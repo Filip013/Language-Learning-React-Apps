@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -354,17 +353,17 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase }) {
 
   return (
     <div className="max-w-3xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className={`mb-12 border-b-2 pb-8 flex justify-between items-end ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
+      <header className={`mb-12 border-b-2 pb-8 flex justify-between items-end ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div>
           <h1 className={`text-4xl font-bold mb-2 moe-font ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Review Quiz</h1>
-          <p className="text-stone-500 text-lg font-sans">Chapter Comprehension & Vocabulary</p>
+          <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Chapter Comprehension & Vocabulary</p>
         </div>
         {!showConfirmReset ? (
           <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 transition-colors text-sm font-sans">
             <RotateCcw size={16} /> 重置 (Reset)
           </button>
         ) : (
-          <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-red-950/30 border-red-900' : 'bg-red-50 border-red-100'}`}>
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-red-950/30 border-red-900/50' : 'bg-red-50 border-red-100'}`}>
             <AlertCircle size={16} className="text-red-500" />
             <button onClick={resetQuiz} className="text-red-600 font-bold text-sm">Yes</button>
             <span className="text-red-200">|</span>
@@ -381,38 +380,84 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase }) {
           const isCorrect = userChoice === q.answer;
 
           return (
-            <div key={q.id} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
+            <div key={q.id} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
               <div className="text-sm text-stone-400 font-bold mb-4 uppercase tracking-wider font-sans">Question {String(q.id + 1).padStart(2, '0')}</div>
               <p className={`text-[28px] md:text-3xl leading-relaxed mb-4 moe-font ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
                 {q.sentence?.replace('___', userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}
               </p>
 
               {!isRevealed ? (
-                <button onClick={() => updateFirebase({ revealed: [...revealedIds, q.id] })} className={`flex items-center gap-2 px-6 py-3 rounded-md transition-all shadow-sm font-sans text-sm ${isDarkMode ? 'bg-stone-700 text-stone-100 hover:bg-stone-600' : 'bg-stone-800 text-stone-100 hover:bg-stone-700'}`}>
+                <button 
+                  onClick={() => updateFirebase({ revealed: [...revealedIds, q.id] })} 
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all shadow-sm font-sans text-sm ${isDarkMode ? 'bg-stone-800 text-stone-200 border border-stone-700 hover:bg-stone-700 hover:text-stone-100' : 'bg-stone-850 text-stone-100 hover:bg-stone-800'}`}
+                >
                   <Eye size={16} /> 顯示選項 (Reveal Options)
                 </button>
               ) : (
                 <div className="animate-in fade-in duration-500">
-                  <div className="mb-6"><p className="text-stone-400 italic font-sans text-lg">Hint: {q.englishHint}</p></div>
+                  <div className="mb-6">
+                    <p className={`italic font-sans text-lg ${isDarkMode ? 'text-stone-300' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
                     {q.options.map((option, optIdx) => {
                       const isSelected = userChoice === option;
                       const isThisCorrect = option === q.answer;
-                      let btnClass = "px-4 py-3 rounded-md border-2 text-[28px] md:text-3xl transition-all text-center moe-font ";
-                      if (!isGraded) btnClass += isSelected ? (isDarkMode ? "border-amber-500 bg-amber-900/30 text-amber-400" : "border-amber-400 bg-amber-50 text-amber-700") : (isDarkMode ? "border-stone-700 text-stone-300" : "border-stone-200 text-stone-600");
-                      else btnClass += isThisCorrect ? (isDarkMode ? "border-emerald-600 bg-emerald-900/30 text-emerald-400 font-bold" : "border-emerald-500 bg-emerald-50 text-emerald-700 font-bold") : (isSelected ? (isDarkMode ? "border-rose-700 bg-rose-900/30 text-rose-400 line-through opacity-80" : "border-rose-400 bg-rose-50 text-rose-600 line-through opacity-80") : (isDarkMode ? "border-stone-800 text-stone-600 opacity-50" : "border-stone-100 text-stone-400 opacity-50"));
-                      return <button key={`${option}-${optIdx}`} disabled={isGraded} onClick={() => handleSelect(q.id, option)} className={btnClass}>{option}</button>;
+                      
+                      let btnClass = "px-4 py-3 rounded-xl border-2 text-[26px] md:text-2xl transition-all text-center moe-font ";
+                      
+                      if (!isGraded) {
+                        if (isSelected) {
+                          btnClass += isDarkMode 
+                            ? "border-amber-500 bg-amber-950/40 text-amber-300 shadow-sm" 
+                            : "border-amber-500 bg-amber-50 text-amber-800 shadow-sm";
+                        } else {
+                          btnClass += isDarkMode 
+                            ? "border-stone-750 bg-stone-900/40 text-stone-200 hover:border-stone-600 hover:bg-stone-800" 
+                            : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50";
+                        }
+                      } else {
+                        if (isThisCorrect) {
+                          btnClass += isDarkMode 
+                            ? "border-emerald-500 bg-emerald-950/50 text-emerald-300 shadow-sm" 
+                            : "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm";
+                        } else if (isSelected) {
+                          btnClass += isDarkMode 
+                            ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" 
+                            : "border-rose-300 bg-rose-50 text-rose-600 line-through opacity-70";
+                        } else {
+                          btnClass += isDarkMode 
+                            ? "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40" 
+                            : "border-stone-100 bg-stone-50/50 text-stone-400 opacity-40";
+                        }
+                      }
+                      
+                      return (
+                        <button 
+                          key={`${option}-${optIdx}`} 
+                          disabled={isGraded} 
+                          onClick={() => handleSelect(q.id, option)} 
+                          className={btnClass}
+                        >
+                          {option}
+                        </button>
+                      );
                     })}
                   </div>
 
-                  <div className="flex justify-between items-center mt-4">
+                  <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
-                     <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, q.id] }); playAnswer(`quiz-${q.id}`, q.sentence.replace('___', q.answer)); } }} className={`px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${!userChoice ? 'bg-stone-300 text-stone-500' : (isDarkMode ? 'bg-amber-600 text-stone-900' : 'bg-amber-500 text-stone-900')}`}>
+                     <button 
+                       disabled={!userChoice} 
+                       onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, q.id] }); playAnswer(`quiz-${q.id}`, q.sentence.replace('___', q.answer)); } }} 
+                       className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}
+                     >
                         驗證答案 (Grade Answer)
                       </button>
                     ) : (
                       <div className="flex items-center gap-4 animate-in duration-300 w-full justify-between">
-                        <span className={`text-sm font-bold font-sans flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>{isCorrect ? "答對了 (Correct!)" : "答錯了 (Incorrect)"}</span>
+                        <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {isCorrect ? "答對了 (Correct!)" : "答錯了 (Incorrect)"}
+                        </span>
                         <PlayButton 
                           isDarkMode={isDarkMode} 
                           isLoading={playingId === `quiz-${q.id}`}
@@ -429,11 +474,19 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase }) {
         })}
       </div>
 
-      <footer className={`fixed bottom-0 left-0 right-0 p-6 backdrop-blur-md border-t font-sans z-10 ${isDarkMode ? 'bg-stone-900/90 border-stone-800' : 'bg-stone-50/90 border-stone-200'}`}>
+      <footer className={`fixed bottom-0 left-0 right-0 p-6 backdrop-blur-md border-t font-sans z-10 ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
         <div className="max-w-3xl mx-auto flex justify-between items-center text-stone-500">
           <div className="flex gap-8 items-center">
-            <div><span className="block text-xs uppercase tracking-tighter opacity-50">完成度 (Graded)</span><span className={`text-xl font-bold ${isDarkMode ? 'text-stone-300' : 'text-stone-800'}`}>{gradedIds.length} / {shuffledData.length}</span></div>
-            {gradedIds.length > 0 && <div><span className="block text-xs uppercase tracking-tighter opacity-50">準確率 (Score)</span><span className="text-xl font-bold text-emerald-500 flex items-center gap-1">{correctCount} <CheckCircle2 size={18} /></span></div>}
+            <div>
+              <span className="block text-xs uppercase tracking-tighter opacity-50">完成度 (Graded)</span>
+              <span className={`text-xl font-bold ${isDarkMode ? 'text-stone-300' : 'text-stone-800'}`}>{gradedIds.length} / {shuffledData.length}</span>
+            </div>
+            {gradedIds.length > 0 && (
+              <div>
+                <span className="block text-xs uppercase tracking-tighter opacity-50">準確率 (Score)</span>
+                <span className="text-xl font-bold text-emerald-500 flex items-center gap-1">{correctCount} <CheckCircle2 size={18} /></span>
+              </div>
+            )}
           </div>
         </div>
       </footer>
@@ -904,7 +957,7 @@ export default function Mandarin() {
   if (!user) return null; // Global Router handles Auth.
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-700' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang="zh-Hant">
+    <div className={`min-h-screen transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang="zh-Hant">
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
         @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
@@ -912,7 +965,7 @@ export default function Mandarin() {
         .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }
       `}} />
 
-      <nav className={`sticky top-0 z-50 border-b backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-sm ${isDarkMode ? 'bg-stone-900/85 border-stone-800' : 'bg-white/90 border-stone-200'}`}>
+      <nav className={`sticky top-0 z-50 border-b backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-sm ${isDarkMode ? 'bg-stone-900/85 border-stone-850' : 'bg-white/90 border-stone-200'}`}>
         <div className="flex gap-1 md:gap-4 overflow-x-auto no-scrollbar mask-edges pr-8 flex-1">
           {/* BACK TO HUB ARROW */}
           <Link to="/" className={`p-2 rounded-lg border transition-all active:scale-95 shrink-0 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-amber-400 hover:text-white' : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-stone-800'}`}>
