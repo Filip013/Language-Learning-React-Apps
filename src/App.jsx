@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
 import Mandarin from './pages/Mandarin';
 import Hungarian from './pages/Hungarian';
-import Portuguese from './pages/Portuguese'; // <-- Import Portuguese
+import Portuguese from './pages/Portuguese'; // <-- Re-added Portuguese
 
 function App() {
   useEffect(() => {
@@ -16,13 +16,13 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/lingocraft" element={<LingoCraft />} />
         <Route path="/mandarin" element={<Mandarin />} />
         <Route path="/hungarian" element={<Hungarian />} />
-        <Route path="/portuguese" element={<Portuguese />} /> {/* <-- Add Route */}
+        <Route path="/portuguese" element={<Portuguese />} /> {/* <-- Re-added Portuguese Route */}
       </Routes>
     </Router>
   );
