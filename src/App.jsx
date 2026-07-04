@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 
 import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
-import Romanian from './pages/Romanian';
 import MigrationTool from './pages/MigrationTool';
 
 // The new Config Engine
