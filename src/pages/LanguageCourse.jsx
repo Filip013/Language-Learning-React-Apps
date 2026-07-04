@@ -10,6 +10,8 @@ function shuffleArray(array) {
   return arr;
 }
 
+const removeDiacritics = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+
 function PlayButton({ isDarkMode, onClick, size = 24, isLoading = false, isPlaying = false }) {
   const colorClasses = isDarkMode ? 'bg-stone-700 text-stone-300 hover:bg-stone-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200';
   return (
@@ -155,7 +157,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   const playDrill = (ex, exId, isListened) => {
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
-    const targetText = ex[config.primaryTextKey];
+    const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
     handleSpeak(`${targetText}。\n\n${ex.english}\n\n${targetText}。`, () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
@@ -178,7 +180,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
             {section.examples?.map((ex, exIndex) => {
               const exId = `drill_${sectionIdx}_${exIndex}`;
               const isListened = !isLatestEpisode || listenedIds.includes(exId);
-              const targetText = ex[config.primaryTextKey];
+              const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
               
               return (
                 <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
@@ -191,19 +193,19 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
                   </div>
                   <div className="relative mt-2">
                     <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
-                      <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl md:text-2xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{targetText}</p>
-                      <p className={`text-lg md:text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.english || ex.translation}</p>
+                      <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{targetText}</p>
+                      <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.english || ex.translation}</p>
                       
                       {config.secondaryScriptKey && ex[config.secondaryScriptKey] && (
                         <p className={`text-[28px] md:text-3xl ${config.secondaryFontClass || ''} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ex[config.secondaryScriptKey]}</p>
                       )}
                       {config.transliterationKey && ex[config.transliterationKey] && (
-                        <p className={`text-lg md:text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex[config.transliterationKey]}</p>
+                        <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex[config.transliterationKey]}</p>
                       )}
                     </div>
                     {!isListened && (
                       <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <button onClick={() => playDrill(ex, exId, isListened)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
+                        <button onClick={() => playDrill(ex, exId, isListened)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
                           {playingId === exId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Play to Reveal
                         </button>
                       </div>
@@ -213,6 +215,21 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
               );
             })}
           </div>
+
+          {/* Drill Notes / Grammar Focus */}
+          {section.notes && section.notes.length > 0 && (
+            <div className={`mt-8 p-6 rounded-2xl border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
+              <div className={`flex items-center gap-3 mb-4 border-b pb-3 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+                <Lightbulb className="text-amber-500" size={20} />
+                <h4 className={`text-lg font-bold ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Focus & Grammar</h4>
+              </div>
+              <div className="space-y-3">
+                {section.notes.map((note, noteIdx) => (
+                  <p key={noteIdx} className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{note}</p>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       ))}
     </div>
@@ -227,11 +244,6 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   const userSelections = progressState.selections || {};
   const revealedIds = progressState.revealed || [];
   const gradedIds = progressState.gradedIds || [];
-
-  const gradeBtnText = config.uiText?.gradeAnswer || 'Grade Answer';
-  const revealBtnText = config.uiText?.revealOptions || 'Reveal Options';
-  const correctText = config.uiText?.correct || 'Correct!';
-  const incorrectText = config.uiText?.incorrect || 'Incorrect';
 
   useEffect(() => {
     if (activeEpisode?.quiz) {
@@ -268,7 +280,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className="absolute right-0 top-0">
           {!showConfirmReset ? (
-            <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> Reset</button>
+            <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> 重置</button>
           ) : (
             <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-red-950/30 border-red-900/50' : 'bg-red-50 border-red-100'}`}>
               <AlertCircle size={16} className="text-red-500" />
@@ -301,16 +313,16 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   </button>
                 )}
               </div>
-              <p className={`leading-relaxed mb-4 ${config.customFontClass ? `${config.customFontClass} text-[26px] md:text-3xl` : 'font-sans font-bold text-xl md:text-2xl'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/_{3,}/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
+              <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/_{3,}/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
 
               <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
                   <div className="mb-6">
-                    <p className={`italic font-sans text-lg ${isDarkMode ? 'text-stone-300' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
+                    <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                     {q.options.map((option, optIdx) => {
-                      let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.customFontClass ? `${config.customFontClass} text-[26px] md:text-2xl` : 'font-sans font-bold text-lg'} `;
+                      let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[26px] md:text-2xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
                       if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
                       else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
                       return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
@@ -319,12 +331,12 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/_{3,}/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
-                        {gradeBtnText}
+                        {config.id === 'mandarin' ? '驗證答案 (Grade Answer)' : 'Grade Answer'}
                      </button>
                     ) : (
                       <div className="flex items-center gap-4 animate-in duration-300 w-full justify-between">
                         <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {isCorrect ? correctText : incorrectText}
+                          {isCorrect ? (config.id === 'mandarin' ? "答對了 (Correct!)" : "Correct!") : (config.id === 'mandarin' ? "答錯了 (Incorrect)" : "Incorrect")}
                         </span>
                         <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/_{3,}/, q.answer))} size={18} />
                       </div>
@@ -403,9 +415,9 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   />
                 </div>
                 {!rev[qId] && (
-                  <div className="absolute top-0 left-0 z-10 mt-4">
-                    <button onClick={() => playAnswer(qId, item[config.primaryTextKey], false)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
-                      {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Answer
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
+                      {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Sweep
                     </button>
                   </div>
                 )}
@@ -456,13 +468,13 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
               <div className="relative mt-4">
                 <div className={`transition-all duration-700 ${!rev[qId] ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'} space-y-2 pt-4 border-t border-stone-100 dark:border-stone-800`}>
                   <p className="font-bold text-xs uppercase tracking-widest text-blue-500 mb-2">{item.word}</p>
-                  <p className={`text-xl font-bold ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
-                  <p className={`text-lg italic ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{item.english}</p>
+                  <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
+                  <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{item.english}</p>
                 </div>
 
                 {!rev[qId] && (
-                  <div className="absolute top-0 left-0 z-10 mt-4">
-                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-sm text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
                       {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Sweep
                     </button>
                   </div>
@@ -498,16 +510,16 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
 
   const filteredData = useMemo(() => {
     if (categories.length === 0) return [];
-    const term = searchTerm.trim().toLowerCase();
+    const term = removeDiacritics(searchTerm);
     
     return categories.map(cat => ({ 
       ...cat, 
       words: term ? cat.words.filter(w => {
-        if (typeof w === 'string') return w.toLowerCase().includes(term);
+        if (typeof w === 'string') return removeDiacritics(w).includes(term);
         if (typeof w === 'object' && w !== null) {
           const target = w[config.primaryTextKey] || w.word || w.targetText || "";
           const en = w.english || w.meaning || w.translation || "";
-          return target.toLowerCase().includes(term) || en.toLowerCase().includes(term);
+          return removeDiacritics(target).includes(term) || removeDiacritics(en).includes(term);
         }
         return false;
       }) : cat.words 
