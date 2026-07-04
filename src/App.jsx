@@ -5,7 +5,9 @@ import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
 import Mandarin from './pages/Mandarin';
 import Hungarian from './pages/Hungarian';
-import Portuguese from './pages/Portuguese'; // <-- Re-added Portuguese
+import Portuguese from './pages/Portuguese';
+import Romanian from './pages/Romanian';
+import MigrationTool from './pages/MigrationTool'; // <-- Added MigrationTool
 
 function App() {
   useEffect(() => {
@@ -22,7 +24,9 @@ function App() {
         <Route path="/lingocraft" element={<LingoCraft />} />
         <Route path="/mandarin" element={<Mandarin />} />
         <Route path="/hungarian" element={<Hungarian />} />
-        <Route path="/portuguese" element={<Portuguese />} /> {/* <-- Re-added Portuguese Route */}
+        <Route path="/portuguese" element={<Portuguese />} />
+        <Route path="/romanian" element={<Romanian />} />
+        <Route path="/migrate" element={<MigrationTool />} /> {/* <-- Added Route */}
       </Routes>
     </Router>
   );

@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Settings, ChevronDown, Globe } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Settings, ChevronDown, Globe, Database } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
 
 // --- COURSES DATABASE ---
 const ALL_COURSES = [
-    { id: "lingocraft", name: "LingoCraft", description: "Advanced multilingual context & grammar generator.", url: "/lingocraft", color: "border-emerald-500", reqKey: "Paid API" },
     { id: "hungarian", name: "Hungarian Master", description: "B1/B2 Reading, Drills, and Vocab with AI Live TTS.", url: "/hungarian", color: "border-blue-500", reqKey: "Free API" },
+    { id: "lingocraft", name: "LingoCraft", description: "Advanced multilingual context & grammar generator.", url: "/lingocraft", color: "border-emerald-500", reqKey: "Paid API" },
     { id: "mandarin", name: "Mandarin Master", description: "Character reading, Pinyin, and pronunciation drills.", url: "/mandarin", color: "border-red-500", reqKey: "Free API" },
     { id: "portuguese", name: "Portuguese Master", description: "B1/B2 European Portuguese Reading & Drills.", url: "/portuguese", color: "border-emerald-600", reqKey: "Free API" },
+    { id: "romanian", name: "Romanian Master", description: "A2/B1 Romanian Reading, Drills, and Vocab.", url: "/romanian", color: "border-indigo-500", reqKey: "Free API" },
 ];
+
+// --- PINNED ORDER ---
+const PINNED_ORDER = ["hungarian", "lingocraft", "mandarin"];
 
 // --- API KEY MANAGER ---
 const ApiKeyManager = ({ title, description, storageKey, badgeColor, user }) => {
@@ -109,15 +113,57 @@ export default function Home() {
                 recentAccess: { ...recentActivity, [course.id]: Date.now() }
             }, { merge: true });
         }
-        navigate(course.url); // Use React Router instead of page reload!
+        navigate(course.url);
     };
 
-    const sortedCourses = [...ALL_COURSES].sort((a, b) => {
+    // --- DATA SEPARATION & SORTING ---
+    const pinnedCourses = PINNED_ORDER.map(id => ALL_COURSES.find(c => c.id === id)).filter(Boolean);
+    const dynamicCourses = ALL_COURSES.filter(c => !PINNED_ORDER.includes(c.id));
+
+    dynamicCourses.sort((a, b) => {
         const timeA = recentActivity[a.id] || 0;
         const timeB = recentActivity[b.id] || 0;
         if (timeA !== timeB) return timeB - timeA; 
         return a.name.localeCompare(b.name); 
     });
+
+    let maxTime = 0;
+    let mostRecentCourseId = null;
+    Object.entries(recentActivity).forEach(([id, time]) => {
+        if (time > maxTime) {
+            maxTime = time;
+            mostRecentCourseId = id;
+        }
+    });
+
+    const CourseCard = ({ course }) => {
+        const isMostRecent = course.id === mostRecentCourseId;
+        return (
+            <a 
+                href={course.url} onClick={(e) => handleCourseClick(e, course)}
+                className={`relative group bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm hover:shadow-xl dark:shadow-black/20 transition-all duration-300 border-t-4 cursor-pointer hover:-translate-y-1 flex flex-col h-full ${course.color}`}
+            >
+                {isMostRecent && (
+                    <span className="absolute -top-3 right-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+                        Last Accessed
+                    </span>
+                )}
+                <div className="flex justify-between items-start mb-3 mt-2">
+                    <h2 className="text-xl font-extrabold text-stone-800 dark:text-zinc-100">{course.name}</h2>
+                </div>
+                <p className="text-stone-500 dark:text-zinc-400 text-sm mb-6 flex-1 leading-relaxed">{course.description}</p>
+                
+                <div className="flex items-center justify-between mt-auto border-t pt-4 dark:border-zinc-800/50">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${course.reqKey === 'Paid API' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'}`}>
+                        Req: {course.reqKey}
+                    </span>
+                    <div className="text-sm font-bold text-stone-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        Open &rarr;
+                    </div>
+                </div>
+            </a>
+        );
+    };
 
     if (!user) {
         return (
@@ -160,43 +206,35 @@ export default function Home() {
                     <h2 className="text-lg font-bold mb-4 text-stone-800 dark:text-zinc-100 flex items-center gap-2">
                         <Settings size={18} /> API Configurations
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <ApiKeyManager user={user} title="Free Gemini Key" description="Used for basic TTS and drills in language courses." storageKey="geminiApiKey" badgeColor="bg-blue-500" />
                         <ApiKeyManager user={user} title="Paid Gemini Key" description="Used for Advanced generation and Aoede TTS in LingoCraft." storageKey="geminiPaidApiKey" badgeColor="bg-emerald-500" />
+                    </div>
+                    
+                    {/* Migration Tool Link - Service Feature */}
+                    <div className="border-t border-stone-200 dark:border-zinc-800 pt-6">
+                        <h2 className="text-sm font-bold mb-2 text-stone-600 dark:text-zinc-400 uppercase tracking-widest">Advanced Services</h2>
+                        <Link to="/migrate" className="inline-flex items-center gap-2 text-sm font-bold text-stone-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-4 py-2 rounded-xl transition-all">
+                            <Database size={16} /> Open Canvas Migration Tool
+                        </Link>
                     </div>
                 </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedCourses.map((course, index) => {
-                    const isMostRecent = index === 0 && Object.keys(recentActivity).length > 0;
-                    return (
-                        <a 
-                            key={course.id} href={course.url} onClick={(e) => handleCourseClick(e, course)}
-                            className={`relative group bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm hover:shadow-xl dark:shadow-black/20 transition-all duration-300 border-t-4 cursor-pointer hover:-translate-y-1 flex flex-col h-full ${course.color}`}
-                        >
-                            {isMostRecent && (
-                                <span className="absolute -top-3 right-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
-                                    Last Accessed
-                                </span>
-                            )}
-                            <div className="flex justify-between items-start mb-3 mt-2">
-                                <h2 className="text-xl font-extrabold text-stone-800 dark:text-zinc-100">{course.name}</h2>
-                            </div>
-                            <p className="text-stone-500 dark:text-zinc-400 text-sm mb-6 flex-1 leading-relaxed">{course.description}</p>
-                            
-                            <div className="flex items-center justify-between mt-auto border-t pt-4 dark:border-zinc-800/50">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${course.reqKey === 'Paid API' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'}`}>
-                                    Req: {course.reqKey}
-                                </span>
-                                <div className="text-sm font-bold text-stone-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                    Open &rarr;
-                                </div>
-                            </div>
-                        </a>
-                    );
-                })}
+                {pinnedCourses.map(course => <CourseCard key={course.id} course={course} />)}
             </div>
+
+            <div className="flex items-center gap-4 my-12">
+                <div className="flex-1 border-t border-stone-200 dark:border-zinc-800"></div>
+                <span className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-zinc-500">More Languages</span>
+                <div className="flex-1 border-t border-stone-200 dark:border-zinc-800"></div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {dynamicCourses.map(course => <CourseCard key={course.id} course={course} />)}
+            </div>
+            
         </div>
     );
 }

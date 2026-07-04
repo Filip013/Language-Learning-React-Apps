@@ -21,16 +21,16 @@ export default defineConfig({
         background_color: '#fafaf9',
         display: 'standalone',
         start_url: '/Language-Learning-React-Apps/', // <-- Update start_url for GitHub Pages subfolder
-        icons: [
+        "icons": [
           {
-            src: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>',
-            sizes: '192x192',
-            type: 'image/svg+xml'
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
           },
           {
-            src: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>',
-            sizes: '512x512',
-            type: 'image/svg+xml'
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
           }
         ]
       }
