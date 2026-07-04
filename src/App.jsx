@@ -3,11 +3,12 @@ import { useEffect } from 'react';
 
 import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
-import Mandarin from './pages/Mandarin';
-import Hungarian from './pages/Hungarian';
-import Portuguese from './pages/Portuguese';
 import Romanian from './pages/Romanian';
-import MigrationTool from './pages/MigrationTool'; // <-- Added MigrationTool
+import MigrationTool from './pages/MigrationTool';
+
+// The new Config Engine
+import LanguageCourse from './pages/LanguageCourse';
+import { courseConfigs } from './config/courseConfigs';
 
 function App() {
   useEffect(() => {
@@ -22,11 +23,14 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/lingocraft" element={<LingoCraft />} />
-        <Route path="/mandarin" element={<Mandarin />} />
-        <Route path="/hungarian" element={<Hungarian />} />
-        <Route path="/portuguese" element={<Portuguese />} />
-        <Route path="/romanian" element={<Romanian />} />
-        <Route path="/migrate" element={<MigrationTool />} /> {/* <-- Added Route */}
+        
+        {/* NEW REFACTORED ARCHITECTURE */}
+        <Route path="/mandarin" element={<LanguageCourse config={courseConfigs.mandarin} />} />
+        <Route path="/hungarian" element={<LanguageCourse config={courseConfigs.hungarian} />} />
+        <Route path="/portuguese" element={<LanguageCourse config={courseConfigs.portuguese} />} />
+        <Route path="/romanian" element={<LanguageCourse config={courseConfigs.romanian} />} />
+        
+        <Route path="/migrate" element={<MigrationTool />} />
       </Routes>
     </Router>
   );
