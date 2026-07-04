@@ -696,7 +696,7 @@ export default function LanguageCourse({ config }) {
       }
       
       let pastContext = '';
-      const pastEps = episodesList.slice(0, 10);
+      const pastEps = episodesList.slice(0, 10).reverse();
       
       for (let i = 0; i < pastEps.length; i++) {
         const ep = pastEps[i];
@@ -705,23 +705,40 @@ export default function LanguageCourse({ config }) {
         const progSnap = await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get();
         const prog = progSnap.exists ? progSnap.data() : {};
 
+        // 1. Send previous user prompt & tutor introduction
+        if (ep.userPrompt) epContext += `User Request: ${ep.userPrompt}\n`;
+        if (ep.tutorIntroduction) epContext += `Tutor Response: ${ep.tutorIntroduction}\n\n`;
+
         if (!config.hasStories && ep.reading) {
             const targetText = ep.reading[config.primaryTextKey] || "";
             if (targetText) epContext += `Reading Passage:\n${targetText}\n\n`;
+            
+            // 2. Send Grammar/Vocabulary Focus Notes
+            if (ep.reading.focus && ep.reading.focus.length > 0) {
+                const focusNotes = ep.reading.focus.map(f => `- ${f.word}: ${f.explanation}`).join('\n');
+                epContext += `Grammar Focus:\n${focusNotes}\n\n`;
+            }
         }
         
         if (ep.drills) {
           let drillSentences = [];
           ep.drills.forEach(d => {
+             // 3. Send Drill Notes & group by word
+             let noteStr = (d.notes && d.notes.length > 0) ? ` (Notes: ${d.notes.join(' | ')})` : '';
+             let dSentences = [];
+             
              if (d.examples) {
                 d.examples.forEach(ex => {
                    const text = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
-                   if (text) drillSentences.push(text);
+                   if (text) dSentences.push(text);
                 });
+             }
+             if (dSentences.length > 0) {
+                 drillSentences.push(`${d.word}${noteStr}:\n  - ${dSentences.join('\n  - ')}`);
              }
           });
           if (drillSentences.length > 0) {
-              epContext += `Drill Sentences:\n- ${drillSentences.join('\n- ')}\n\n`;
+              epContext += `Drills & Notes:\n- ${drillSentences.join('\n- ')}\n\n`;
           }
         }
         
@@ -733,13 +750,15 @@ export default function LanguageCourse({ config }) {
               const isGraded = prog.quizGraded?.[qId] || prog.gradedIds?.includes(numId) || prog.quiz?.answers?.[qId] !== undefined;
               const userAns = prog.quizAnswers?.[qId] || prog.selections?.[numId] || prog.quiz?.answers?.[qId];
               
-              const sentenceWithAns = (q.sentence || q.text || "").replace(/_{3,}/, q.answer || q.correct);
+              // 4. Clearly provide the raw question, correct answer, and the user's specific performance
+              const rawQuestion = q.sentence || q.text || "";
+              const correctAns = q.answer || q.correct;
               
               if (isGraded) {
-                  const isCorrect = (userAns === q.answer || userAns === q.correct);
-                  quizDetails.push(`- ${sentenceWithAns} | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
+                  const isCorrect = (userAns === correctAns);
+                  quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
               } else {
-                  quizDetails.push(`- ${sentenceWithAns} | Result: Not answered`);
+                  quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: Not answered`);
               }
           });
           if (quizDetails.length > 0) {
@@ -769,6 +788,7 @@ export default function LanguageCourse({ config }) {
           }
         }
         
+        // This is where the for-loop actually closes
         if (epContext) {
             pastContext += `\n--- Past Episode: ${ep.title} ---\n${epContext}`;
         }
@@ -777,7 +797,8 @@ export default function LanguageCourse({ config }) {
       const storyContextBlock = config.hasStories && currentStoryText ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
       const pastContextBlock = pastContext ? `\nRECENT CONTEXT & PERFORMANCE (Last 10 lessons):\n${pastContext}\n` : '';
       
-      const exportedText = `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\nOUTPUT FORMAT (Raw JSON only):\n${config.promptOutputFormat}`;
+      // 5. Ask for JSON inside a markdown codeblock
+      const exportedText = `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\nOUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${config.promptOutputFormat}`;
 
       const blob = new Blob([exportedText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
