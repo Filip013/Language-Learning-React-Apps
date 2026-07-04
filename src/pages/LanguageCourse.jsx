@@ -675,47 +675,94 @@ export default function LanguageCourse({ config }) {
           currentStoryText = (currentStoryData.episodes || []).map(e => `[Chapter: ${e.title}]\n${e.text}`).join('\n\n');
       }
       
-      const pastEps = episodesList.slice(0, 10);
       let pastContext = '';
+      const pastEps = episodesList.slice(0, 10);
       
       for (let i = 0; i < pastEps.length; i++) {
         const ep = pastEps[i];
-        pastContext += `\n--- Past Episode: ${ep.title} ---\n`;
+        let epContext = '';
+        
         const progSnap = await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get();
         const prog = progSnap.exists ? progSnap.data() : {};
 
-        if (ep.reading) {
-            const targetText = ep.reading[config.primaryTextKey] || "Reading passage.";
-            pastContext += `Reading Passage: ${targetText.substring(0, 100)}...\n`;
-            if (ep.reading.focus) pastContext += `Target Words: ${ep.reading.focus.map(f=>f.word).join(', ')}\n`;
+        // 1. Full Reading Passage (Only fetch reading for non-story courses. Story courses use currentStoryText instead)
+        if (!config.hasStories && ep.reading) {
+            const targetText = ep.reading[config.primaryTextKey] || "";
+            if (targetText) epContext += `Reading Passage:\n${targetText}\n\n`;
         }
-        if (ep.drills) pastContext += `Drilled Words: ${ep.drills.map(d => d.word).join(', ')}\n`;
         
+        // 2. Drill Sentences (Target language only)
+        if (ep.drills) {
+          let drillSentences = [];
+          ep.drills.forEach(d => {
+             if (d.examples) {
+                d.examples.forEach(ex => {
+                   const text = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
+                   if (text) drillSentences.push(text);
+                });
+             }
+          });
+          if (drillSentences.length > 0) {
+              epContext += `Drill Sentences:\n- ${drillSentences.join('\n- ')}\n\n`;
+          }
+        }
+        
+        // 3. Quiz Sentences & Results
         if (ep.quiz) {
-          let correct = 0;
+          let quizDetails = [];
           ep.quiz.forEach((q, idx) => {
               const qId = `quiz_${idx}`; 
               const numId = idx;         
               const isGraded = prog.quizGraded?.[qId] || prog.gradedIds?.includes(numId) || prog.quiz?.answers?.[qId] !== undefined;
               const userAns = prog.quizAnswers?.[qId] || prog.selections?.[numId] || prog.quiz?.answers?.[qId];
-              if (isGraded && userAns === q.answer) correct++;
-              else if (isGraded && userAns === q.correct) correct++; 
+              
+              const sentenceWithAns = (q.sentence || q.text || "").replace(/_{3,}/, q.answer || q.correct);
+              
+              if (isGraded) {
+                  const isCorrect = (userAns === q.answer || userAns === q.correct);
+                  quizDetails.push(`- ${sentenceWithAns} | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
+              } else {
+                  quizDetails.push(`- ${sentenceWithAns} | Result: Not answered`);
+              }
           });
-          pastContext += `Quiz Score: ${correct}/${ep.quiz.length}\n`;
+          if (quizDetails.length > 0) {
+              epContext += `Quiz Performance:\n${quizDetails.join('\n')}\n\n`;
+          }
+        }
+
+        // 4. Sweep Sentences (Target language only)
+        if (ep.sweep) {
+           let sweepSentences = [];
+           ep.sweep.forEach(s => {
+               const text = s[config.primaryTextKey] || s.hungarian;
+               if (text) sweepSentences.push(text);
+           });
+           if (sweepSentences.length > 0) {
+               epContext += `Sweep Sentences:\n- ${sweepSentences.join('\n- ')}\n\n`;
+           }
         }
         
+        // 5. Test Translation Mistakes (EN -> Target)
         if (ep.test) {
           let testMisses = [];
           ep.test.forEach((t, tIdx) => {
               const m = prog.mistakes?.[`test_${tIdx}`] || prog.test?.mistakes?.[`test_${tIdx}`];
-              if (m && m.trim()) testMisses.push(`EN: ${t.english} -> User wrote: ${m.trim()} (Correct: ${t[config.primaryTextKey]})`);
+              if (m && m.trim()) testMisses.push(`EN: ${t.english} -> User wrote: ${m.trim()} (Correct: ${t[config.primaryTextKey] || t.hungarian})`);
           });
-          if (testMisses.length > 0) pastContext += `Test Translation Mistakes: ${testMisses.join(' | ')}\n`;
+          if (testMisses.length > 0) {
+              epContext += `Test Translation Mistakes:\n- ${testMisses.join('\n- ')}\n\n`;
+          }
+        }
+        
+        if (epContext) {
+            pastContext += `\n--- Past Episode: ${ep.title} ---\n${epContext}`;
         }
       }
 
-      const storyContextBlock = config.hasStories ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
-      const exportedText = `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}\nRECENT CONTEXT (For reference):\n${pastContext}\n\nUSER REQUEST:\n${topicInput}\n\n---\n\nOUTPUT FORMAT (Raw JSON only):\n${config.promptOutputFormat}`;
+      const storyContextBlock = config.hasStories && currentStoryText ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
+      const pastContextBlock = pastContext ? `\nRECENT CONTEXT & PERFORMANCE (Last 10 lessons):\n${pastContext}\n` : '';
+      
+      const exportedText = `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\nOUTPUT FORMAT (Raw JSON only):\n${config.promptOutputFormat}`;
 
       const blob = new Blob([exportedText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
