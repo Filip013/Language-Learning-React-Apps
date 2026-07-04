@@ -7,13 +7,32 @@ export const courseConfigs = {
         id: 'mandarin',
         dbAppId: 'mandarin-master',
         name: 'Mandarin Master',
+        
+        // Data Keys
         primaryTextKey: 'traditional',
+        transliterationKey: 'pinyin',
+        secondaryScriptKey: 'simplified',
+        
+        // Font & Design
+        fontClass: 'moe-font',
+        secondaryFontClass: 'simp-font',
+        useLargeDrillFont: true,
+        
+        // Tabs
         hasStories: true,
         hasReading: false,
         hasTestTab: false,
         hasSweepTab: false,
-        ttsSystemInstruction: SHARED_TTS_PROMPT,
         
+        // Custom UI Text
+        uiText: {
+            gradeAnswer: '驗證答案 (Grade Answer)',
+            revealOptions: '顯示選項 (Reveal Options)',
+            correct: '答對了 (Correct!)',
+            incorrect: '答錯了 (Incorrect)'
+        },
+
+        ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert curriculum designer and storyteller for a Mandarin Chinese learning app. Your task is to write stories that should be 30+ episodes long.
         
 CRITICAL RULES:
@@ -58,7 +77,7 @@ DRILL AND QUIZ DESIGN:
       "englishHint": "hint"
     }
   ],
-  "newLemmas": ["word1", "word2"]
+  "newLemmas": ["漢字1", "漢字2"]
 }`
     },
 
@@ -68,12 +87,13 @@ DRILL AND QUIZ DESIGN:
         name: 'Hungarian Master',
         primaryTextKey: 'hungarian',
         lexiconDoc: 'dictionary',
+        
         hasStories: false,
         hasReading: true,
         hasTestTab: true,
         hasSweepTab: true,
-        ttsSystemInstruction: SHARED_TTS_PROMPT,
         
+        ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert Hungarian language curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULES:
@@ -120,7 +140,6 @@ TASKS:
         hasTestTab: false,
         hasSweepTab: false,
         ttsSystemInstruction: SHARED_TTS_PROMPT,
-        
         promptSystemInstruction: `You are an expert European Portuguese curriculum designer. Generate a highly structured B1/B2 lesson.
         
 CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
@@ -173,7 +192,6 @@ TASKS:
         hasTestTab: false,
         hasSweepTab: false,
         ttsSystemInstruction: SHARED_TTS_PROMPT,
-        
         promptSystemInstruction: `You are an expert Romanian curriculum designer. Generate a highly structured A2/B1 lesson.
         
 CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.

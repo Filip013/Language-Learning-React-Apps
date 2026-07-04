@@ -1,131 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Globe, Search, History, Sun, Moon, Database, 
+  Globe, Search, History, Database, 
   Loader2, Sparkles, AlertCircle, BookOpen, 
   Eye, Volume2, Pause, Trash2, ArrowLeft 
 } from 'lucide-react';
 import { auth, db } from '../firebase';
+import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
 const dbAppId = 'lingocraft';
-
-// --- GEMINI LIVE TTS WEBSOCKET ENGINE ---
-let ws = null;
-let audioContext = null;
-let nextAudioTime = 0;
-let lastSourceNode = null;
-let currentOnComplete = null;
-let currentOnError = null;
-
-function playPCMChunk(base64Data) {
-    if (!audioContext) return;
-    const binaryString = window.atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-    const int16Array = new Int16Array(bytes.buffer);
-    const audioBuffer = audioContext.createBuffer(1, int16Array.length, 24000);
-    const channelData = audioBuffer.getChannelData(0);
-    for (let i = 0; i < int16Array.length; i++) channelData[i] = int16Array[i] / 32768.0;
-    
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
-    
-    const currentTime = audioContext.currentTime;
-    if (nextAudioTime < currentTime) nextAudioTime = currentTime + 0.05;
-    source.start(nextAudioTime);
-    nextAudioTime += audioBuffer.duration;
-    lastSourceNode = source;
-}
-
-const stopSpeak = () => {
-    if (ws) { ws.close(); ws = null; }
-    if (lastSourceNode) {
-        try { lastSourceNode.stop(); } catch(e) {}
-        lastSourceNode.onended = null;
-        lastSourceNode = null;
-    }
-    if (audioContext) nextAudioTime = audioContext.currentTime; 
-    if (currentOnComplete) currentOnComplete();
-    currentOnComplete = null;
-    currentOnError = null;
-};
-
-const handleSpeak = (text, onComplete = null, onError = null) => {
-    if (!text || !text.trim()) return;
-    
-    const myKey = localStorage.getItem('geminiApiKey') || '';
-    if (!myKey) {
-        alert("Free API key not found. Please set your Free Gemini API Key in the Hub settings for Audio.");
-        if (onError) onError();
-        return;
-    }
-
-    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-    if (audioContext.state === 'suspended') audioContext.resume();
-    
-    nextAudioTime = audioContext.currentTime;
-    lastSourceNode = null;
-    currentOnComplete = onComplete;
-    currentOnError = onError;
-
-    const sendAudioRequest = () => ws.send(JSON.stringify({ realtimeInput: { text: text } }));
-
-    const setupMessageHandlers = () => {
-        ws.onmessage = async (event) => {
-            let rawData = event.data;
-            if (rawData instanceof Blob) rawData = await rawData.text();
-            const msg = JSON.parse(rawData);
-            
-            if (msg.serverContent) {
-                if (msg.serverContent.modelTurn) {
-                    for (const part of msg.serverContent.modelTurn.parts) {
-                        if (part.inlineData && part.inlineData.mimeType.startsWith("audio/pcm")) {
-                            playPCMChunk(part.inlineData.data);
-                        }
-                    }
-                }
-                if (msg.serverContent.turnComplete) {
-                    if (lastSourceNode && currentOnComplete) {
-                        const cb = currentOnComplete;
-                        currentOnComplete = null;
-                        lastSourceNode.onended = () => { cb(); };
-                    } else if (currentOnComplete) {
-                        currentOnComplete();
-                        currentOnComplete = null;
-                    }
-                }
-            }
-        };
-        ws.onerror = (e) => {
-            console.error("TTS WebSocket Error:", e);
-            if (currentOnError) currentOnError();
-            alert("Audio connection failed. Check your API key or try again later.");
-        };
-    };
-
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-        ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${myKey.trim()}`);
-        ws.onopen = () => {
-            const setupMessage = {
-                setup: {
-                    model: "models/gemini-3.1-flash-live-preview",
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } } }
-                    },
-                    systemInstruction: { parts: [{ text: "You are a multilingual text-to-speech reader. Read the text provided aloud exactly as written. Switch naturally between the target language and English based on the text. Do not translate the text. Do not add any conversational filler, introductions, or extra words. Provide clear pauses between sentences." }] }
-                }
-            };
-            ws.send(JSON.stringify(setupMessage));
-            setTimeout(sendAudioRequest, 500);
-        };
-        setupMessageHandlers();
-    } else {
-        setupMessageHandlers();
-        sendAudioRequest();
-    }
-};
 
 // --- APP DATA ---
 const LANGUAGES = [
@@ -183,12 +66,25 @@ export default function LingoCraft() {
     // Playback State
     const [playState, setPlayState] = useState({ index: null, status: 'idle' });
 
-    // Initialize Theme
+    // Use centralized TTS Hook
+    const ttsSystemInstruction = "You are a language teaching text-to-speech engine. Your ONLY function is to read the provided text aloud exactly as written for a student. Do not converse, do not answer questions. Read the text clearly and carefully. Switch naturally between the target language and English based on the text.";
+    const { handleSpeak, stopSpeak } = useGeminiTTS(ttsSystemInstruction);
+
+    // Global Theme Initialization
     useEffect(() => {
-        const storedTheme = localStorage.getItem('lingocraft_theme');
-        const isDark = storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        setIsDarkMode(isDark);
-        if (isDark) document.documentElement.classList.add('dark');
+        const checkTheme = () => {
+            const localTheme = localStorage.getItem('lingocraft_theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setIsDarkMode(localTheme === 'dark' || (!localTheme && systemDark));
+        };
+        checkTheme();
+        
+        window.addEventListener('storage', checkTheme);
+        window.addEventListener('theme-changed', checkTheme);
+        return () => {
+            window.removeEventListener('storage', checkTheme);
+            window.removeEventListener('theme-changed', checkTheme);
+        };
     }, []);
 
     // Handle Authentication
@@ -219,14 +115,6 @@ export default function LingoCraft() {
 
         return () => { unsubPrefs(); unsubHistory(); };
     }, [user]);
-
-    const toggleTheme = () => {
-        const newTheme = !isDarkMode;
-        setIsDarkMode(newTheme);
-        localStorage.setItem('lingocraft_theme', newTheme ? 'dark' : 'light');
-        if (newTheme) document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-    };
 
     const handlePrefChange = async (type, value) => {
         if (!user) return;
@@ -359,8 +247,10 @@ export default function LingoCraft() {
     };
 
     const getTTSText = (item, langName) => {
-        if (langName === 'English') return `${item.original}.`;
-        return `${item.original}。\n\n${item.englishTranslation}\n\n${item.original}。`;
+        if (langName === 'English') return item.original;
+        // Avoid adding explicit periods here, as item.original usually already contains punctuation. 
+        // This prevents double punctuation (。。) which confuses the TTS model's prosody.
+        return `${item.original}\n\n${item.englishTranslation}\n\n${item.original}`;
     };
 
     const toggleAudio = (item, index, langName) => {
@@ -386,7 +276,7 @@ export default function LingoCraft() {
             }
         );
         
-        setTimeout(() => setPlayState(prev => prev.index === index ? { index, status: 'playing' } : prev), 500);
+        setTimeout(() => setPlayState(prev => prev.index === index ? { index, status: 'playing' } : prev), 300);
     };
 
     const { isCjk, fontClass } = getFontStyles(result?.targetLanguage?.name);
@@ -412,7 +302,6 @@ export default function LingoCraft() {
             <nav className={`sticky top-0 z-50 backdrop-blur-md border-b shadow-sm ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800' : 'bg-white/80 border-stone-200'}`}>
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        {/* SLEEK BACK TO HUB BUTTON */}
                         <Link 
                             to="/" 
                             className={`p-2 rounded-xl border transition-all active:scale-95 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800' : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`}
@@ -442,12 +331,6 @@ export default function LingoCraft() {
                             title="History"
                         >
                             <History size={16} />
-                        </button>
-                        <button 
-                            onClick={toggleTheme} 
-                            className={`p-2 rounded-full border transition-all active:scale-95 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-blue-400 hover:bg-zinc-800' : 'bg-white border-stone-200 text-blue-600 hover:bg-stone-50'}`}
-                        >
-                            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
                     </div>
                 </div>

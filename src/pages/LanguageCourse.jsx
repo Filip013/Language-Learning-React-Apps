@@ -21,16 +21,19 @@ function PlayButton({ isDarkMode, onClick, size = 24, isLoading = false, isPlayi
 
 // --- TAB COMPONENTS ---
 
-function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak }) {
+function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config }) {
   const [playingId, setPlayingId] = useState(null);
   if (!activeEpisode?.story) return null;
 
   const versions = [
-    { id: 'traditional', title: '繁體中文 (Traditional)', fontClass: 'moe-font text-[28px] md:text-3xl leading-relaxed', text: activeEpisode.story.traditional },
-    { id: 'english', title: 'English', fontClass: 'font-sans text-lg md:text-xl leading-relaxed', text: activeEpisode.story.english },
-    { id: 'simplified', title: '简体中文 (Simplified)', fontClass: 'simp-font text-[28px] md:text-3xl leading-relaxed', text: activeEpisode.story.simplified },
-    { id: 'pinyin', title: '拼音 (Pinyin)', fontClass: 'font-sans text-lg md:text-xl leading-relaxed', text: activeEpisode.story.pinyin }
-  ].filter(v => v.text);
+    { id: config.primaryTextKey, title: 'Target Script', fontClass: `${config.fontClass || 'font-sans'} text-[28px] md:text-3xl leading-relaxed`, text: activeEpisode.story[config.primaryTextKey] },
+    { id: 'english', title: 'English', fontClass: 'font-sans text-lg md:text-xl leading-relaxed', text: activeEpisode.story.english }
+  ];
+  
+  if (config.secondaryScriptKey) versions.push({ id: config.secondaryScriptKey, title: 'Secondary Script', fontClass: `${config.secondaryFontClass || config.fontClass} text-[28px] md:text-3xl leading-relaxed`, text: activeEpisode.story[config.secondaryScriptKey] });
+  if (config.transliterationKey) versions.push({ id: config.transliterationKey, title: 'Transliteration', fontClass: 'font-sans text-lg md:text-xl leading-relaxed', text: activeEpisode.story[config.transliterationKey] });
+  
+  const filteredVersions = versions.filter(v => v.text);
 
   const playAudio = (id, text) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
@@ -42,17 +45,17 @@ function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak }) {
     <div className="max-w-4xl mx-auto py-12 px-4 md:px-8">
       <header className={`mb-12 border-b pb-8 text-center relative ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
-        <h1 className={`text-4xl font-bold mb-3 tracking-wider moe-font ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
+        <h1 className={`text-4xl font-bold mb-3 tracking-wider ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>AI-Generated Chapter</p>
       </header>
       <main className="space-y-8">
-        {versions.map((v) => (
+        {filteredVersions.map((v) => (
           <section key={v.id} className={`p-6 md:p-10 rounded-2xl shadow-sm border transition-colors ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
             <div className={`flex items-center justify-between mb-6 border-b pb-4 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
               <h2 className={`text-2xl font-bold tracking-wide font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{v.title}</h2>
-              {v.id !== 'pinyin' && <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === v.id} onClick={() => playAudio(v.id, v.text)} />}
+              {v.id !== config.transliterationKey && <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === v.id} onClick={() => playAudio(v.id, v.text)} />}
             </div>
-            <div className={`space-y-4 ${v.fontClass} ${['traditional', 'simplified'].includes(v.id) ? (isDarkMode ? 'text-stone-100' : 'text-stone-800') : (isDarkMode ? 'text-stone-300' : 'text-stone-700')}`}>
+            <div className={`space-y-4 ${v.fontClass} ${v.id !== 'english' && v.id !== config.transliterationKey ? (isDarkMode ? 'text-stone-100' : 'text-stone-800') : (isDarkMode ? 'text-stone-300' : 'text-stone-700')}`}>
               {v.text.split('\n\n').map((paragraph, idx) => <p key={idx}>{paragraph}</p>)}
             </div>
           </section>
@@ -104,7 +107,7 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
               <h2 className="text-2xl font-bold tracking-wide">Reading</h2>
               <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'read'} onClick={() => playAudio('read', targetText)} />
             </div>
-            <div className="space-y-4 text-xl leading-relaxed">
+            <div className={`space-y-4 ${config.fontClass || ''} text-xl leading-relaxed`}>
               {targetText.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
             </div>
           </section>
@@ -131,7 +134,7 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
             <div className="space-y-6 text-lg">
               {reading.focus.map((item, idx) => (
                 <div key={idx}>
-                  <span className={`font-bold ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{idx + 1}. {item.word}</span>
+                  <span className={`font-bold ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{idx + 1}. {item.word}</span>
                   <p className="mt-1 text-base">{item.explanation}</p>
                 </div>
               ))}
@@ -152,7 +155,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   const playDrill = (ex, exId, isListened) => {
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
-    const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
+    const targetText = ex[config.primaryTextKey];
     handleSpeak(`${targetText}。\n\n${ex.english}\n\n${targetText}。`, () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
@@ -166,16 +169,16 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
       {activeEpisode.drills.map((section, sectionIdx) => (
         <section key={sectionIdx} className={`space-y-8 p-6 md:p-10 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
           <div className="text-center mb-8">
-            <div className={`inline-block rounded-2xl p-4 md:p-6 border shadow-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-stone-100' : 'bg-white border-stone-200 text-stone-800'}`}>
-              <h2 className={`${config.id === 'mandarin' ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-2xl font-sans font-bold px-4'}`}>{section.word}</h2>
-              {section.pinyin && <p className="mt-2 font-sans text-lg opacity-70">{section.pinyin}</p>}
+            <div className={`inline-block rounded-2xl p-4 md:p-6 border shadow-sm ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100' : 'bg-stone-100 border-stone-200 text-stone-800'}`}>
+              <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-xl md:text-2xl font-bold font-sans tracking-wide px-4'}`}>{section.word}</h2>
+              {config.transliterationKey && section[config.transliterationKey] && <p className="mt-2 font-sans text-sm opacity-70">{section[config.transliterationKey]}</p>}
             </div>
           </div>
           <div className="space-y-10 pl-2">
             {section.examples?.map((ex, exIndex) => {
               const exId = `drill_${sectionIdx}_${exIndex}`;
               const isListened = !isLatestEpisode || listenedIds.includes(exId);
-              const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
+              const targetText = ex[config.primaryTextKey];
               
               return (
                 <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
@@ -188,14 +191,14 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
                   </div>
                   <div className="relative mt-2">
                     <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
-                      <p className={`${config.id==='mandarin' ? 'text-[28px] md:text-3xl moe-font' : 'text-xl md:text-2xl font-sans font-bold'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{targetText}</p>
+                      <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl md:text-2xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{targetText}</p>
                       <p className={`text-lg md:text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.english || ex.translation}</p>
                       
-                      {config.id === 'mandarin' && (
-                        <>
-                          <p className={`text-[28px] md:text-3xl simp-font leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ex.simplified}</p>
-                          <p className={`text-lg md:text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.pinyin}</p>
-                        </>
+                      {config.secondaryScriptKey && ex[config.secondaryScriptKey] && (
+                        <p className={`text-[28px] md:text-3xl ${config.secondaryFontClass || ''} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ex[config.secondaryScriptKey]}</p>
+                      )}
+                      {config.transliterationKey && ex[config.transliterationKey] && (
+                        <p className={`text-lg md:text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex[config.transliterationKey]}</p>
                       )}
                     </div>
                     {!isListened && (
@@ -224,6 +227,11 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   const userSelections = progressState.selections || {};
   const revealedIds = progressState.revealed || [];
   const gradedIds = progressState.gradedIds || [];
+
+  const gradeBtnText = config.uiText?.gradeAnswer || 'Grade Answer';
+  const revealBtnText = config.uiText?.revealOptions || 'Reveal Options';
+  const correctText = config.uiText?.correct || 'Correct!';
+  const incorrectText = config.uiText?.incorrect || 'Incorrect';
 
   useEffect(() => {
     if (activeEpisode?.quiz) {
@@ -260,7 +268,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className="absolute right-0 top-0">
           {!showConfirmReset ? (
-            <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> 重置</button>
+            <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> Reset</button>
           ) : (
             <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-red-950/30 border-red-900/50' : 'bg-red-50 border-red-100'}`}>
               <AlertCircle size={16} className="text-red-500" />
@@ -293,7 +301,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   </button>
                 )}
               </div>
-              <p className={`leading-relaxed mb-4 ${config.id==='mandarin'?'text-[28px] md:text-3xl moe-font':'text-xl md:text-2xl font-sans font-medium'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/_{3,}/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
+              <p className={`leading-relaxed mb-4 ${config.customFontClass ? `${config.customFontClass} text-[26px] md:text-3xl` : 'font-sans font-bold text-xl md:text-2xl'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/_{3,}/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
 
               <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
@@ -302,7 +310,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                     {q.options.map((option, optIdx) => {
-                      let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.id==='mandarin'?'text-[26px] md:text-2xl moe-font':'text-lg font-sans font-bold'} `;
+                      let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.customFontClass ? `${config.customFontClass} text-[26px] md:text-2xl` : 'font-sans font-bold text-lg'} `;
                       if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
                       else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
                       return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
@@ -311,12 +319,12 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/_{3,}/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
-                        {config.id === 'mandarin' ? '驗證答案 (Grade Answer)' : 'Grade Answer'}
+                        {gradeBtnText}
                      </button>
                     ) : (
                       <div className="flex items-center gap-4 animate-in duration-300 w-full justify-between">
                         <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {isCorrect ? (config.id === 'mandarin' ? "答對了 (Correct!)" : "Correct!") : (config.id === 'mandarin' ? "答錯了 (Incorrect)" : "Incorrect")}
+                          {isCorrect ? correctText : incorrectText}
                         </span>
                         <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/_{3,}/, q.answer))} size={18} />
                       </div>
@@ -387,7 +395,7 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
               
               <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!rev[qId] ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'} pt-4 border-t border-dashed border-stone-200 dark:border-stone-700`}>
-                  <p className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{item[config.primaryTextKey]}</p>
+                  <p className={`text-2xl font-bold mb-4 ${config.fontClass || ''} ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{item[config.primaryTextKey]}</p>
                   <textarea 
                     value={mis[qId] || ''} onChange={e => updateFirebase({ mistakes: { ...mis, [qId]: e.target.value } })}
                     placeholder="Log your mistake or note here..." rows="2"
@@ -395,8 +403,8 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   />
                 </div>
                 {!rev[qId] && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <button onClick={() => playAnswer(qId, item[config.primaryTextKey], false)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
+                  <div className="absolute top-0 left-0 z-10 mt-4">
+                    <button onClick={() => playAnswer(qId, item[config.primaryTextKey], false)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
                       {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Answer
                     </button>
                   </div>
@@ -448,13 +456,13 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
               <div className="relative mt-4">
                 <div className={`transition-all duration-700 ${!rev[qId] ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'} space-y-2 pt-4 border-t border-stone-100 dark:border-stone-800`}>
                   <p className="font-bold text-xs uppercase tracking-widest text-blue-500 mb-2">{item.word}</p>
-                  <p className={`text-xl font-bold ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
+                  <p className={`text-xl font-bold ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
                   <p className={`text-lg italic ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{item.english}</p>
                 </div>
 
                 {!rev[qId] && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
+                  <div className="absolute top-0 left-0 z-10 mt-4">
+                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-sm text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
                       {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Sweep
                     </button>
                   </div>
@@ -564,7 +572,7 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
                   return (
                     <div key={`${wId}-${idx}`} className={`flex flex-col gap-2 p-4 border rounded-xl shadow-sm ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-stone-800'}`}>
                       <div className="flex items-center justify-between gap-4">
-                        <span className={`${config.id === 'mandarin' ? 'moe-font text-[28px] md:text-3xl' : 'font-sans font-bold text-xl'}`}>{displayWord}</span>
+                        <span className={`${config.fontClass ? `${config.fontClass} text-[28px] md:text-3xl` : 'font-sans font-bold text-xl'}`}>{displayWord}</span>
                         {deletingWord === wId ? (
                           <div className={`flex items-center gap-1 rounded-md px-1 ml-2 ${isDarkMode ? 'bg-red-500/20' : 'bg-red-50'}`}>
                             <button onClick={() => handleDeleteConfirm(word)} className="px-2 py-1 text-[10px] font-bold uppercase text-red-500 font-sans">Confirm</button>
@@ -685,13 +693,11 @@ export default function LanguageCourse({ config }) {
         const progSnap = await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get();
         const prog = progSnap.exists ? progSnap.data() : {};
 
-        // 1. Full Reading Passage (Only fetch reading for non-story courses. Story courses use currentStoryText instead)
         if (!config.hasStories && ep.reading) {
             const targetText = ep.reading[config.primaryTextKey] || "";
             if (targetText) epContext += `Reading Passage:\n${targetText}\n\n`;
         }
         
-        // 2. Drill Sentences (Target language only)
         if (ep.drills) {
           let drillSentences = [];
           ep.drills.forEach(d => {
@@ -707,7 +713,6 @@ export default function LanguageCourse({ config }) {
           }
         }
         
-        // 3. Quiz Sentences & Results
         if (ep.quiz) {
           let quizDetails = [];
           ep.quiz.forEach((q, idx) => {
@@ -730,7 +735,6 @@ export default function LanguageCourse({ config }) {
           }
         }
 
-        // 4. Sweep Sentences (Target language only)
         if (ep.sweep) {
            let sweepSentences = [];
            ep.sweep.forEach(s => {
@@ -742,7 +746,6 @@ export default function LanguageCourse({ config }) {
            }
         }
         
-        // 5. Test Translation Mistakes (EN -> Target)
         if (ep.test) {
           let testMisses = [];
           ep.test.forEach((t, tIdx) => {
@@ -784,6 +787,7 @@ export default function LanguageCourse({ config }) {
   const { handleSpeak, stopSpeak } = useGeminiTTS(config.ttsSystemInstruction);
 
   useEffect(() => { const unsub = auth.onAuthStateChanged(setUser); return () => unsub(); }, []);
+  
   useEffect(() => {
     const checkTheme = () => {
       const localTheme = localStorage.getItem('lingocraft_theme');
@@ -791,8 +795,6 @@ export default function LanguageCourse({ config }) {
       setIsDarkMode(localTheme === 'dark' || (!localTheme && systemDark));
     };
     checkTheme();
-    
-    // Listen for cross-tab or global changes
     window.addEventListener('storage', checkTheme);
     window.addEventListener('theme-changed', checkTheme);
     return () => {
@@ -836,8 +838,6 @@ export default function LanguageCourse({ config }) {
     const unsubProg = progRef.onSnapshot(snap => {
       if (snap.exists) {
         const d = snap.data();
-        
-        // Normalize keys (Mandarin used '0', Hungarian/PT used 'quiz_0')
         const rawSelections = d.selections || d.quizAnswers || d.quiz?.answers || {};
         const normalizedSelections = {};
         Object.keys(rawSelections).forEach(k => { normalizedSelections[k.toString().startsWith('quiz_') ? k : `quiz_${k}`] = rawSelections[k]; });
@@ -1129,7 +1129,7 @@ export default function LanguageCourse({ config }) {
         </div>
       )}
 
-      {config.hasStories && <div className={activeTab === 'episode' ? 'block animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} /></div>}
+      {config.hasStories && <div className={activeTab === 'episode' ? 'block animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
       {config.hasReading && <div className={activeTab === 'reading' ? 'block animate-in fade-in duration-300' : 'hidden'}><ReadingTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
       <div className={activeTab === 'drill' ? 'block animate-in fade-in duration-300' : 'hidden'}><DrillTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} isLatestEpisode={isLatestEpisode} /></div>
       <div className={activeTab === 'quiz' ? 'block animate-in fade-in duration-300' : 'hidden'}><QuizTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>
