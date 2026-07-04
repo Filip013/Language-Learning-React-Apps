@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb } from 'lucide-react';
+import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
@@ -913,66 +913,79 @@ export default function LanguageCourse({ config }) {
     setTimeout(() => { window.scrollTo({ top: scrollPositions.current[newTab] || 0, behavior: 'instant' }); }, 0);
   };
 
+  const processImportedJSON = async (textToParse) => {
+    try {
+      if (textToParse.startsWith('```json')) textToParse = textToParse.replace(/^```json\n?/, '');
+      else if (textToParse.startsWith('```')) textToParse = textToParse.replace(/^```\n?/, '');
+      if (textToParse.endsWith('```')) textToParse = textToParse.replace(/\n?```$/, '');
+
+      const lessonJSON = JSON.parse(textToParse);
+      const newEpisodeId = `ep_${Date.now()}`;
+      
+      if (lessonJSON.drills) lessonJSON.drills.forEach(d => { if (d.examples) d.examples = d.examples.slice(0, 5); });
+      
+      const validNewLemmas = (lessonJSON.newLemmas || []).map(w => {
+          if (typeof w === 'object' && w !== null && !w.id) {
+              return { ...w, id: `dict_${Date.now()}_${Math.random().toString(36).substring(7)}` };
+          }
+          return w;
+      }).filter(Boolean);
+
+      const episodeDoc = { ...lessonJSON, newLemmas: validNewLemmas, id: newEpisodeId, timestamp: Date.now(), userPrompt: topicInput || "Imported JSON Lesson" };
+      
+      const batch = db.batch();
+      batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(newEpisodeId), episodeDoc);
+      
+      const docName = config.lexiconDoc || 'lexicon';
+      if (Array.isArray(globalLexicon) || globalLexicon?.entries) {
+          const existingEntries = globalLexicon.entries || globalLexicon || [];
+          const newEntries = [...validNewLemmas, ...existingEntries];
+          batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries }, { merge: true });
+      } else {
+          const newAcc = [...validNewLemmas, ...(globalLexicon?.accumulated || [])];
+          batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { ...globalLexicon, accumulated: newAcc }, { merge: true });
+      }
+      
+      if (config.hasStories) {
+          let targetStoryId = userPrefs.activeStoryId || 'season_3';
+          if (lessonJSON.storyStatus === 'new_story') {
+            targetStoryId = `season_${Date.now()}`;
+            batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('settings').doc('prefs'), { activeStoryId: targetStoryId }, { merge: true });
+          }
+          const targetStoryData = storyList.find(s => s.id === targetStoryId) || { episodes: [] };
+          const targetEps = [...(targetStoryData.episodes || [])];
+          if (lessonJSON.story?.traditional) targetEps.push({ id: newEpisodeId, title: lessonJSON.title, text: lessonJSON.story.traditional });
+          batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('stories').doc(targetStoryId), { currentTitle: lessonJSON.storyTitle || "Story", episodes: targetEps, timestamp: targetStoryData.timestamp || Date.now() }, { merge: true });
+      }
+      
+      await batch.commit();
+      setActiveEpisodeId(newEpisodeId);
+      setTopicInput('');
+      setGenError('');
+    } catch (err) {
+      setGenError("Import failed. Make sure the data contains valid JSON.");
+    }
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    
     const reader = new FileReader();
     reader.onload = async (event) => {
-      try {
-        let textToParse = event.target.result.trim();
-        if (textToParse.startsWith('```json')) textToParse = textToParse.replace(/^```json\n?/, '');
-        else if (textToParse.startsWith('```')) textToParse = textToParse.replace(/^```\n?/, '');
-        if (textToParse.endsWith('```')) textToParse = textToParse.replace(/\n?```$/, '');
-
-        const lessonJSON = JSON.parse(textToParse);
-        const newEpisodeId = `ep_${Date.now()}`;
-        
-        if (lessonJSON.drills) lessonJSON.drills.forEach(d => { if (d.examples) d.examples = d.examples.slice(0, 5); });
-        
-        const validNewLemmas = (lessonJSON.newLemmas || []).map(w => {
-            if (typeof w === 'object' && w !== null && !w.id) {
-                return { ...w, id: `dict_${Date.now()}_${Math.random().toString(36).substring(7)}` };
-            }
-            return w;
-        }).filter(Boolean);
-
-        const episodeDoc = { ...lessonJSON, newLemmas: validNewLemmas, id: newEpisodeId, timestamp: Date.now(), userPrompt: topicInput || "Imported JSON Lesson" };
-        
-        const batch = db.batch();
-        batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(newEpisodeId), episodeDoc);
-        
-        const docName = config.lexiconDoc || 'lexicon';
-        if (Array.isArray(globalLexicon) || globalLexicon?.entries) {
-            const existingEntries = globalLexicon.entries || globalLexicon || [];
-            const newEntries = [...validNewLemmas, ...existingEntries];
-            batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries }, { merge: true });
-        } else {
-            const newAcc = [...validNewLemmas, ...(globalLexicon?.accumulated || [])];
-            batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { ...globalLexicon, accumulated: newAcc }, { merge: true });
-        }
-        
-        if (config.hasStories) {
-            let targetStoryId = userPrefs.activeStoryId || 'season_3';
-            if (lessonJSON.storyStatus === 'new_story') {
-              targetStoryId = `season_${Date.now()}`;
-              batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('settings').doc('prefs'), { activeStoryId: targetStoryId }, { merge: true });
-            }
-            const targetStoryData = storyList.find(s => s.id === targetStoryId) || { episodes: [] };
-            const targetEps = [...(targetStoryData.episodes || [])];
-            if (lessonJSON.story?.traditional) targetEps.push({ id: newEpisodeId, title: lessonJSON.title, text: lessonJSON.story.traditional });
-            batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('stories').doc(targetStoryId), { currentTitle: lessonJSON.storyTitle || "Story", episodes: targetEps, timestamp: targetStoryData.timestamp || Date.now() }, { merge: true });
-        }
-        
-        await batch.commit();
-        setActiveEpisodeId(newEpisodeId);
-        setTopicInput('');
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      } catch (err) {
-        alert("Import failed. Make sure the file contains valid JSON.");
-      }
+      await processImportedJSON(event.target.result.trim());
+      if (fileInputRef.current) fileInputRef.current.value = "";
     };
     reader.readAsText(file);
+  };
+
+  const handlePasteLesson = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) throw new Error("Clipboard is empty.");
+      await processImportedJSON(text.trim());
+    } catch (err) {
+      setGenError("Failed to read clipboard: " + err.message);
+    }
   };
 
   const handleDeleteEpisode = async () => {
@@ -1081,20 +1094,30 @@ export default function LanguageCourse({ config }) {
                 className={`w-full px-4 py-3 rounded-xl border focus:outline-none transition-all ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} 
               />
               
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button 
                     onClick={handleExportPrompt} 
                     disabled={isGenerating || !topicInput.trim()} 
-                    title="Download detailed prompt file for Gemini Web App" 
-                    className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
+                    title="Download detailed prompt file for LLM Web App" 
+                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
                     >
                     {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                    <span>Export Prompt File</span>
+                    <span className="truncate">Export Prompt</span>
+                </button>
+
+                <button 
+                    onClick={handlePasteLesson} 
+                    disabled={isGenerating} 
+                    title="Paste copied JSON from clipboard" 
+                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
+                    >
+                    <ClipboardPaste className="w-5 h-5" />
+                    <span className="truncate">Paste JSON</span>
                 </button>
                 
-                <label className={`cursor-pointer flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}>
+                <label className={`cursor-pointer font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}>
                   <Upload className="w-5 h-5" /> 
-                  <span>Import JSON File</span>
+                  <span className="truncate">Import File</span>
                   <input 
                     type="file" accept=".json,.txt" ref={fileInputRef} onChange={handleFileUpload} disabled={isGenerating} className="hidden" 
                   />

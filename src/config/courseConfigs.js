@@ -38,7 +38,7 @@ export const courseConfigs = {
 CRITICAL RULES:
 1. VOCABULARY: Write the story primarily using the KNOWN VOCABULARY list.
 2. NEW WORDS: You are allowed to introduce up to 5 NEW WORDS not on the known list. You MUST list any new words introduced in the 'newLemmas' array. Do not leave 'newLemmas' empty if you introduced new words!
-3. DRILLS: For EACH word in the 'drills' array (which should be the new words + requested review words), you MUST generate an 'examples' array containing EXACTLY 5 sentences. NEVER leave 'examples' empty.
+3. DRILLS: For EACH word in the 'drills' array (which should be the new words + requested review words), you MUST generate an 'examples' array containing EXACTLY 5 sentences. NEVER leave 'examples' empty. Under 'notes', provide nuance about word use, synonyms, and related grammar.
 4. REVIEW WORDS: Do not force user-requested Review Words into the story plot. They should only appear in drills and the quiz.
 5. STORY MANAGEMENT: If the user asks to start a brand new story (e.g., changing genre, or stating "start a new story"), you MUST set 'storyStatus' to 'new_story' and invent a new 'storyTitle'. If continuing the current story, set to 'continue'. If the user asks to end the story, set to 'finale'.
 
@@ -140,12 +140,12 @@ TASKS:
         hasTestTab: false,
         hasSweepTab: false,
         ttsSystemInstruction: SHARED_TTS_PROMPT,
-        promptSystemInstruction: `You are an expert European Portuguese curriculum designer. Generate a highly structured B1/B2 lesson.
+        promptSystemInstruction: `You are an expert European Portuguese curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
 
 TASKS:
-1. 'reading': A B1/B2 passage (3 paragraphs, separated by \\n\\n), English translation, and target-language definitions.
+1. 'reading': A passage in Portuguese, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in PT/EN.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
@@ -156,7 +156,7 @@ TASKS:
   "tutorIntroduction": "Short engaging intro",
   "reading": {
     "definitions": [{ "word": "word", "text": "Portuguese definition using known words" }],
-    "portuguese": "3 paragraphs separated by \\n\\n",
+    "portuguese": "Text broken into paragraphs separated by \\n\\n",
     "english": "English translation",
     "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
   },
@@ -192,12 +192,12 @@ TASKS:
         hasTestTab: false,
         hasSweepTab: false,
         ttsSystemInstruction: SHARED_TTS_PROMPT,
-        promptSystemInstruction: `You are an expert Romanian curriculum designer. Generate a highly structured A2/B1 lesson.
+        promptSystemInstruction: `You are an expert Romanian curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
 
 TASKS:
-1. 'reading': An A2/B1 passage (3 paragraphs, separated by \\n\\n), English translation, and target-language definitions.
+1. 'reading': A passage in Romanian, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in RO/EN.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
@@ -208,7 +208,7 @@ TASKS:
   "tutorIntroduction": "Short engaging intro",
   "reading": {
     "definitions": [{ "word": "word", "text": "Romanian definition using known words" }],
-    "romanian": "3 paragraphs separated by \\n\\n",
+    "romanian": "Text broken into paragraphs separated by \\n\\n",
     "english": "English translation",
     "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
   },
