@@ -137,7 +137,7 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
               {reading.focus.map((item, idx) => (
                 <div key={idx}>
                   <span className={`font-bold ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{idx + 1}. {item.word}</span>
-                  <p className="mt-1 text-base">{item.explanation}</p>
+                  <p className="mt-1 text-base">{item.explanation || item.text}</p>
                 </div>
               ))}
             </div>
@@ -715,8 +715,8 @@ export default function LanguageCourse({ config }) {
             
             // 2. Send Grammar/Vocabulary Focus Notes
             if (ep.reading.focus && ep.reading.focus.length > 0) {
-                const focusNotes = ep.reading.focus.map(f => `- ${f.word}: ${f.explanation}`).join('\n');
-                epContext += `Grammar Focus:\n${focusNotes}\n\n`;
+                const focusNotes = ep.reading.focus.map(f => `- ${f.word}: ${f.explanation || f.text}`).join('\n');
+                epContext += `Focus:\n${focusNotes}\n\n`;
             }
         }
         
@@ -778,13 +778,19 @@ export default function LanguageCourse({ config }) {
         }
         
         if (ep.test) {
-          let testMisses = [];
+          let testSentences = [];
           ep.test.forEach((t, tIdx) => {
               const m = prog.mistakes?.[`test_${tIdx}`] || prog.test?.mistakes?.[`test_${tIdx}`];
-              if (m && m.trim()) testMisses.push(`EN: ${t.english} -> User wrote: ${m.trim()} (Correct: ${t[config.primaryTextKey] || t.hungarian})`);
+              const correctAns = t[config.primaryTextKey] || t.hungarian;
+              
+              if (m && m.trim()) {
+                  testSentences.push(`EN: ${t.english} -> Correct: ${correctAns} | User Note: ${m.trim()}`);
+              } else {
+                  testSentences.push(`EN: ${t.english} -> Correct: ${correctAns}`);
+              }
           });
-          if (testMisses.length > 0) {
-              epContext += `Test Translation Mistakes:\n- ${testMisses.join('\n- ')}\n\n`;
+          if (testSentences.length > 0) {
+              epContext += `Test Translations & Notes:\n- ${testSentences.join('\n- ')}\n\n`;
           }
         }
         
