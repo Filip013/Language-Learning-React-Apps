@@ -110,7 +110,7 @@ TASKS:
 6. 'quiz': Exactly 15 grammar/vocab questions. Use '_____' (5 underscores) for the blank.
 7. 'test': Exactly 15 active translation sentences (English to Hungarian).
 8. 'sweep': Exactly 15 sentences targeting words that have not recently been encountered.
-9. 'newLemmas': Extract the 3 new base words plus any silent additions.`,
+9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.`,
 
         promptOutputFormat: `{
   "title": "Lesson Title",
