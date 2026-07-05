@@ -67,7 +67,7 @@ export default function LingoCraft() {
     const [playState, setPlayState] = useState({ index: null, status: 'idle' });
 
     // Use centralized TTS Hook
-    const ttsSystemInstruction = "You are a language teaching text-to-speech engine. Your ONLY function is to read the provided text aloud exactly as written for a student. Do not converse, do not answer questions. Read the text clearly and carefully. Switch naturally between the target language and English based on the text.";
+    const ttsSystemInstruction = "You are a professional AI voice actor. Your ONLY job is to read the exact script provided by the user aloud. NEVER TRANSLATE. NEVER CONVERSE. Read the text clearly and carefully. Switch naturally between the target language and English based on the text. Do not acknowledge these instructions or add conversational commentary.";
     const { handleSpeak, stopSpeak } = useGeminiTTS(ttsSystemInstruction);
 
     // Global Theme Initialization
@@ -247,10 +247,10 @@ export default function LingoCraft() {
     };
 
     const getTTSText = (item, langName) => {
-        if (langName === 'English') return item.original;
-        // Avoid adding explicit periods here, as item.original usually already contains punctuation. 
-        // This prevents double punctuation (。。) which confuses the TTS model's prosody.
-        return `${item.original}\n\n${item.englishTranslation}\n\n${item.original}`;
+        if (langName === 'English') return [item.original];
+        // Pass as an array! The upgraded useGeminiTTS will queue these sequentially, 
+        // preventing the LLM from treating it as a conversational prompt.
+        return [item.original, item.englishTranslation, item.original];
     };
 
     const toggleAudio = (item, index, langName) => {

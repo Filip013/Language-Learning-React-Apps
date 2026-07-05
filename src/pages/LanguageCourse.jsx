@@ -158,7 +158,8 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
     const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
-    handleSpeak(`${targetText}。\n\n${ex.english}\n\n${targetText}。`, () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
+    // Array creates a sequence: Target Language -> English -> Target Language
+    handleSpeak([targetText, ex.english, targetText], () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
   return (
@@ -313,7 +314,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   </button>
                 )}
               </div>
-              <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/_{3,}/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
+              <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
 
               <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
@@ -330,7 +331,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   </div>
                   <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
-                     <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/_{3,}/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
+                     <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
                         {config.id === 'mandarin' ? '驗證答案 (Grade Answer)' : 'Grade Answer'}
                      </button>
                     ) : (
@@ -338,7 +339,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                         <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
                           {isCorrect ? (config.id === 'mandarin' ? "答對了 (Correct!)" : "Correct!") : (config.id === 'mandarin' ? "答錯了 (Incorrect)" : "Incorrect")}
                         </span>
-                        <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/_{3,}/, q.answer))} size={18} />
+                        <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} size={18} />
                       </div>
                     )}
                   </div>
@@ -456,7 +457,7 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
       <div className="space-y-6">
         {activeEpisode.sweep.map((item, i) => {
           const qId = `sweep_${i}`;
-          const textToRead = `${item.word}. ${item[config.primaryTextKey]}. ${item.english}. ${item[config.primaryTextKey]}`;
+          const textToRead = [`${item.word}. ${item[config.primaryTextKey]}`, item.english, item[config.primaryTextKey]];
           
           return (
             <div key={qId} className={`p-6 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>

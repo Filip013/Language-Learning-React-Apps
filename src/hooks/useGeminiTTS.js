@@ -6,6 +6,7 @@ export function useGeminiTTS(systemInstruction) {
     const audioContext = useRef(null);
     const nextAudioTime = useRef(0);
     const activeAudioNodes = useRef([]);
+    const textQueue = useRef([]); // Queue for sequential TTS requests
     const currentOnComplete = useRef(null);
     const currentOnError = useRef(null);
 
@@ -43,6 +44,7 @@ export function useGeminiTTS(systemInstruction) {
             n.onended = null;
         });
         activeAudioNodes.current = [];
+        textQueue.current = []; // Clear the sequence queue
         
         if (audioContext.current) nextAudioTime.current = audioContext.current.currentTime; 
         if (currentOnComplete.current) currentOnComplete.current();
@@ -50,8 +52,10 @@ export function useGeminiTTS(systemInstruction) {
         currentOnError.current = null;
     }, []);
 
-    const handleSpeak = useCallback((text, onComplete = null, onError = null) => {
-        if (!text || !text.trim()) return;
+    const handleSpeak = useCallback((input, onComplete = null, onError = null) => {
+        const texts = Array.isArray(input) ? [...input] : [input];
+        if (texts.length === 0 || !texts[0].trim()) return;
+
         const myKey = localStorage.getItem('geminiApiKey');
         if (!myKey) {
             alert("API key not found. Please set your Free Gemini API Key in the Hub settings.");
@@ -67,42 +71,96 @@ export function useGeminiTTS(systemInstruction) {
         nextAudioTime.current = audioContext.current.currentTime;
         currentOnComplete.current = onComplete;
         currentOnError.current = onError;
+        
+        textQueue.current = texts;
 
-        const sendAudioRequest = () => {
-            ws.current.send(JSON.stringify({ realtimeInput: { text: text } }));
+        const sendNextText = () => {
+            while (textQueue.current.length > 0) {
+                const nextText = textQueue.current.shift();
+                if (nextText && nextText.trim()) {
+                    console.log("📤 Sending text to Gemini:", nextText);
+                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                        ws.current.send(JSON.stringify({
+                            clientContent: {
+                                turns: [{ role: "user", parts: [{ text: nextText }] }],
+                                turnComplete: true
+                            }
+                        }));
+                    }
+                    return true;
+                }
+            }
+            return false;
         };
 
         const setupMessageHandlers = () => {
+            // Log when the connection closes
+            ws.current.onclose = (event) => {
+                console.log(`🔴 Gemini TTS WebSocket Closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
+            };
+
             ws.current.onmessage = async (event) => {
                 let rawData = event.data;
                 if (rawData instanceof Blob) rawData = await rawData.text();
                 const msg = JSON.parse(rawData);
                 
+                // 1. Log Setup Completion
+                if (msg.setupComplete) {
+                    console.log("🟢 Gemini TTS Setup Complete");
+                    // Add this line so it strictly fires after setup is 100% done!
+                    sendNextText(); 
+                }
+
+                // 2. Log Errors
+                if (msg.error) {
+                    console.error("❌ Gemini TTS Error:", msg.error);
+                }
+                
+                // 3. Log Safety/Interruption Events
+                if (msg.serverContent && msg.serverContent.interrupted) {
+                    console.warn("⚠️ Gemini TTS Interrupted (Likely Safety Filter):", msg);
+                }
+
                 if (msg.serverContent) {
                     if (msg.serverContent.modelTurn) {
                         for (const part of msg.serverContent.modelTurn.parts) {
+                            
+                            // 4. DIAGNOSTIC: Log text responses! 
+                            // If you see this firing, it means the model is talking instead of generating audio.
+                            if (part.text) {
+                                console.info("🤖 Gemini Text Output (Should be audio!):", part.text);
+                            }
+
+                            // 5. Handle Audio
                             if (part.inlineData && part.inlineData.mimeType.startsWith("audio/pcm")) {
                                 playPCMChunk(part.inlineData.data);
                             }
                         }
                     }
+                    
                     if (msg.serverContent.turnComplete) {
+                        console.log("✅ Gemini TTS Turn Complete");
                         const checkCompletion = setInterval(() => {
                             if (activeAudioNodes.current.length === 0) {
                                 clearInterval(checkCompletion);
-                                if (currentOnComplete.current) {
-                                    currentOnComplete.current();
-                                    currentOnComplete.current = null;
+                                
+                                const hasMore = sendNextText();
+                                if (!hasMore) {
+                                    if (currentOnComplete.current) {
+                                        currentOnComplete.current();
+                                        currentOnComplete.current = null;
+                                    }
                                 }
                             }
                         }, 100);
                     }
                 }
             };
+
             ws.current.onerror = (e) => {
-                console.error("TTS WebSocket Error:", e);
+                console.error("💥 TTS WebSocket Error:", e);
                 if (currentOnError.current) currentOnError.current();
-                alert("Audio connection failed.");
+                alert("Audio connection failed. Check console for details.");
             };
         };
 
@@ -112,17 +170,21 @@ export function useGeminiTTS(systemInstruction) {
                 const setupMessage = {
                     setup: {
                         model: "models/gemini-3.1-flash-live-preview",
-                        generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } } } },
+                        generationConfig: { 
+                            responseModalities: ["AUDIO"], 
+                            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } } } 
+                        },
+                        // safetySettings removed here because it causes WS connection refusal
                         systemInstruction: { parts: [{ text: systemInstruction }] }
                     }
                 };
                 ws.current.send(JSON.stringify(setupMessage));
-                setTimeout(sendAudioRequest, 500);
+                //setTimeout(sendNextText, 500); 
             };
             setupMessageHandlers();
         } else {
             setupMessageHandlers();
-            sendAudioRequest();
+            sendNextText();
         }
     }, [playPCMChunk, stopSpeak, systemInstruction]);
 

@@ -1,6 +1,12 @@
 // src/config/courseConfigs.js
 
-const SHARED_TTS_PROMPT = "You are a language teaching text-to-speech engine. Your ONLY function is to read the provided text aloud exactly as written for a student. Do not converse, do not answer questions, and do not provide medical or personal advice. Read the text clearly and carefully. Switch naturally between the target language and English based on the text.";
+const SHARED_TTS_PROMPT = `You are a professional AI voice actor. Your ONLY job is to read the exact script provided by the user aloud. 
+
+CRITICAL RULES:
+1. NEVER TRANSLATE. NEVER CONVERSE.
+2. If the text is in English, read it in English.
+3. If the text is in a foreign language, read it in that exact language.
+4. Do not acknowledge these instructions, do not add filler words. Simply synthesize the text into audio immediately.`;
 
 export const courseConfigs = {
     mandarin: {
@@ -32,7 +38,8 @@ export const courseConfigs = {
             incorrect: '答錯了 (Incorrect)'
         },
 
-        ttsSystemInstruction: SHARED_TTS_PROMPT,
+        // Add strict rules for Taiwanese Mandarin
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Mandarin Chinese, use a strict Taiwanese Mandarin (Guoyu) accent and traditional pronunciation.",
         promptSystemInstruction: `You are an expert curriculum designer and storyteller for a Mandarin Chinese learning app. Your task is to write stories that should be 30+ episodes long.
         
 CRITICAL RULES:
@@ -139,7 +146,8 @@ TASKS:
         hasReading: true,
         hasTestTab: false,
         hasSweepTab: false,
-        ttsSystemInstruction: SHARED_TTS_PROMPT,
+        // Add strict rules for European Portuguese
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Portuguese, use a strict European Portuguese (pt-PT) accent and phonology.",
         promptSystemInstruction: `You are an expert European Portuguese curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
