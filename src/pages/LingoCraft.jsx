@@ -146,6 +146,8 @@ export default function LingoCraft() {
         setPlayState({ index: null, status: 'idle' });
         setRevealedSentences(new Set()); 
 
+        setWord('');
+
         const langObj = LANGUAGES.find(l => l.name === selectedLanguage);
         
         const responseSchema = {
