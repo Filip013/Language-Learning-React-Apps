@@ -416,8 +416,8 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                 </div>
                 {!rev[qId] && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
-                      {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Sweep
+                    <button onClick={() => playAnswer(qId, item[config.primaryTextKey], false)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
+                      {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Play to Reveal
                     </button>
                   </div>
                 )}

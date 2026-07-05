@@ -44,7 +44,7 @@ const getFontStyles = (langName) => {
     return { isCjk: false, fontClass: '' };
 };
 
-const getPaidApiKey = () => localStorage.getItem('geminiPaidApiKey') || '';
+const getApiKey = () => localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey') || '';
 
 export default function LingoCraft() {
     const [user, setUser] = useState(null);
@@ -133,9 +133,9 @@ export default function LingoCraft() {
         const queryWord = (customWord || word).trim();
         if (!queryWord || !user) return;
 
-        const apiKey = getPaidApiKey();
+        const apiKey = getApiKey();
         if (!apiKey) {
-            setError("No Paid Gemini API Key found. Please add it in your Hub settings.");
+            setError("No Gemini API Key found. Please add it in your Hub settings.");
             return;
         }
 
@@ -188,7 +188,7 @@ export default function LingoCraft() {
         };
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -281,6 +281,7 @@ export default function LingoCraft() {
 
     const { isCjk, fontClass } = getFontStyles(result?.targetLanguage?.name);
     const isTargetEnglish = result?.targetLanguage?.name === 'English';
+    const isNoBlurLang = result?.targetLanguage?.name === 'Latin' || result?.targetLanguage?.name === 'Ancient Greek' || result?.targetLanguage?.name === 'Serbian';
 
     const filteredHistory = history.filter(i => 
         i.word.toLowerCase().includes(historySearch.toLowerCase()) || 
@@ -443,7 +444,7 @@ export default function LingoCraft() {
                                     </div>
                                 </div>
 
-                                {revealedSentences.size < 5 && (
+                                {!isNoBlurLang && revealedSentences.size < 5 && (
                                     <div className="mt-6 pt-4 border-t border-dashed border-inherit flex justify-end">
                                         <button 
                                             onClick={() => setRevealedSentences(new Set([0, 1, 2, 3, 4]))}
@@ -459,7 +460,7 @@ export default function LingoCraft() {
                                 {result.sentences.map((item, index) => {
                                     const isPlaying = playState.index === index && playState.status === 'playing';
                                     const isLoadingAudio = playState.index === index && playState.status === 'loading';
-                                    const isRevealed = revealedSentences.has(index);
+                                    const isRevealed = isNoBlurLang || revealedSentences.has(index);
                                     
                                     return (
                                         <div key={index} className={`p-5 sm:p-6 rounded-2xl border transition-all ${isDarkMode ? 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700' : 'bg-white border-stone-200 hover:shadow-md'}`}>
