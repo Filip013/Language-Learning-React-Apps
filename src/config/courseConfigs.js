@@ -40,7 +40,7 @@ CRITICAL RULES:
 2. NEW WORDS: You are allowed to introduce up to 5 NEW WORDS not on the known list. You MUST list any new words introduced in the 'newLemmas' array. Do not leave 'newLemmas' empty if you introduced new words!
 3. DRILLS: For EACH word in the 'drills' array (which should be the new words + requested review words), you MUST generate an 'examples' array containing EXACTLY 5 sentences. NEVER leave 'examples' empty. Under 'notes', provide nuance about word use, synonyms, and related grammar.
 4. REVIEW WORDS: Do not force user-requested Review Words into the story plot. They should only appear in drills and the quiz.
-5. STORY MANAGEMENT: If the user asks to start a brand new story (e.g., changing genre, or stating "start a new story"), you MUST set 'storyStatus' to 'new_story' and invent a new 'storyTitle'. If continuing the current story, set to 'continue'. If the user asks to end the story, set to 'finale'.
+5. STORY MANAGEMENT: If the user asks to start a brand new story (e.g., changing genre, or stating "start a new story"), you MUST set 'storyStatus' to 'new_story' and invent a new 'storyTitle'. If continuing the current story, set to 'continue'. If it time to end the story, set to 'finale'.
 
 DRILL AND QUIZ DESIGN:
 - I have provided the context from the last few episodes.
@@ -97,20 +97,20 @@ DRILL AND QUIZ DESIGN:
         promptSystemInstruction: `You are an expert Hungarian language curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULES:
-1. EXTRACT EXACTLY 3 NEW BASE WORDS to teach, PLUS any additional words the user explicitly requests.
+1. PRESENT EXACTLY 3 NEW BASE WORDS to teach, PLUS any additional words the user explicitly requests.
 2. The Definitions, Quiz, and Test MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
-3. For the Quiz and Test (15 questions each): EXACTLY 2 questions must target each of the 3 new target words. The remaining questions should test other grammar from the Known list to review weak points identified in the context.
+3. For the Quiz and Test (15 questions each): EXACTLY 2 questions must target each of the 3 new target words. The remaining questions should test other vocabulary and grammar from the Known list to review weak points identified in the context.
 
 TASKS:
 1. 'reading.definitions': Hungarian definitions for ONLY the 3 new target words, using Known Vocabulary.
-2. 'reading.hungarian': 3 to 5 paragraphs separated by \\n\\n.
-3. 'reading.english': Literal English translation.
+2. 'reading.hungarian': multiple paragraphs separated by \\n\\n with some dialog.
+3. 'reading.english': English translation.
 4. 'reading.focus': Explain grammar rules, nuances, and how the 3 new words are used.
 5. 'drills': Exactly 5 items. Each needs exactly 5 example sentences in HU/EN.
 6. 'quiz': Exactly 15 grammar/vocab questions. Use '_____' (5 underscores) for the blank.
 7. 'test': Exactly 15 active translation sentences (English to Hungarian).
-8. 'sweep': Exactly 15 diagnostic sentences.
-9. 'newLemmas': Extract the 3 new base words.`,
+8. 'sweep': Exactly 15 sentences targeting words that have not recently been encountered.
+9. 'newLemmas': Extract the 3 new base words plus any silent additions.`,
 
         promptOutputFormat: `{
   "title": "Lesson Title",
