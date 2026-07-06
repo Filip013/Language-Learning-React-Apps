@@ -715,39 +715,41 @@ export default function LanguageCourse({ config }) {
           }
       }
       
-      if (ep.drills) {
-        let drillSentences = [];
-        ep.drills.forEach(d => {
-           let noteStr = (d.notes && d.notes.length > 0) ? ` (Notes: ${d.notes.join(' | ')})` : '';
-           let dSentences = [];
-           if (d.examples) {
-              d.examples.forEach(ex => {
-                 const text = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
-                 if (text) dSentences.push(text);
-              });
-           }
-           if (dSentences.length > 0) drillSentences.push(`${d.word}${noteStr}:\n  - ${dSentences.join('\n  - ')}`);
-        });
-        if (drillSentences.length > 0) epContext += `Drills & Notes:\n- ${drillSentences.join('\n- ')}\n\n`;
-      }
-      
       if (ep.quiz) {
         let quizDetails = [];
+        
+        // Support both modern and legacy database structures
+        const selections = prog.selections || {};
+        const legacy1 = prog.quizAnswers || {};
+        const legacy2 = prog.quiz?.answers || {};
+
         ep.quiz.forEach((q, idx) => {
             const qId = `quiz_${idx}`; 
-            const numId = idx;         
-            const isGraded = prog.quizGraded?.[qId] || prog.gradedIds?.includes(numId) || prog.quiz?.answers?.[qId] !== undefined;
-            const userAns = prog.quizAnswers?.[qId] || prog.selections?.[numId] || prog.quiz?.answers?.[qId];
-            const rawQuestion = q.sentence || q.text || "";
-            const correctAns = q.answer || q.correct;
             
-            if (isGraded) {
+            // Check all possible locations for the user's answer
+            let userAns = selections[qId] || selections[idx] || selections[String(idx)] ||
+                          legacy1[qId] || legacy1[idx] || legacy1[String(idx)] ||
+                          legacy2[qId] || legacy2[idx] || legacy2[String(idx)];
+                          
+            if (typeof userAns === 'string') userAns = userAns.trim();
+            
+            const rawQuestion = q.sentence || q.text || "";
+            const correctAns = (q.answer || q.correct || "").trim();
+            
+            // Safely extract distractors
+            const distractorsList = q.distractors && Array.isArray(q.distractors) 
+                ? q.distractors.join(', ') 
+                : (q.options ? q.options.filter(o => o !== correctAns).join(', ') : 'None');
+
+            // Format the output cleanly for the LLM
+            if (userAns) {
                 const isCorrect = (userAns === correctAns);
-                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
             } else {
-                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: Not answered`);
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: Not answered`);
             }
         });
+        
         if (quizDetails.length > 0) epContext += `Quiz Performance:\n${quizDetails.join('\n')}\n\n`;
       }
 
