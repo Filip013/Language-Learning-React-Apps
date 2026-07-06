@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles } from 'lucide-react';
+import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
@@ -341,17 +341,24 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                             <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
                   <div className="mb-6">
-                    <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                    {q.options.map((option, optIdx) => {
-                      let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[26px] md:text-2xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
-                      if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
-                      else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
-                      return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
-                    })}
-                  </div>
-                  <div className="flex justify-between items-center mt-4 font-sans">
+  <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
+    </div>
+    {(() => {
+      const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
+      const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
+
+      return (
+        <div className={`grid gap-3 mb-6 ${gridClasses}`}>
+          {q.options.map((option, optIdx) => {
+            let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[26px] md:text-2xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
+            if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
+            else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
+            return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
+          })}
+        </div>
+      );
+    })()}
+    <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
                         Grade Answer
@@ -517,6 +524,13 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   const [activeTab, setActiveTab] = useState('all');
   const [deletingWord, setDeletingWord] = useState(null);
 
+  // New states for the Add Word form
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newWordTarget, setNewWordTarget] = useState('');
+  const [newWordEnglish, setNewWordEnglish] = useState('');
+  const [newWordPos, setNewWordPos] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const categories = useMemo(() => {
     if (!globalLexicon || Object.keys(globalLexicon).length === 0) return [];
     
@@ -587,6 +601,41 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     } catch (err) { console.error(err); }
   };
 
+  // --- NEW: Add Word Manually ---
+  const handleManualAdd = async () => {
+    if (!newWordTarget.trim() || !globalLexicon || !user) return;
+    setIsSubmitting(true);
+    try {
+      const newEntry = {
+        id: `dict_manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        [config.primaryTextKey]: newWordTarget.trim(),
+        word: newWordTarget.trim(), // Kept as fallback for other app features
+        english: newWordEnglish.trim(),
+        pos: newWordPos.trim()
+      };
+
+      const docName = config.lexiconDoc || 'lexicon';
+      const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+
+      if (Array.isArray(globalLexicon) || globalLexicon.entries) {
+        const list = globalLexicon.entries || globalLexicon;
+        await lexRef.set({ entries: [newEntry, ...list] }, { merge: true });
+      } else {
+        const list = globalLexicon.accumulated || [];
+        await lexRef.set({ accumulated: [newEntry, ...list] }, { merge: true });
+      }
+
+      setNewWordTarget('');
+      setNewWordEnglish('');
+      setNewWordPos('');
+      setShowAddForm(false);
+    } catch (err) {
+      console.error("Error adding word:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!globalLexicon || Object.keys(globalLexicon).length === 0) return <div className="p-20 text-center text-stone-500 font-sans">Loading master lexicon...</div>;
 
   return (
@@ -598,10 +647,35 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       </header>
 
       <div className={`p-6 rounded-2xl shadow-sm border mb-8 sticky top-4 z-10 ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
-          <input type="text" placeholder="Search vocabulary or translation..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-xl focus:outline-none transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-stone-50 border-stone-100'}`} />
+        
+        {/* Updated Top Bar: Search + Add Button */}
+        <div className="flex flex-col md:flex-row gap-4 relative">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+            <input type="text" placeholder="Search vocabulary or translation..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-xl focus:outline-none transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-stone-50 border-stone-100'}`} />
+          </div>
+          <button onClick={() => setShowAddForm(!showAddForm)} className={`shrink-0 flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 font-bold transition-colors ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100 hover:bg-stone-600' : 'bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200'}`}>
+            <Plus size={20} /> <span className="hidden sm:inline">Add Word</span>
+          </button>
         </div>
+
+        {/* NEW: Add Form Panel */}
+        {showAddForm && (
+          <div className={`mt-4 p-5 rounded-xl border-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-stone-900 border-stone-700' : 'bg-stone-50 border-stone-200'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <input type="text" placeholder={`Target Word (${config.name})`} value={newWordTarget} onChange={e => setNewWordTarget(e.target.value)} className={`w-full px-4 py-3 rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
+              <input type="text" placeholder="English Translation" value={newWordEnglish} onChange={e => setNewWordEnglish(e.target.value)} className={`w-full px-4 py-3 rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
+              <input type="text" placeholder="Part of Speech (e.g. noun)" value={newWordPos} onChange={e => setNewWordPos(e.target.value)} className={`w-full px-4 py-3 rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowAddForm(false)} className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${isDarkMode ? 'text-stone-400 hover:text-stone-200' : 'text-stone-500 hover:text-stone-800'}`}>Cancel</button>
+              <button onClick={handleManualAdd} disabled={isSubmitting || !newWordTarget.trim()} className={`px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-white'}`}>
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Save Word
+              </button>
+            </div>
+          </div>
+        )}
+
         {categories.length > 1 && (
           <div className="flex flex-wrap gap-2 mt-6">
             {categories.map((cat) => (
