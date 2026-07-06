@@ -186,7 +186,11 @@ export default function LingoCraft() {
         const payload = {
             contents: [{ parts: [{ text: promptText }] }],
             systemInstruction: { parts: [{ text: systemInstruction }] },
-            generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema }
+            generationConfig: { 
+                responseMimeType: "application/json", 
+                responseSchema: responseSchema,
+                thinkingConfig: { thinkingLevel: "HIGH" } // <-- Add this property
+            }
         };
 
         try {

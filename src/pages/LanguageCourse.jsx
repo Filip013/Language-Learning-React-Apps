@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste } from 'lucide-react';
+import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
@@ -672,141 +672,126 @@ export default function LanguageCourse({ config }) {
   
   const [topicInput, setTopicInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [genError, setGenError] = useState('');
   const [deletingEpisodeId, setDeletingEpisodeId] = useState(null);
   const fileInputRef = useRef(null);
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
 
-  // --- DYNAMIC PROMPT EXPORT ENGINE ---
+  // --- CENTRALIZED PROMPT BUILDER ---
+  const generatePromptString = async (isForAPI = false) => {
+    const flatLexicon = Object.values(globalLexicon || {}).flat().map(w => {
+        if (typeof w === 'string') return w;
+        if (w && typeof w === 'object') return w.word || w[config.primaryTextKey] || w.targetText || '';
+        return '';
+    }).filter(Boolean).join(', ');
+    
+    let currentStoryText = "";
+    if (config.hasStories) {
+        const activeBackendStoryId = userPrefs.activeStoryId || 'season_3';
+        const currentStoryData = storyList.find(s => s.id === activeBackendStoryId) || { episodes: [] };
+        currentStoryText = (currentStoryData.episodes || []).map(e => `[Chapter: ${e.title}]\n${e.text}`).join('\n\n');
+    }
+    
+    let pastContext = '';
+    const pastEps = episodesList.slice(0, 10).reverse();
+    
+    for (let i = 0; i < pastEps.length; i++) {
+      const ep = pastEps[i];
+      let epContext = '';
+      
+      const progSnap = await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get();
+      const prog = progSnap.exists ? progSnap.data() : {};
+
+      if (ep.userPrompt) epContext += `User Request: ${ep.userPrompt}\n`;
+      if (ep.tutorIntroduction) epContext += `Tutor Response: ${ep.tutorIntroduction}\n\n`;
+
+      if (!config.hasStories && ep.reading) {
+          const targetText = ep.reading[config.primaryTextKey] || "";
+          if (targetText) epContext += `Reading Passage:\n${targetText}\n\n`;
+          if (ep.reading.focus && ep.reading.focus.length > 0) {
+              const focusNotes = ep.reading.focus.map(f => `- ${f.word}: ${f.explanation || f.text}`).join('\n');
+              epContext += `Focus:\n${focusNotes}\n\n`;
+          }
+      }
+      
+      if (ep.drills) {
+        let drillSentences = [];
+        ep.drills.forEach(d => {
+           let noteStr = (d.notes && d.notes.length > 0) ? ` (Notes: ${d.notes.join(' | ')})` : '';
+           let dSentences = [];
+           if (d.examples) {
+              d.examples.forEach(ex => {
+                 const text = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
+                 if (text) dSentences.push(text);
+              });
+           }
+           if (dSentences.length > 0) drillSentences.push(`${d.word}${noteStr}:\n  - ${dSentences.join('\n  - ')}`);
+        });
+        if (drillSentences.length > 0) epContext += `Drills & Notes:\n- ${drillSentences.join('\n- ')}\n\n`;
+      }
+      
+      if (ep.quiz) {
+        let quizDetails = [];
+        ep.quiz.forEach((q, idx) => {
+            const qId = `quiz_${idx}`; 
+            const numId = idx;         
+            const isGraded = prog.quizGraded?.[qId] || prog.gradedIds?.includes(numId) || prog.quiz?.answers?.[qId] !== undefined;
+            const userAns = prog.quizAnswers?.[qId] || prog.selections?.[numId] || prog.quiz?.answers?.[qId];
+            const rawQuestion = q.sentence || q.text || "";
+            const correctAns = q.answer || q.correct;
+            
+            if (isGraded) {
+                const isCorrect = (userAns === correctAns);
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
+            } else {
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: Not answered`);
+            }
+        });
+        if (quizDetails.length > 0) epContext += `Quiz Performance:\n${quizDetails.join('\n')}\n\n`;
+      }
+
+      if (ep.sweep) {
+         let sweepSentences = [];
+         ep.sweep.forEach(s => {
+             const text = s[config.primaryTextKey] || s.hungarian;
+             if (text) sweepSentences.push(text);
+         });
+         if (sweepSentences.length > 0) epContext += `Sweep Sentences:\n- ${sweepSentences.join('\n- ')}\n\n`;
+      }
+      
+      if (ep.test) {
+        let testSentences = [];
+        ep.test.forEach((t, tIdx) => {
+            const m = prog.mistakes?.[`test_${tIdx}`] || prog.test?.mistakes?.[`test_${tIdx}`];
+            const correctAns = t[config.primaryTextKey] || t.hungarian;
+            if (m && m.trim()) testSentences.push(`EN: ${t.english} -> Correct: ${correctAns} | User Note: ${m.trim()}`);
+            else testSentences.push(`EN: ${t.english} -> Correct: ${correctAns}`);
+        });
+        if (testSentences.length > 0) epContext += `Test Translations & Notes:\n- ${testSentences.join('\n- ')}\n\n`;
+      }
+      
+      if (epContext) pastContext += `\n--- Past Episode: ${ep.title} ---\n${epContext}`;
+    }
+
+    const storyContextBlock = config.hasStories && currentStoryText ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
+    const pastContextBlock = pastContext ? `\nRECENT CONTEXT & PERFORMANCE (Last 10 lessons):\n${pastContext}\n` : '';
+    
+    // API vs Chatbot output instructions
+    const outputInstruction = isForAPI 
+        ? `OUTPUT FORMAT (Provide response strictly as raw JSON, without any markdown formatting or backticks. Do NOT wrap in \`\`\`json):\n${config.promptOutputFormat}`
+        : `OUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${config.promptOutputFormat}`;
+
+    return `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\n${outputInstruction}`;
+  };
+
+  // --- EXPORT PROMPT FUNCTION ---
   const handleExportPrompt = async () => {
     if (!topicInput.trim() || !user) return;
-    setIsGenerating(true); 
+    setIsExporting(true); // <-- Uses distinct state
     setGenError('');
-    
     try {
-      const flatLexicon = Object.values(globalLexicon || {}).flat().map(w => {
-          if (typeof w === 'string') return w;
-          if (w && typeof w === 'object') return w.word || w[config.primaryTextKey] || w.targetText || '';
-          return '';
-      }).filter(Boolean).join(', ');
-      
-      let currentStoryText = "";
-      if (config.hasStories) {
-          const activeBackendStoryId = userPrefs.activeStoryId || 'season_3';
-          const currentStoryData = storyList.find(s => s.id === activeBackendStoryId) || { episodes: [] };
-          currentStoryText = (currentStoryData.episodes || []).map(e => `[Chapter: ${e.title}]\n${e.text}`).join('\n\n');
-      }
-      
-      let pastContext = '';
-      const pastEps = episodesList.slice(0, 10).reverse();
-      
-      for (let i = 0; i < pastEps.length; i++) {
-        const ep = pastEps[i];
-        let epContext = '';
-        
-        const progSnap = await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get();
-        const prog = progSnap.exists ? progSnap.data() : {};
-
-        // 1. Send previous user prompt & tutor introduction
-        if (ep.userPrompt) epContext += `User Request: ${ep.userPrompt}\n`;
-        if (ep.tutorIntroduction) epContext += `Tutor Response: ${ep.tutorIntroduction}\n\n`;
-
-        if (!config.hasStories && ep.reading) {
-            const targetText = ep.reading[config.primaryTextKey] || "";
-            if (targetText) epContext += `Reading Passage:\n${targetText}\n\n`;
-            
-            // 2. Send Grammar/Vocabulary Focus Notes
-            if (ep.reading.focus && ep.reading.focus.length > 0) {
-                const focusNotes = ep.reading.focus.map(f => `- ${f.word}: ${f.explanation || f.text}`).join('\n');
-                epContext += `Focus:\n${focusNotes}\n\n`;
-            }
-        }
-        
-        if (ep.drills) {
-          let drillSentences = [];
-          ep.drills.forEach(d => {
-             // 3. Send Drill Notes & group by word
-             let noteStr = (d.notes && d.notes.length > 0) ? ` (Notes: ${d.notes.join(' | ')})` : '';
-             let dSentences = [];
-             
-             if (d.examples) {
-                d.examples.forEach(ex => {
-                   const text = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
-                   if (text) dSentences.push(text);
-                });
-             }
-             if (dSentences.length > 0) {
-                 drillSentences.push(`${d.word}${noteStr}:\n  - ${dSentences.join('\n  - ')}`);
-             }
-          });
-          if (drillSentences.length > 0) {
-              epContext += `Drills & Notes:\n- ${drillSentences.join('\n- ')}\n\n`;
-          }
-        }
-        
-        if (ep.quiz) {
-          let quizDetails = [];
-          ep.quiz.forEach((q, idx) => {
-              const qId = `quiz_${idx}`; 
-              const numId = idx;         
-              const isGraded = prog.quizGraded?.[qId] || prog.gradedIds?.includes(numId) || prog.quiz?.answers?.[qId] !== undefined;
-              const userAns = prog.quizAnswers?.[qId] || prog.selections?.[numId] || prog.quiz?.answers?.[qId];
-              
-              // 4. Clearly provide the raw question, correct answer, and the user's specific performance
-              const rawQuestion = q.sentence || q.text || "";
-              const correctAns = q.answer || q.correct;
-              
-              if (isGraded) {
-                  const isCorrect = (userAns === correctAns);
-                  quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
-              } else {
-                  quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Result: Not answered`);
-              }
-          });
-          if (quizDetails.length > 0) {
-              epContext += `Quiz Performance:\n${quizDetails.join('\n')}\n\n`;
-          }
-        }
-
-        if (ep.sweep) {
-           let sweepSentences = [];
-           ep.sweep.forEach(s => {
-               const text = s[config.primaryTextKey] || s.hungarian;
-               if (text) sweepSentences.push(text);
-           });
-           if (sweepSentences.length > 0) {
-               epContext += `Sweep Sentences:\n- ${sweepSentences.join('\n- ')}\n\n`;
-           }
-        }
-        
-        if (ep.test) {
-          let testSentences = [];
-          ep.test.forEach((t, tIdx) => {
-              const m = prog.mistakes?.[`test_${tIdx}`] || prog.test?.mistakes?.[`test_${tIdx}`];
-              const correctAns = t[config.primaryTextKey] || t.hungarian;
-              
-              if (m && m.trim()) {
-                  testSentences.push(`EN: ${t.english} -> Correct: ${correctAns} | User Note: ${m.trim()}`);
-              } else {
-                  testSentences.push(`EN: ${t.english} -> Correct: ${correctAns}`);
-              }
-          });
-          if (testSentences.length > 0) {
-              epContext += `Test Translations & Notes:\n- ${testSentences.join('\n- ')}\n\n`;
-          }
-        }
-        
-        // This is where the for-loop actually closes
-        if (epContext) {
-            pastContext += `\n--- Past Episode: ${ep.title} ---\n${epContext}`;
-        }
-      }
-
-      const storyContextBlock = config.hasStories && currentStoryText ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
-      const pastContextBlock = pastContext ? `\nRECENT CONTEXT & PERFORMANCE (Last 10 lessons):\n${pastContext}\n` : '';
-      
-      // 5. Ask for JSON inside a markdown codeblock
-      const exportedText = `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\nOUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${config.promptOutputFormat}`;
-
+      const exportedText = await generatePromptString(false); // isForAPI = false
       const blob = new Blob([exportedText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -816,9 +801,58 @@ export default function LanguageCourse({ config }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
     } catch (err) {
       setGenError("Failed to build prompt: " + err.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // --- API GENERATION FUNCTION ---
+  const handleGenerateLLM = async () => {
+    if (!topicInput.trim() || !user) return;
+    const apiKey = localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey');
+    
+    if (!apiKey) {
+      setGenError("No API Key found. Please set it in Hub settings.");
+      setShowGenerateConfirm(false);
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenError('');
+    setShowGenerateConfirm(false);
+
+    try {
+      const promptText = await generatePromptString(true); // isForAPI = true
+      
+      const payload = {
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { 
+              responseMimeType: "application/json",
+              thinkingConfig: { thinkingLevel: "HIGH" } 
+          }
+      };
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error?.message || "API Connection Failed");
+      }
+
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!rawText) throw new Error("Empty response received.");
+
+      await processImportedJSON(rawText);
+    } catch (err) {
+      setGenError("Generation failed: " + err.message);
     } finally {
       setIsGenerating(false);
     }
@@ -1101,32 +1135,59 @@ export default function LanguageCourse({ config }) {
                 className={`w-full px-4 py-3 rounded-xl border focus:outline-none transition-all ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} 
               />
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                
+                {/* 1. API Generation Button */}
+                {!showGenerateConfirm ? (
+                  <button 
+                      onClick={() => setShowGenerateConfirm(true)} 
+                      disabled={isGenerating || isExporting || !topicInput.trim()} 
+                      title="Generate instantly via Gemini 3.5 API" 
+                      className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isDarkMode ? 'bg-amber-600/20 border-amber-600/30 text-amber-400 hover:bg-amber-600/30 disabled:opacity-50' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 disabled:opacity-50'}`}
+                  >
+                      {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                      <span className="truncate hidden sm:inline">Generate</span>
+                      <span className="truncate sm:hidden">Gen API</span>
+                  </button>
+                ) : (
+                  <div className={`flex items-center justify-between gap-1 py-1 px-2 rounded-xl border shadow-sm ${isDarkMode ? 'bg-amber-950/40 border-amber-800 text-amber-400' : 'bg-amber-50 border-amber-300 text-amber-800'}`}>
+                      <span className="text-[10px] font-bold uppercase tracking-wider pl-1 hidden sm:inline">Sure?</span>
+                      <button onClick={handleGenerateLLM} className="px-3 py-2 sm:py-1.5 bg-amber-500 text-stone-900 text-xs font-bold rounded-lg hover:bg-amber-400 w-full sm:w-auto">Yes</button>
+                      <button onClick={() => setShowGenerateConfirm(false)} className="px-3 py-2 sm:py-1.5 text-xs font-bold opacity-70 hover:opacity-100 w-full sm:w-auto">No</button>
+                  </div>
+                )}
+
+                {/* 2. Export Button */}
                 <button 
                     onClick={handleExportPrompt} 
-                    disabled={isGenerating || !topicInput.trim()} 
+                    disabled={isGenerating || isExporting || !topicInput.trim()} 
                     title="Download detailed prompt file for LLM Web App" 
-                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
+                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 disabled:opacity-50 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
                     >
-                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                    <span className="truncate">Export Prompt</span>
+                    {isExporting ? <Loader2 className="w-5 h-5 shrink-0 animate-spin" /> : <Download className="w-5 h-5 shrink-0" />}
+                    <span className="truncate hidden sm:inline">Export Prompt</span>
+                    <span className="truncate sm:hidden">Export</span>
                 </button>
 
+                {/* 3. Paste Button */}
                 <button 
                     onClick={handlePasteLesson} 
-                    disabled={isGenerating} 
+                    disabled={isGenerating || isExporting} 
                     title="Paste copied JSON from clipboard" 
-                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
+                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 disabled:opacity-50 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
                     >
-                    <ClipboardPaste className="w-5 h-5" />
-                    <span className="truncate">Paste JSON</span>
+                    <ClipboardPaste className="w-5 h-5 shrink-0" />
+                    <span className="truncate hidden sm:inline">Paste JSON</span>
+                    <span className="truncate sm:hidden">Paste</span>
                 </button>
                 
-                <label className={`cursor-pointer font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}>
-                  <Upload className="w-5 h-5" /> 
-                  <span className="truncate">Import File</span>
+                {/* 4. Import Button */}
+                <label className={`cursor-pointer font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${(isGenerating || isExporting) ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}>
+                  <Upload className="w-5 h-5 shrink-0" /> 
+                  <span className="truncate hidden sm:inline">Import File</span>
+                  <span className="truncate sm:hidden">Import</span>
                   <input 
-                    type="file" accept=".json,.txt" ref={fileInputRef} onChange={handleFileUpload} disabled={isGenerating} className="hidden" 
+                    type="file" accept=".json,.txt" ref={fileInputRef} onChange={handleFileUpload} disabled={isGenerating || isExporting} className="hidden" 
                   />
                 </label>
               </div>
