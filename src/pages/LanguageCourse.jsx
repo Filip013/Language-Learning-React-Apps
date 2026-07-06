@@ -550,6 +550,26 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     })).filter(cat => activeTab === 'all' || cat.id === activeTab);
   }, [searchTerm, activeTab, categories, config.primaryTextKey]);
 
+  const duplicateWords = useMemo(() => {
+    if (!globalLexicon || Object.keys(globalLexicon).length === 0) return new Set();
+    const counts = {};
+    const duplicates = new Set();
+    
+    let isObjectArray = Array.isArray(globalLexicon) || (globalLexicon.entries && Array.isArray(globalLexicon.entries));
+    let mainList = isObjectArray ? (globalLexicon.entries || globalLexicon) : (globalLexicon.accumulated || []);
+
+    mainList.forEach(w => {
+      const isObj = typeof w === 'object' && w !== null;
+      const wordText = isObj ? (w[config.primaryTextKey] || w.word) : w;
+      if (wordText) {
+        const norm = wordText.toLowerCase().trim();
+        counts[norm] = (counts[norm] || 0) + 1;
+        if (counts[norm] > 1) duplicates.add(norm);
+      }
+    });
+    return duplicates;
+  }, [globalLexicon, config.primaryTextKey]);
+
   const handleDeleteConfirm = async (wordToDelete) => {
     if (!globalLexicon || !user) return;
     
@@ -605,9 +625,14 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
                   const displayEn = isObj ? (word.english || word.meaning || word.translation) : "";
                   const pos = isObj ? word.pos : "";
                   const wId = isObj ? word.id : word;
+                  const isDuplicate = duplicateWords.has((displayWord || "").toLowerCase().trim());
 
                   return (
-                    <div key={`${wId}-${idx}`} className={`flex flex-col gap-2 p-4 border rounded-xl shadow-sm ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-stone-800'}`}>
+                    <div key={`${wId}-${idx}`} className={`flex flex-col gap-2 p-4 border rounded-xl shadow-sm ${
+                      isDuplicate 
+                        ? (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-stone-200' : 'bg-amber-50 border-amber-300 text-stone-800')
+                        : (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-stone-800')
+                    }`}>
                       <div className="flex items-center justify-between gap-4">
                         <span className={`${config.fontClass ? `${config.fontClass} text-[28px] md:text-3xl` : 'font-sans font-bold text-xl'}`}>{displayWord}</span>
                         {deletingWord === wId ? (
