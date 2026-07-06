@@ -414,7 +414,7 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><PenTool size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Translate EN to {config.name.replace(' Master', '')}</p>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Translate from English to {config.name.replace(' Master', '')}</p>
       </header>
 
       <div className="space-y-8">
