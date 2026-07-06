@@ -35,7 +35,7 @@ export const courseConfigs = {
             gradeAnswer: '驗證答案 (Grade Answer)',
             revealOptions: '顯示選項 (Reveal Options)',
             correct: '答對了 (Correct!)',
-            incorrect: '答錯了 (Incorrect)'
+            incorrect: '答錯了 (Incorrect!)'
         },
 
         // Add strict rules for Taiwanese Mandarin
