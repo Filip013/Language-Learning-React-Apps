@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus } from 'lucide-react';
+import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus, Edit } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
@@ -521,87 +521,133 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
 
 function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const [deletingWord, setDeletingWord] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
 
-  // New states for the Add Word form
+  // Edit/Delete Modal States
+  const [editingWord, setEditingWord] = useState(null);
+  const [editListKey, setEditListKey] = useState('');
+  const [editTarget, setEditTarget] = useState('');
+  const [editEnglish, setEditEnglish] = useState('');
+  const [editPos, setEditPos] = useState('');
+
+  // Add Word Form States
   const [showAddForm, setShowAddForm] = useState(false);
   const [newWordTarget, setNewWordTarget] = useState('');
   const [newWordEnglish, setNewWordEnglish] = useState('');
   const [newWordPos, setNewWordPos] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = useMemo(() => {
+  // Determine language structure (Chinese uses keys like 'accumulated', 'hsk1', others use an array/entries)
+  const isObjectArray = Array.isArray(globalLexicon) || (globalLexicon && globalLexicon.entries && Array.isArray(globalLexicon.entries));
+
+  // Flatten all words into a tagged array so we know where they came from
+  const allTaggedWords = useMemo(() => {
     if (!globalLexicon || Object.keys(globalLexicon).length === 0) return [];
-    
-    let isObjectArray = Array.isArray(globalLexicon) || (globalLexicon.entries && Array.isArray(globalLexicon.entries));
-    let mainList = isObjectArray ? (globalLexicon.entries || globalLexicon) : (globalLexicon.accumulated || []);
-    
-    return [
-      { id: 'all', label: 'All Words', words: mainList }, 
-      ...(isObjectArray ? [] : [
-        { id: 'hsk4', label: 'HSK 4', words: globalLexicon.hsk4 || [] }, 
-        { id: 'hsk3', label: 'HSK 3', words: globalLexicon.hsk3 || [] }
-      ])
-    ];
-  }, [globalLexicon]);
+    let arr = [];
+    if (isObjectArray) {
+      const list = globalLexicon.entries || globalLexicon || [];
+      list.forEach(w => arr.push({ word: w, listKey: 'entries' }));
+    } else {
+      ['accumulated', 'hsk4', 'hsk3', 'hsk2', 'hsk1'].forEach(key => {
+        const list = globalLexicon[key] || [];
+        list.forEach(w => arr.push({ word: w, listKey: key }));
+      });
+    }
+    return arr;
+  }, [globalLexicon, isObjectArray]);
 
-  const filteredData = useMemo(() => {
-    if (categories.length === 0) return [];
-    const term = removeDiacritics(searchTerm);
-    
-    return categories.map(cat => ({ 
-      ...cat, 
-      words: term ? cat.words.filter(w => {
-        if (typeof w === 'string') return removeDiacritics(w).includes(term);
-        if (typeof w === 'object' && w !== null) {
-          const target = w[config.primaryTextKey] || w.word || w.targetText || "";
-          const en = w.english || w.meaning || w.translation || "";
-          return removeDiacritics(target).includes(term) || removeDiacritics(en).includes(term);
-        }
-        return false;
-      }) : cat.words 
-    })).filter(cat => activeTab === 'all' || cat.id === activeTab);
-  }, [searchTerm, activeTab, categories, config.primaryTextKey]);
-
+  // Find duplicates across all words
   const duplicateWords = useMemo(() => {
-    if (!globalLexicon || Object.keys(globalLexicon).length === 0) return new Set();
     const counts = {};
     const duplicates = new Set();
-    
-    let isObjectArray = Array.isArray(globalLexicon) || (globalLexicon.entries && Array.isArray(globalLexicon.entries));
-    let mainList = isObjectArray ? (globalLexicon.entries || globalLexicon) : (globalLexicon.accumulated || []);
-
-    mainList.forEach(w => {
-      const isObj = typeof w === 'object' && w !== null;
-      const wordText = isObj ? (w[config.primaryTextKey] || w.word) : w;
-      if (wordText) {
-        const norm = wordText.toLowerCase().trim();
+    allTaggedWords.forEach(({ word }) => {
+      const text = (typeof word === 'object' ? (word[config.primaryTextKey] || word.word) : word);
+      if (text) {
+        const norm = text.toLowerCase().trim();
         counts[norm] = (counts[norm] || 0) + 1;
         if (counts[norm] > 1) duplicates.add(norm);
       }
     });
     return duplicates;
-  }, [globalLexicon, config.primaryTextKey]);
+  }, [allTaggedWords, config.primaryTextKey]);
 
-  const handleDeleteConfirm = async (wordToDelete) => {
-    if (!globalLexicon || !user) return;
-    
-    try {
-      if (Array.isArray(globalLexicon) || globalLexicon.entries) {
-        const list = globalLexicon.entries || globalLexicon;
-        const newLex = list.filter(w => w.id !== wordToDelete.id);
-        const docName = config.lexiconDoc || 'lexicon';
-        await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName).set({ entries: newLex });
+  // Generate dynamic dropdown filter options
+  const filterOptions = useMemo(() => {
+    const options = [{ id: 'all', label: 'All Words' }];
+    if (!isObjectArray) {
+      options.push(
+        { id: 'accumulated', label: 'Accumulated' },
+        { id: 'hsk4', label: 'HSK 4' },
+        { id: 'hsk3', label: 'HSK 3' },
+        { id: 'hsk2', label: 'HSK 2' },
+        { id: 'hsk1', label: 'HSK 1' }
+      );
+    } else {
+      const posTags = new Set();
+      allTaggedWords.forEach(({ word }) => {
+        if (word && typeof word === 'object' && word.pos) posTags.add(word.pos.toLowerCase().trim());
+      });
+      Array.from(posTags).sort().forEach(pos => {
+        options.push({ id: `pos_${pos}`, label: `POS: ${pos}` });
+      });
+    }
+    options.push({ id: 'duplicates', label: 'Duplicates' });
+    return options;
+  }, [isObjectArray, allTaggedWords]);
+
+  // Filter words based on Active Filter and Search Term
+  const displayedTaggedWords = useMemo(() => {
+    let filtered = allTaggedWords;
+
+    if (activeFilter === 'duplicates') {
+      filtered = filtered.filter(({ word }) => {
+        const text = typeof word === 'object' ? (word[config.primaryTextKey] || word.word) : word;
+        return duplicateWords.has((text || '').toLowerCase().trim());
+      });
+    } else if (activeFilter.startsWith('pos_')) {
+      const targetPos = activeFilter.replace('pos_', '');
+      filtered = filtered.filter(({ word }) => typeof word === 'object' && word.pos?.toLowerCase().trim() === targetPos);
+    } else if (activeFilter !== 'all') {
+      filtered = filtered.filter(({ listKey }) => listKey === activeFilter);
+    }
+
+    const term = removeDiacritics(searchTerm);
+    if (term) {
+      filtered = filtered.filter(({ word }) => {
+        if (typeof word === 'string') return removeDiacritics(word).includes(term);
+        if (typeof word === 'object' && word !== null) {
+          const target = word[config.primaryTextKey] || word.word || "";
+          const en = word.english || word.meaning || word.translation || "";
+          return removeDiacritics(target).includes(term) || removeDiacritics(en).includes(term);
+        }
+        return false;
+      });
+    }
+    return filtered;
+  }, [allTaggedWords, activeFilter, searchTerm, duplicateWords, config.primaryTextKey]);
+
+  // Group words beautifully for rendering
+  const groupedWords = useMemo(() => {
+    const groups = {};
+    displayedTaggedWords.forEach(item => {
+      let groupKey = 'Vocabulary';
+      if (activeFilter === 'all' || activeFilter === 'duplicates') {
+        if (!isObjectArray) {
+          groupKey = item.listKey === 'accumulated' ? 'Accumulated Words' : item.listKey.toUpperCase();
+        } else {
+          groupKey = (item.word && typeof item.word === 'object' && item.word.pos) ? `POS: ${item.word.pos}` : 'Uncategorized';
+        }
       } else {
-        const newLex = { ...globalLexicon, accumulated: (globalLexicon.accumulated || []).filter(w => w !== wordToDelete) };
-        await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc('lexicon').set(newLex);
+        groupKey = filterOptions.find(o => o.id === activeFilter)?.label || 'Vocabulary';
       }
-      setDeletingWord(null);
-    } catch (err) { console.error(err); }
-  };
+      if (!groups[groupKey]) groups[groupKey] = [];
+      groups[groupKey].push(item);
+    });
+    return groups;
+  }, [displayedTaggedWords, activeFilter, isObjectArray, filterOptions]);
 
-  // --- NEW: Add Word Manually ---
+  // --- ACTIONS ---
+
   const handleManualAdd = async () => {
     if (!newWordTarget.trim() || !globalLexicon || !user) return;
     setIsSubmitting(true);
@@ -609,7 +655,7 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       const newEntry = {
         id: `dict_manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         [config.primaryTextKey]: newWordTarget.trim(),
-        word: newWordTarget.trim(), // Kept as fallback for other app features
+        word: newWordTarget.trim(),
         english: newWordEnglish.trim(),
         pos: newWordPos.trim()
       };
@@ -617,7 +663,7 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       const docName = config.lexiconDoc || 'lexicon';
       const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
 
-      if (Array.isArray(globalLexicon) || globalLexicon.entries) {
+      if (isObjectArray) {
         const list = globalLexicon.entries || globalLexicon;
         await lexRef.set({ entries: [newEntry, ...list] }, { merge: true });
       } else {
@@ -625,21 +671,86 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
         await lexRef.set({ accumulated: [newEntry, ...list] }, { merge: true });
       }
 
-      setNewWordTarget('');
-      setNewWordEnglish('');
-      setNewWordPos('');
-      setShowAddForm(false);
-    } catch (err) {
-      console.error("Error adding word:", err);
-    } finally {
-      setIsSubmitting(false);
+      setNewWordTarget(''); setNewWordEnglish(''); setNewWordPos(''); setShowAddForm(false);
+    } catch (err) { console.error("Error adding word:", err); } 
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleOpenEdit = (word, listKey) => {
+    setEditingWord(word);
+    setEditListKey(listKey);
+    if (typeof word === 'object') {
+      setEditTarget(word[config.primaryTextKey] || word.word || '');
+      setEditEnglish(word.english || word.meaning || word.translation || '');
+      setEditPos(word.pos || '');
+    } else {
+      setEditTarget(word);
+      setEditEnglish('');
+      setEditPos('');
     }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTarget.trim() || !user || !globalLexicon) return;
+    setIsSubmitting(true);
+    
+    const updatedWord = typeof editingWord === 'object' ? {
+        ...editingWord,
+        [config.primaryTextKey]: editTarget.trim(),
+        word: editTarget.trim(), 
+        english: editEnglish.trim(),
+        pos: editPos.trim()
+    } : {
+        id: `dict_manual_${Date.now()}`,
+        [config.primaryTextKey]: editTarget.trim(),
+        word: editTarget.trim(),
+        english: editEnglish.trim(),
+        pos: editPos.trim()
+    };
+
+    const docName = config.lexiconDoc || 'lexicon';
+    const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+
+    try {
+      if (isObjectArray) {
+          const list = globalLexicon.entries || globalLexicon || [];
+          const newList = list.map(w => (w === editingWord || w.id === editingWord?.id) ? updatedWord : w);
+          await lexRef.set({ entries: newList }, { merge: true });
+      } else {
+          const list = globalLexicon[editListKey] || [];
+          const newList = list.map(w => (w === editingWord || w.id === editingWord?.id) ? updatedWord : w);
+          await lexRef.set({ [editListKey]: newList }, { merge: true });
+      }
+      setEditingWord(null);
+    } catch (err) { console.error(err); } 
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleDeleteFromEdit = async () => {
+    if (!user || !globalLexicon) return;
+    setIsSubmitting(true);
+    const docName = config.lexiconDoc || 'lexicon';
+    const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+
+    try {
+      if (isObjectArray) {
+          const list = globalLexicon.entries || globalLexicon || [];
+          const newList = list.filter(w => w !== editingWord && w.id !== editingWord?.id);
+          await lexRef.set({ entries: newList }); 
+      } else {
+          const list = globalLexicon[editListKey] || [];
+          const newList = list.filter(w => w !== editingWord && w.id !== editingWord?.id);
+          await lexRef.set({ [editListKey]: newList }, { merge: true });
+      }
+      setEditingWord(null);
+    } catch (err) { console.error(err); } 
+    finally { setIsSubmitting(false); }
   };
 
   if (!globalLexicon || Object.keys(globalLexicon).length === 0) return <div className="p-20 text-center text-stone-500 font-sans">Loading master lexicon...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans relative">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Search size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{config.name} Lexicon</h1>
@@ -647,19 +758,27 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       </header>
 
       <div className={`p-6 rounded-2xl shadow-sm border mb-8 sticky top-4 z-10 ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
-        
-        {/* Updated Top Bar: Search + Add Button */}
-        <div className="flex flex-col md:flex-row gap-4 relative">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row gap-4 relative items-center">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
-            <input type="text" placeholder="Search vocabulary or translation..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-xl focus:outline-none transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-stone-50 border-stone-100'}`} />
+            <input type="text" placeholder="Search vocabulary..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-xl focus:outline-none transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-700 text-stone-100' : 'bg-stone-50 border-stone-100'}`} />
           </div>
-          <button onClick={() => setShowAddForm(!showAddForm)} className={`shrink-0 flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 font-bold transition-colors ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100 hover:bg-stone-600' : 'bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200'}`}>
-            <Plus size={20} /> <span className="hidden sm:inline">Add Word</span>
+          <div className="relative w-full md:w-auto">
+            <select 
+              value={activeFilter} 
+              onChange={e => setActiveFilter(e.target.value)}
+              className={`w-full md:w-auto px-4 py-4 pr-10 rounded-xl border-2 text-base font-bold outline-none cursor-pointer appearance-none transition-colors ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-200 focus:border-stone-500' : 'bg-stone-100 border-stone-200 text-stone-700 focus:border-stone-300'}`}
+              style={{ minWidth: '160px' }}
+            >
+              {filterOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+            </select>
+            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+          </div>
+          <button onClick={() => setShowAddForm(!showAddForm)} className={`w-full md:w-auto shrink-0 flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 font-bold transition-colors ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100 hover:bg-stone-600' : 'bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200'}`}>
+            <Plus size={20} /> <span className="hidden sm:inline">Add</span>
           </button>
         </div>
 
-        {/* NEW: Add Form Panel */}
         {showAddForm && (
           <div className={`mt-4 p-5 rounded-xl border-2 animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-stone-900 border-stone-700' : 'bg-stone-50 border-stone-200'}`}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
@@ -675,64 +794,82 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
             </div>
           </div>
         )}
-
-        {categories.length > 1 && (
-          <div className="flex flex-wrap gap-2 mt-6">
-            {categories.map((cat) => (
-              <button key={cat.id} onClick={() => setActiveTab(cat.id)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === cat.id ? (isDarkMode ? 'bg-stone-600 text-stone-100' : 'bg-stone-800 text-stone-100') : (isDarkMode ? 'bg-stone-900 text-stone-400 hover:bg-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200')}`}>{cat.label}</button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="space-y-10">
-        {filteredData.map(cat => {
-          if (cat.words.length === 0) return null;
-          return (
-            <section key={cat.id} className="animate-in duration-500">
-              {cat.id !== 'all' && <h2 className={`text-2xl font-bold font-sans mb-6 border-b-2 pb-2 ${isDarkMode ? 'text-stone-300 border-stone-700' : 'text-stone-700 border-stone-200'}`}>{cat.label}</h2>}
-              
-              <div className="flex flex-wrap gap-3">
-                {cat.words.map((word, idx) => {
-                  const isObj = typeof word === 'object' && word !== null;
-                  const displayWord = isObj ? (word[config.primaryTextKey] || word.word) : word;
-                  const displayEn = isObj ? (word.english || word.meaning || word.translation) : "";
-                  const pos = isObj ? word.pos : "";
-                  const wId = isObj ? word.id : word;
-                  const isDuplicate = duplicateWords.has((displayWord || "").toLowerCase().trim());
+        {Object.entries(groupedWords).map(([groupTitle, items]) => (
+          <section key={groupTitle} className="animate-in duration-500">
+            <h2 className={`text-2xl font-bold font-sans mb-6 border-b-2 pb-2 ${isDarkMode ? 'text-stone-300 border-stone-700' : 'text-stone-700 border-stone-200'}`}>{groupTitle}</h2>
+            <div className="flex flex-wrap gap-3">
+              {items.map(({ word, listKey }, idx) => {
+                const isObj = typeof word === 'object' && word !== null;
+                const displayWord = isObj ? (word[config.primaryTextKey] || word.word) : word;
+                const displayEn = isObj ? (word.english || word.meaning || word.translation) : "";
+                const pos = isObj ? word.pos : "";
+                const wId = isObj ? word.id : `${displayWord}-${idx}`;
+                const isDuplicate = duplicateWords.has((displayWord || "").toLowerCase().trim());
 
-                  return (
-                    <div key={`${wId}-${idx}`} className={`flex flex-col gap-2 p-4 border rounded-xl shadow-sm ${
-                      isDuplicate 
-                        ? (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-stone-200' : 'bg-amber-50 border-amber-300 text-stone-800')
-                        : (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-stone-800')
-                    }`}>
-                      <div className="flex items-center justify-between gap-4">
-                        <span className={`${config.fontClass ? `${config.fontClass} text-[28px] md:text-3xl` : 'font-sans font-bold text-xl'}`}>{displayWord}</span>
-                        {deletingWord === wId ? (
-                          <div className={`flex items-center gap-1 rounded-md px-1 ml-2 ${isDarkMode ? 'bg-red-500/20' : 'bg-red-50'}`}>
-                            <button onClick={() => handleDeleteConfirm(word)} className="px-2 py-1 text-[10px] font-bold uppercase text-red-500 font-sans">Confirm</button>
-                            <button onClick={() => setDeletingWord(null)} className="p-1 text-stone-400"><XCircle size={14} /></button>
-                          </div>
-                        ) : (
-                          <button onClick={() => setDeletingWord(wId)} className="p-1.5 rounded-md text-stone-400 hover:text-red-500 ml-2"><Trash2 size={14} /></button>
-                        )}
-                      </div>
-                      
-                      {(displayEn || pos) && (
-                        <div className="text-sm font-sans flex items-center gap-2 mt-1 pt-2 border-t border-stone-100 dark:border-stone-700">
-                           {pos && <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 border border-emerald-500/30 px-1.5 rounded bg-emerald-500/10">{pos}</span>}
-                           <span className={isDarkMode ? 'text-stone-400' : 'text-stone-500'}>{displayEn}</span>
-                        </div>
-                      )}
+                return (
+                  <div key={wId} className={`flex flex-col gap-2 p-4 border rounded-xl shadow-sm ${
+                    isDuplicate 
+                      ? (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-stone-200' : 'bg-amber-50 border-amber-300 text-stone-800')
+                      : (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-stone-800')
+                  }`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className={`${config.fontClass ? `${config.fontClass} text-[28px] md:text-3xl` : 'font-sans font-bold text-xl'}`}>{displayWord}</span>
+                      <button onClick={() => handleOpenEdit(word, listKey)} className="p-1.5 rounded-md text-stone-400 hover:text-amber-500 transition-colors ml-2"><Edit size={16} /></button>
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+                    
+                    {(displayEn || pos) && (
+                      <div className="text-sm font-sans flex items-center gap-2 mt-1 pt-2 border-t border-stone-100 dark:border-stone-700">
+                         {pos && <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 border border-emerald-500/30 px-1.5 rounded bg-emerald-500/10">{pos}</span>}
+                         <span className={isDarkMode ? 'text-stone-400' : 'text-stone-500'}>{displayEn}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
+
+      {/* FIXED EDIT & DELETE MODAL */}
+      {editingWord && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
+          <div className={`w-full max-w-md p-6 rounded-2xl shadow-xl border ${isDarkMode ? 'bg-stone-900 border-stone-700' : 'bg-white border-stone-200'}`}>
+            <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Edit Word</h3>
+            
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">Target Language</label>
+                <input type="text" value={editTarget} onChange={e => setEditTarget(e.target.value)} className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">English Translation</label>
+                <input type="text" value={editEnglish} onChange={e => setEditEnglish(e.target.value)} className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">Part of Speech</label>
+                <input type="text" value={editPos} onChange={e => setEditPos(e.target.value)} placeholder="noun, verb, adjective..." className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center border-t pt-4 dark:border-stone-800">
+              <button disabled={isSubmitting} onClick={handleDeleteFromEdit} className="text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-lg font-bold text-sm px-3 py-2 flex items-center gap-2 transition-colors disabled:opacity-50">
+                <Trash2 size={16} /> Delete Word
+              </button>
+              
+              <div className="flex gap-2">
+                <button disabled={isSubmitting} onClick={() => setEditingWord(null)} className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 font-bold text-sm px-4 py-2">Cancel</button>
+                <button disabled={isSubmitting || !editTarget.trim()} onClick={handleSaveEdit} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50">
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
