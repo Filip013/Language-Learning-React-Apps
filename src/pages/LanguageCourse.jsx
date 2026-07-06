@@ -45,9 +45,9 @@ function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 md:px-8">
-      <header className={`mb-12 border-b pb-8 text-center relative ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
+      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
-        <h1 className={`text-4xl font-bold mb-3 tracking-wider ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
+        <h1 className={`text-3xl font-bold mb-3 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>AI-Generated Chapter</p>
       </header>
       <main className="space-y-8">
@@ -82,9 +82,9 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className={`mb-12 border-b pb-8 text-center relative ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
+      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
-        <h1 className={`text-4xl font-bold mb-3 tracking-wider ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Reading'}</h1>
+        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Reading'}</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Reading & Comprehension</p>
       </header>
 
@@ -163,10 +163,11 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-16 py-12 px-4 md:px-8">
-      <header className={`mb-8 border-b pb-6 text-center ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
+    <div className="max-w-4xl mx-auto space-y-16 py-12 px-4 md:px-8">
+      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookMarked size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Audio Drills</h1>
+        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Audio Drills</h1>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Listen & Repeat</p>
       </header>
 
       {activeEpisode.drills.map((section, sectionIdx) => (
@@ -277,7 +278,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   }).length;
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className="absolute right-0 top-0">
           {!showConfirmReset ? (
@@ -293,7 +294,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
         </div>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><CheckCircle2 size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Review Quiz</h1>
-        <p className={`text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Chapter Comprehension & Vocabulary</p>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Chapter Comprehension & Vocabulary</p>
       </header>
 
       <div className="space-y-16 pb-32">
@@ -314,9 +315,30 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   </button>
                 )}
               </div>
-              <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{q.sentence?.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, userChoice ? ` ${userChoice} ` : ' ＿＿＿ ')}</p>
-
-              <div className="relative mt-6">
+              <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+                {(() => {
+                  const match = q.sentence?.match(/(_{2,}|\.{3,}|(?:_\s*){2,})/);
+                  if (!match) return q.sentence;
+                  
+                  const before = q.sentence.substring(0, match.index);
+                  const after = q.sentence.substring(match.index + match[0].length);
+                  
+                  return (
+                    <>
+                      {before}
+                      {userChoice ? (
+                        <span className={`inline-block align-bottom px-2 py-0.5 mx-1 rounded-lg border-b-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>
+                          {userChoice}
+                        </span>
+                      ) : (
+                        <span className={`inline-block align-middle min-w-[3.5em] h-[1.25em] mx-1 rounded-md border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40' : 'border-amber-300/80 bg-amber-50/60'}`}></span>
+                      )}
+                      {after}
+                    </>
+                  );
+                })()}
+              </p>
+                            <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
                   <div className="mb-6">
                     <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
@@ -351,7 +373,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
       </div>
 
       <footer className={`fixed bottom-0 left-0 right-0 py-3 px-6 backdrop-blur-md border-t font-sans z-10 ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
-        <div className="max-w-3xl mx-auto flex justify-between items-center text-stone-500">
+        <div className="max-w-4xl mx-auto flex justify-between items-center text-stone-500">
           <div className="flex gap-8 items-center w-full justify-around">
             <div className="text-center">
               <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5">Graded</span>
@@ -388,10 +410,10 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className={`mb-12 border-b pb-8 text-center relative ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><PenTool size={32} /></div>
-        <h1 className={`text-4xl font-bold mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
+        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Translate EN to {config.name.replace(' Master', '')}</p>
       </header>
 
@@ -448,10 +470,11 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className={`mb-12 border-b pb-8 text-center relative ${isDarkMode ? 'border-stone-700' : 'border-stone-200'}`}>
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Activity size={32} /></div>
-        <h1 className={`text-4xl font-bold mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Diagnostic Sweep</h1>
+        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Diagnostic Sweep</h1>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Fluency & Comprehension Check</p>
       </header>
 
       <div className="space-y-6">
@@ -548,9 +571,10 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className="mb-10 text-center">
+      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Search size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{config.name} Lexicon</h1>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Saved Vocabulary</p>
       </header>
 
       <div className={`p-6 rounded-2xl shadow-sm border mb-8 sticky top-4 z-10 ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
@@ -614,13 +638,13 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   );
 }
 
-function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList }) {
+function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, config }) {
   if (storyList.length === 0) return <div className="p-20 text-center font-sans opacity-50">Loading archive...</div>;
   const activeStoryData = storyList.find(s => s.id === activeStoryId) || storyList[0];
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className="mb-12 text-center flex flex-col items-center">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+      <header className={`mb-12 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
         
         {storyList.length > 1 && (
@@ -638,7 +662,8 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList }) {
           </div>
         )}
         
-        <h1 className={`text-4xl font-bold tracking-wider moe-font ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeStoryData.currentTitle || 'Archive'}</h1>
+        <h1 className={`text-3xl font-bold mb-3 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeStoryData.currentTitle || 'Archive'}</h1>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Story Library</p>
       </header>
       <div className="space-y-12">
         {activeStoryData.episodes?.map((ep, i) => (
@@ -1262,7 +1287,6 @@ export default function LanguageCourse({ config }) {
       {config.hasTestTab && <div className={activeTab === 'test' ? 'block animate-in fade-in duration-300' : 'hidden'}><TestTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
       {config.hasSweepTab && <div className={activeTab === 'sweep' ? 'block animate-in fade-in duration-300' : 'hidden'}><SweepTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
       <div className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={config} /></div>
-      {config.hasStories && <div className={activeTab === 'story' ? 'block animate-in fade-in duration-300' : 'hidden'}><StoryTab isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} /></div>}
-    </div>
+      {config.hasStories && <div className={activeTab === 'story' ? 'block animate-in fade-in duration-300' : 'hidden'}><StoryTab isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={config} /></div>}    </div>
   );
 }

@@ -85,7 +85,9 @@ export function useGeminiTTS(systemInstruction) {
         
         // Browsers require user interaction to play audio. 
         // Because handleSpeak is triggered by clicking a play button, this is allowed.
-        silentAudioRef.current.play().catch(e => console.warn("Background audio hack failed:", e));
+        silentAudioRef.current.play().catch(e => {
+            // console.warn("Background audio hack failed:", e);
+        });
 
         // NEW: Tell the OS that media is playing so it shows on the lock screen
         if ('mediaSession' in navigator) {
@@ -106,7 +108,7 @@ export function useGeminiTTS(systemInstruction) {
             while (textQueue.current.length > 0) {
                 const nextText = textQueue.current.shift();
                 if (nextText && nextText.trim()) {
-                    console.log("📤 Sending text to Gemini:", nextText);
+                    // console.log("📤 Sending text to Gemini:", nextText);
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                         ws.current.send(JSON.stringify({
                             clientContent: {
@@ -123,7 +125,7 @@ export function useGeminiTTS(systemInstruction) {
 
         const setupMessageHandlers = () => {
             ws.current.onclose = (event) => {
-                console.log(`🔴 Gemini TTS WebSocket Closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
+                // console.log(`🔴 Gemini TTS WebSocket Closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
             };
 
             ws.current.onmessage = async (event) => {
@@ -132,17 +134,17 @@ export function useGeminiTTS(systemInstruction) {
                 const msg = JSON.parse(rawData);
                 
                 if (msg.setupComplete) {
-                    console.log("🟢 Gemini TTS Setup Complete");
+                    // console.log("🟢 Gemini TTS Setup Complete");
                     sendNextText(); 
                 }
 
-                if (msg.error) console.error("❌ Gemini TTS Error:", msg.error);
-                if (msg.serverContent && msg.serverContent.interrupted) console.warn("⚠️ Gemini TTS Interrupted (Likely Safety Filter):", msg);
+                // if (msg.error) console.error("❌ Gemini TTS Error:", msg.error);
+                // if (msg.serverContent && msg.serverContent.interrupted) console.warn("⚠️ Gemini TTS Interrupted (Likely Safety Filter):", msg);
 
                 if (msg.serverContent) {
                     if (msg.serverContent.modelTurn) {
                         for (const part of msg.serverContent.modelTurn.parts) {
-                            if (part.text) console.info("🤖 Gemini Text Output (Should be audio!):", part.text);
+                            // if (part.text) console.info("🤖 Gemini Text Output (Should be audio!):", part.text);
                             if (part.inlineData && part.inlineData.mimeType.startsWith("audio/pcm")) {
                                 playPCMChunk(part.inlineData.data);
                             }
@@ -150,7 +152,7 @@ export function useGeminiTTS(systemInstruction) {
                     }
                     
                     if (msg.serverContent.turnComplete) {
-                        console.log("✅ Gemini TTS Turn Complete");
+                        // console.log("✅ Gemini TTS Turn Complete");
                         const checkCompletion = setInterval(() => {
                             if (activeAudioNodes.current.length === 0) {
                                 clearInterval(checkCompletion);
@@ -172,7 +174,7 @@ export function useGeminiTTS(systemInstruction) {
             };
 
             ws.current.onerror = (e) => {
-                console.error("💥 TTS WebSocket Error:", e);
+                // console.error("💥 TTS WebSocket Error:", e);
                 if (currentOnError.current) currentOnError.current();
                 alert("Audio connection failed. Check console for details.");
             };
