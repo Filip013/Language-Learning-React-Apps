@@ -9,6 +9,9 @@ export function useGeminiTTS(systemInstruction) {
     const textQueue = useRef([]); // Queue for sequential TTS requests
     const currentOnComplete = useRef(null);
     const currentOnError = useRef(null);
+    
+    // NEW: Ref to hold our silent HTML5 audio player
+    const silentAudioRef = useRef(null);
 
     const playPCMChunk = useCallback((base64Data) => {
         if (!audioContext.current) return;
@@ -46,6 +49,11 @@ export function useGeminiTTS(systemInstruction) {
         activeAudioNodes.current = [];
         textQueue.current = []; // Clear the sequence queue
         
+        // NEW: Pause the background silent audio
+        if (silentAudioRef.current) {
+            silentAudioRef.current.pause();
+        }
+
         if (audioContext.current) nextAudioTime.current = audioContext.current.currentTime; 
         if (currentOnComplete.current) currentOnComplete.current();
         currentOnComplete.current = null;
@@ -67,6 +75,26 @@ export function useGeminiTTS(systemInstruction) {
         if (audioContext.current.state === 'suspended') audioContext.current.resume();
         
         stopSpeak();
+
+        // NEW: Initialize and play the silent audio element to keep mobile JS alive
+        if (!silentAudioRef.current) {
+            // This is a tiny, valid silent MP3 file encoded in base64
+            silentAudioRef.current = new Audio('data:audio/mp3;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq');
+            silentAudioRef.current.loop = true;
+        }
+        
+        // Browsers require user interaction to play audio. 
+        // Because handleSpeak is triggered by clicking a play button, this is allowed.
+        silentAudioRef.current.play().catch(e => console.warn("Background audio hack failed:", e));
+
+        // NEW: Tell the OS that media is playing so it shows on the lock screen
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: 'Reading Text...',
+                artist: 'AI Tutor',
+            });
+            navigator.mediaSession.setActionHandler('pause', () => stopSpeak());
+        }
 
         nextAudioTime.current = audioContext.current.currentTime;
         currentOnComplete.current = onComplete;
@@ -94,7 +122,6 @@ export function useGeminiTTS(systemInstruction) {
         };
 
         const setupMessageHandlers = () => {
-            // Log when the connection closes
             ws.current.onclose = (event) => {
                 console.log(`🔴 Gemini TTS WebSocket Closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
             };
@@ -104,34 +131,18 @@ export function useGeminiTTS(systemInstruction) {
                 if (rawData instanceof Blob) rawData = await rawData.text();
                 const msg = JSON.parse(rawData);
                 
-                // 1. Log Setup Completion
                 if (msg.setupComplete) {
                     console.log("🟢 Gemini TTS Setup Complete");
-                    // Add this line so it strictly fires after setup is 100% done!
                     sendNextText(); 
                 }
 
-                // 2. Log Errors
-                if (msg.error) {
-                    console.error("❌ Gemini TTS Error:", msg.error);
-                }
-                
-                // 3. Log Safety/Interruption Events
-                if (msg.serverContent && msg.serverContent.interrupted) {
-                    console.warn("⚠️ Gemini TTS Interrupted (Likely Safety Filter):", msg);
-                }
+                if (msg.error) console.error("❌ Gemini TTS Error:", msg.error);
+                if (msg.serverContent && msg.serverContent.interrupted) console.warn("⚠️ Gemini TTS Interrupted (Likely Safety Filter):", msg);
 
                 if (msg.serverContent) {
                     if (msg.serverContent.modelTurn) {
                         for (const part of msg.serverContent.modelTurn.parts) {
-                            
-                            // 4. DIAGNOSTIC: Log text responses! 
-                            // If you see this firing, it means the model is talking instead of generating audio.
-                            if (part.text) {
-                                console.info("🤖 Gemini Text Output (Should be audio!):", part.text);
-                            }
-
-                            // 5. Handle Audio
+                            if (part.text) console.info("🤖 Gemini Text Output (Should be audio!):", part.text);
                             if (part.inlineData && part.inlineData.mimeType.startsWith("audio/pcm")) {
                                 playPCMChunk(part.inlineData.data);
                             }
@@ -146,6 +157,9 @@ export function useGeminiTTS(systemInstruction) {
                                 
                                 const hasMore = sendNextText();
                                 if (!hasMore) {
+                                    // NEW: Pause the silent background audio when all TTS is finished
+                                    if (silentAudioRef.current) silentAudioRef.current.pause();
+
                                     if (currentOnComplete.current) {
                                         currentOnComplete.current();
                                         currentOnComplete.current = null;
@@ -174,12 +188,10 @@ export function useGeminiTTS(systemInstruction) {
                             responseModalities: ["AUDIO"], 
                             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } } } 
                         },
-                        // safetySettings removed here because it causes WS connection refusal
                         systemInstruction: { parts: [{ text: systemInstruction }] }
                     }
                 };
                 ws.current.send(JSON.stringify(setupMessage));
-                //setTimeout(sendNextText, 500); 
             };
             setupMessageHandlers();
         } else {
