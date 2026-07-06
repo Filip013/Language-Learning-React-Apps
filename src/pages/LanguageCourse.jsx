@@ -92,7 +92,7 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
         {Array.isArray(reading.definitions) && reading.definitions.length > 0 && (
           <section className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
             <div className={`flex items-center justify-between mb-6 border-b pb-4 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
-              <h2 className="text-2xl font-bold tracking-wide">Definíciók (Definitions)</h2>
+              <h2 className="text-2xl font-bold tracking-wide">Definitions</h2>
               <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'defs'} onClick={() => playAudio('defs', reading.definitions.map(d=>d.word + ". " + d.text).join(' '))} />
             </div>
             <ul className="space-y-3 text-lg leading-relaxed">
@@ -354,12 +354,12 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
-                        {config.id === 'mandarin' ? '驗證答案 (Grade Answer)' : 'Grade Answer'}
+                        Grade Answer
                      </button>
                     ) : (
                       <div className="flex items-center gap-4 animate-in duration-300 w-full justify-between">
                         <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {isCorrect ? (config.id === 'mandarin' ? "答對了 (Correct!)" : "Correct!") : (config.id === 'mandarin' ? "答錯了 (Incorrect)" : "Incorrect")}
+                          {isCorrect ? "Correct!" : "Incorrect"}
                         </span>
                         <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} size={18} />
                       </div>

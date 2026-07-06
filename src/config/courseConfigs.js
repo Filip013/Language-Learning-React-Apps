@@ -29,14 +29,6 @@ export const courseConfigs = {
         hasReading: false,
         hasTestTab: false,
         hasSweepTab: false,
-        
-        // Custom UI Text
-        uiText: {
-            gradeAnswer: '驗證答案 (Grade Answer)',
-            revealOptions: '顯示選項 (Reveal Options)',
-            correct: '答對了 (Correct!)',
-            incorrect: '答錯了 (Incorrect!)'
-        },
 
         // Add strict rules for Taiwanese Mandarin
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Mandarin Chinese, use a strict Taiwanese Mandarin (Guoyu) accent and traditional pronunciation.",
