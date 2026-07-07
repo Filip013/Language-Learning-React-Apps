@@ -44,7 +44,7 @@ function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
         <h1 className={`text-3xl font-bold mb-3 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
@@ -81,7 +81,7 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
   const targetText = reading[config.primaryTextKey];
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Reading'}</h1>
@@ -163,7 +163,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-16 py-12 px-4 md:px-8">
+    <div className="max-w-6xl mx-auto space-y-16 py-12 px-4 md:px-8">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookMarked size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Audio Drills</h1>
@@ -278,7 +278,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   }).length;
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className="absolute right-0 top-0">
           {!showConfirmReset ? (
@@ -380,7 +380,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
       </div>
 
       <footer className={`fixed bottom-0 left-0 right-0 py-3 px-6 backdrop-blur-md border-t font-sans z-10 ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
-        <div className="max-w-4xl mx-auto flex justify-between items-center text-stone-500">
+        <div className="max-w-6xl mx-auto flex justify-between items-center text-stone-500">
           <div className="flex gap-8 items-center w-full justify-around">
             <div className="text-center">
               <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5">Graded</span>
@@ -417,7 +417,7 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><PenTool size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
@@ -477,7 +477,7 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Activity size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Diagnostic Sweep</h1>
@@ -771,7 +771,7 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   if (!globalLexicon || Object.keys(globalLexicon).length === 0) return <div className="p-20 text-center text-stone-500 font-sans">Loading master lexicon...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans relative">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans relative">
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Search size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{config.name} Lexicon</h1>
@@ -820,8 +820,11 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       <div className="space-y-10">
         {Object.entries(groupedWords).map(([groupTitle, items]) => (
           <section key={groupTitle} className="animate-in duration-500">
-            <h2 className={`text-2xl font-bold font-sans mb-6 border-b-2 pb-2 ${isDarkMode ? 'text-stone-300 border-stone-700' : 'text-stone-700 border-stone-200'}`}>{groupTitle}</h2>
-            <div className="flex flex-wrap gap-3">
+            <h2 className={`text-2xl font-bold font-sans mb-6 border-b-2 pb-2 flex items-baseline gap-2 ${isDarkMode ? 'text-stone-300 border-stone-700' : 'text-stone-700 border-stone-200'}`}>
+              {groupTitle} <span className="text-lg font-medium opacity-50">({items.length})</span>
+            </h2>
+            
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
               {items.map(({ word, listKey }, idx) => {
                 const isObj = typeof word === 'object' && word !== null;
                 const displayWord = isObj ? (word[config.primaryTextKey] || word.word) : word;
@@ -900,7 +903,7 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
   const activeStoryData = storyList.find(s => s.id === activeStoryId) || storyList[0];
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
       <header className={`mb-12 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
         
@@ -1382,33 +1385,36 @@ export default function LanguageCourse({ config }) {
       </nav>
 
       {activeTab === 'studio' && (
-        <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 animate-in fade-in duration-300">
-          <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className={`p-4 rounded-2xl shadow-lg ${isDarkMode ? 'bg-stone-800 text-stone-100' : 'bg-stone-800 text-white'}`}><MessageSquare size={32} /></div>
-              <div><h2 className="text-2xl md:text-3xl font-bold">Studio</h2><p className={`text-sm mt-1 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Generate next lesson</p></div>
+        <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 animate-in fade-in duration-300">
+          <header className={`mb-8 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+            <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
+              <MessageSquare size={32} />
             </div>
-            
-            <div className="relative shrink-0">
-              <button onClick={() => setDropdownOpen(!dropdownOpen)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${isDarkMode ? 'bg-stone-800 border-stone-700 hover:bg-stone-700 text-stone-200' : 'bg-white border-stone-200 hover:bg-stone-50 text-stone-700'}`}>
-                <List size={16} className={isDarkMode ? 'text-amber-400' : 'text-amber-600'} />
-                <span className="max-w-[150px] truncate font-bold text-sm">{activeEpisode ? activeEpisode.title : 'Archive'}</span>
-                <ChevronDown size={16} />
-              </button>
-              {dropdownOpen && (
-                <div className={`absolute right-0 mt-2 w-72 rounded-2xl shadow-xl border overflow-hidden z-50 ${isDarkMode ? 'bg-stone-900 border-stone-700' : 'bg-white border-stone-200'}`}>
-                  <div className={`px-4 py-3 text-[10px] font-bold uppercase tracking-widest border-b ${isDarkMode ? 'bg-stone-950 border-stone-800 text-stone-500' : 'bg-stone-50 border-stone-100 text-stone-400'}`}>Past Episodes</div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {episodesList.map(ep => (
-                      <button key={ep.id} onClick={() => { setActiveEpisodeId(ep.id); setDropdownOpen(false); }} className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${activeEpisodeId === ep.id ? (isDarkMode ? 'bg-amber-900/30 text-amber-400' : 'bg-amber-50 text-amber-700') : (isDarkMode ? 'hover:bg-stone-800 text-stone-300' : 'hover:bg-stone-50 text-stone-700')}`}>
-                        {ep.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Studio</h1>
+            <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Generate next lesson</p>
           </header>
+
+          <div className="mb-8 relative z-20">
+            <button onClick={() => setDropdownOpen(!dropdownOpen)} className={`w-full flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border-2 shadow-sm transition-all ${isDarkMode ? 'bg-stone-900 border-stone-800 hover:border-stone-700 text-stone-200' : 'bg-white border-stone-200 hover:border-stone-300 text-stone-700'}`}>
+              <div className="flex items-center gap-3 overflow-hidden">
+                <List size={20} className={`shrink-0 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+                <span className="font-bold text-lg truncate">{activeEpisode ? activeEpisode.title : 'Archive'}</span>
+              </div>
+              <ChevronDown size={20} className={`shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {dropdownOpen && (
+              <div className={`absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-xl border overflow-hidden z-50 text-left ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
+                <div className={`px-4 py-3 text-[10px] font-bold uppercase tracking-widest border-b ${isDarkMode ? 'bg-stone-950 border-stone-800 text-stone-500' : 'bg-stone-50 border-stone-100 text-stone-400'}`}>Past Episodes</div>
+                <div className="max-h-72 overflow-y-auto">
+                  {episodesList.map(ep => (
+                    <button key={ep.id} onClick={() => { setActiveEpisodeId(ep.id); setDropdownOpen(false); }} className={`w-full text-left px-6 py-4 text-base font-medium transition-colors border-b last:border-0 ${activeEpisodeId === ep.id ? (isDarkMode ? 'bg-amber-900/30 text-amber-400 border-stone-800' : 'bg-amber-50 text-amber-700 border-stone-100') : (isDarkMode ? 'hover:bg-stone-800 text-stone-300 border-stone-800' : 'hover:bg-stone-50 text-stone-700 border-stone-100')}`}>
+                      {ep.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <section className={`p-6 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
             <h3 className="text-xl font-bold mb-4 font-sans">Prompt the AI</h3>
