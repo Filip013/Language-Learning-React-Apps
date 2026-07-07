@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus, Edit } from 'lucide-react';
+import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus, Edit, FileText } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
@@ -12,12 +12,60 @@ function shuffleArray(array) {
 
 const removeDiacritics = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
 
-function PlayButton({ isDarkMode, onClick, size = 24, isLoading = false, isPlaying = false }) {
+function PlayButton({ isDarkMode, onClick, size = 20, isLoading = false, isPlaying = false }) {
   const colorClasses = isDarkMode ? 'bg-stone-700 text-stone-300 hover:bg-stone-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200';
   return (
-    <button disabled={isLoading} onClick={onClick} className={`flex items-center justify-center rounded-full transition-colors p-3 ${colorClasses} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+    <button disabled={isLoading} onClick={onClick} className={`flex items-center justify-center rounded-full transition-colors p-2.5 ${colorClasses} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
       {isLoading ? <Loader2 size={size} className="animate-spin text-amber-500" /> : isPlaying ? <Pause size={size} className="text-amber-500 animate-pulse" /> : <Volume2 size={size} />}
     </button>
+  );
+}
+
+function NoteButton({ isDarkMode, hasNote, onClick, size = 20 }) {
+  return (
+    <button onClick={onClick} title="User Note" className={`flex items-center justify-center rounded-full transition-colors p-2.5 ${hasNote ? (isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600') : (isDarkMode ? 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200' : 'bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-800')}`}>
+      <FileText size={size} className={hasNote ? "fill-current opacity-20" : ""} />
+    </button>
+  );
+}
+
+function UserNoteModal({ isDarkMode, isOpen, noteTitle, initialText, onClose, onSave }) {
+  const [text, setText] = useState(initialText || '');
+
+  // Reset text whenever the modal opens with a new note
+  useEffect(() => {
+    if (isOpen) setText(initialText || '');
+  }, [isOpen, initialText]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
+      <div className={`w-full max-w-md p-6 rounded-2xl shadow-xl border ${isDarkMode ? 'bg-stone-900 border-stone-700' : 'bg-white border-stone-200'}`}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
+            <FileText size={20} className="text-amber-500" /> User Note
+          </h3>
+          <button onClick={onClose} className="p-2 rounded-full text-stone-400 hover:text-stone-600 dark:hover:text-stone-300">
+             <XCircle size={20} />
+          </button>
+        </div>
+        <p className={`text-sm mb-4 truncate ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{noteTitle}</p>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Log your mistake, note, or mnemonic here..."
+          rows="4"
+          className={`w-full p-4 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all mb-6 resize-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 placeholder-stone-600' : 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400'}`}
+        />
+        <div className="flex justify-end gap-3">
+           <button onClick={onClose} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${isDarkMode ? 'text-stone-400 hover:text-stone-200' : 'text-stone-500 hover:text-stone-800'}`}>Cancel</button>
+           <button onClick={() => onSave(text)} className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm ${isDarkMode ? 'bg-amber-600 hover:bg-amber-500 text-stone-950' : 'bg-amber-500 hover:bg-amber-400 text-stone-900'}`}>
+             Save Note
+           </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -67,7 +115,7 @@ function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
   );
 }
 
-function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config }) {
+function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, progressState, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   const reading = activeEpisode?.reading;
   if (!reading) return null;
@@ -79,6 +127,7 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
   };
 
   const targetText = reading[config.primaryTextKey];
+  const notes = progressState?.notes || {};
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
@@ -129,9 +178,12 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
 
         {Array.isArray(reading.focus) && reading.focus.length > 0 && (
           <section className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
-            <div className={`flex items-center gap-3 mb-6 border-b pb-4 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
-              <Lightbulb className="text-amber-500" size={24} />
-              <h2 className="text-2xl font-bold tracking-wide">Focus & Grammar</h2>
+            <div className={`flex items-center justify-between mb-6 border-b pb-4 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
+              <div className="flex items-center gap-3">
+                <Lightbulb className="text-amber-500" size={24} />
+                <h2 className="text-2xl font-bold tracking-wide">Focus & Grammar</h2>
+              </div>
+              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes['reading_focus']} onClick={() => handleOpenNote('reading_focus', 'Focus & Grammar Notes', notes['reading_focus'])} />
             </div>
             <div className="space-y-6 text-lg">
               {reading.focus.map((item, idx) => (
@@ -148,8 +200,9 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
   );
 }
 
-function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, isLatestEpisode }) {
+function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, isLatestEpisode, handleOpenNote }) {
   const listenedIds = progressState.listenedDrills || [];
+  const notes = progressState.notes || {};
   const [playingId, setPlayingId] = useState(null);
 
   if (!activeEpisode?.drills?.length) return <div className="p-10 text-center font-sans opacity-50">No drills generated yet.</div>;
@@ -157,12 +210,11 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   const playDrill = (ex, exId, isListened) => {
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
-    const targetText = ex[config.primaryTextKey]; // Cleaned up magic strings!
+    const targetText = ex[config.primaryTextKey]; 
     handleSpeak([targetText, ex.english, targetText], () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
   return (
-    // 1. Removed space-y-16 from this top container
     <div className="max-w-6xl mx-auto py-12 px-4 md:px-8">
       
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
@@ -171,7 +223,6 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Listen & Repeat</p>
       </header>
 
-      {/* 2. ADDED the wrapper div here with space-y-16 */}
       <div className="space-y-16">
         {activeEpisode.drills.map((section, sectionIdx) => (
           
@@ -190,7 +241,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
               {section.examples?.map((ex, exIndex) => {
                 const exId = `drill_${sectionIdx}_${exIndex}`;
                 const isListened = !isLatestEpisode || listenedIds.includes(exId);
-                const targetText = ex[config.primaryTextKey]; // Cleaned up magic strings!
+                const targetText = ex[config.primaryTextKey];
                 
                 return (
                   <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
@@ -199,7 +250,10 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
                         <h3 className={`text-xl font-bold font-sans tracking-wide ${isDarkMode ? 'text-stone-400' : 'text-stone-450'}`}>Example {exIndex + 1}</h3>
                         {isListened && <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Listened ✓</span>}
                       </div>
-                      <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(ex, exId, isListened)} size={20} />
+                      <div className="flex items-center gap-2">
+                        <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
+                        <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(ex, exId, isListened)} size={20} />
+                      </div>
                     </div>
                     <div className="relative mt-2">
                       <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
@@ -244,13 +298,12 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
           </section>
         ))}
       </div>
-      {/* End of new wrapper div */}
       
     </div>
   );
 }
 
-function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config }) {
+function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [shuffledData, setShuffledData] = useState([]);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [playingId, setPlayingId] = useState(null);
@@ -258,6 +311,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   const userSelections = progressState.selections || {};
   const revealedIds = progressState.revealed || [];
   const gradedIds = progressState.gradedIds || [];
+  const notes = progressState.notes || {};
 
   useEffect(() => {
     if (activeEpisode?.quiz) {
@@ -320,15 +374,17 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
           return (
             <div key={q.id} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
               
-              {/* FIX 1: Locked height of the header so it doesn't shrink when Eye is clicked */}
               <div className="flex items-center justify-between mb-4 min-h-[40px]">
                 <div className="text-sm text-stone-400 font-bold uppercase tracking-wider">Question {String(q.id + 1).padStart(2, '0')}</div>
-                <button 
-                  onClick={() => !isRevealed && updateFirebase({ revealed: [...revealedIds, qId] })} 
-                  className={`p-2.5 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : 'opacity-0 pointer-events-none'}`}
-                >
-                  <Eye size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
+                  <button 
+                    onClick={() => !isRevealed && updateFirebase({ revealed: [...revealedIds, qId] })} 
+                    className={`p-2.5 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : 'opacity-0 pointer-events-none'}`}
+                  >
+                    <Eye size={18} />
+                  </button>
+                </div>
               </div>
 
               <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
@@ -342,7 +398,6 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   return (
                     <>
                       {before}
-                      {/* FIX 2: Made empty and filled blanks mathematically identical in padding & borders */}
                       {userChoice ? (
                         <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>
                           {userChoice}
@@ -371,10 +426,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                     return (
                       <div className={`grid gap-3 mb-6 ${gridClasses}`}>
                         {q.options.map((option, optIdx) => {
-                          
-                          {/* FIX 3: Updated text size from text-2xl to text-3xl to perfectly match the main sentence size */}
                           let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
-                          
                           if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
                           else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
                           return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
@@ -383,7 +435,6 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                     );
                   })()}
                   
-                  {/* FIX 4: Locked height of the grading button area */}
                   <div className="flex justify-between items-center mt-4 font-sans min-h-[44px]">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
@@ -425,13 +476,13 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   );
 }
 
-function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config }) {
+function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   if (!activeEpisode?.test?.length) return null;
 
   const mst = progressState.testMastered || {};
   const rev = progressState.testRevealed || {};
-  const mis = progressState.mistakes || {};
+  const notes = progressState.notes || {};
 
   const playAnswer = (id, text, isRev) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
@@ -457,18 +508,16 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
             <div key={qId} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
               <div className="flex items-center justify-between mb-4 border-b pb-4 border-stone-100 dark:border-stone-800">
                 <div className="text-sm font-bold uppercase tracking-wider text-amber-500">Sentence {String(i + 1).padStart(2, '0')}</div>
-                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playAnswer(qId, item[config.primaryTextKey], rev[qId])} size={20} />
+                <div className="flex items-center gap-2">
+                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Translate: ${item.english}`, notes[qId])} />
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playAnswer(qId, item[config.primaryTextKey], rev[qId])} size={20} />
+                </div>
               </div>
               <p className={`text-xl font-bold leading-relaxed mb-6 ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>{item.english}</p>
               
               <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!rev[qId] ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'} pt-4 border-t border-dashed border-stone-200 dark:border-stone-700`}>
-                  <p className={`text-2xl font-bold mb-4 ${config.fontClass || ''} ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{item[config.primaryTextKey]}</p>
-                  <textarea 
-                    value={mis[qId] || ''} onChange={e => updateFirebase({ mistakes: { ...mis, [qId]: e.target.value } })}
-                    placeholder="Log your mistake or note here..." rows="2"
-                    className={`w-full p-4 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 placeholder-stone-600' : 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400'}`} 
-                  />
+                  <p className={`text-2xl font-bold ${config.fontClass || ''} ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{item[config.primaryTextKey]}</p>
                 </div>
                 {!rev[qId] && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -486,12 +535,13 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   );
 }
 
-function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config }) {
+function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   if (!activeEpisode?.sweep?.length) return null;
 
   const mst = progressState.sweepMastered || {};
   const rev = progressState.sweepRevealed || {};
+  const notes = progressState.notes || {};
 
   const playSweep = (id, text, isRev) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
@@ -519,7 +569,10 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
             <div key={qId} className={`p-6 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm font-bold uppercase tracking-wider text-stone-400">Sentence {String(i + 1).padStart(2, '0')}</div>
-                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playSweep(qId, textToRead, rev[qId])} size={20} />
+                <div className="flex items-center gap-2">
+                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Sweep: ${item.word}`, notes[qId])} />
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playSweep(qId, textToRead, rev[qId])} size={20} />
+                </div>
               </div>
               
               <div className="relative mt-4">
@@ -845,7 +898,6 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
             
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
               {items.map(({ word, listKey }, idx) => {
-                // --- ADD THESE STRING-SAFE CHECKS ---
                 const isString = typeof word === 'string';
                 const displayWord = isString ? word : (word[config.primaryTextKey] || word.word);
                 const displayEn = isString ? "" : (word.english || word.meaning || word.translation || "");
@@ -927,7 +979,6 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
   return (
     <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans animate-in fade-in duration-300">
       
-      {/* 1. Header (Mirrors Studio exactly) */}
       <header className={`mb-8 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
           <Book size={32} />
@@ -936,7 +987,6 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Browse your generated books</p>
       </header>
 
-      {/* 2. Dropdown (Visually mirrors Studio button, but uses native select for mobile ease) */}
       {storyList.length > 1 && (
         <div className="mb-12 relative z-20 group">
           <div className={`w-full flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border-2 shadow-sm transition-all group-hover:border-stone-400 ${isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-200' : 'bg-white border-stone-200 text-stone-700'}`}>
@@ -948,7 +998,6 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
             </div>
             <ChevronDown size={20} className="shrink-0 pointer-events-none" />
           </div>
-          {/* Invisible select element overlaid on top */}
           <select 
             value={activeStoryId}
             onChange={(e) => setActiveStoryId(e.target.value)}
@@ -963,7 +1012,6 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
         </div>
       )}
 
-      {/* 3. Nice Large Title */}
       <div className="mb-12 text-center animate-in slide-in-from-bottom-4 duration-700">
          <h2 className={`text-4xl md:text-5xl font-bold mb-6 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
            {activeStoryData.currentTitle || 'Archive'}
@@ -971,7 +1019,6 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
          <div className={`h-1.5 w-24 mx-auto rounded-full ${isDarkMode ? 'bg-amber-600' : 'bg-amber-400'}`}></div>
       </div>
 
-      {/* 4. Episodes */}
       <div className="space-y-12">
         {activeStoryData.episodes?.map((ep, i) => (
           <article key={ep.id || i} className={`p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
@@ -1014,9 +1061,25 @@ export default function LanguageCourse({ config }) {
   const fileInputRef = useRef(null);
   const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
 
+  // User Notes Modal State
+  const [noteModal, setNoteModal] = useState({ isOpen: false, id: null, title: '', initialText: '' });
+
+  const handleOpenNote = useCallback((id, title, existingNote) => {
+    setNoteModal({ isOpen: true, id, title, initialText: existingNote || '' });
+  }, []);
+
+  const handleSaveNote = useCallback((newText) => {
+    if (noteModal.id && activeEpisodeId && user) {
+       const currentNotes = progressState.notes || {};
+       const updatedNotes = { ...currentNotes, [noteModal.id]: newText.trim() };
+       setProgressState(prev => ({ ...prev, notes: updatedNotes }));
+       db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId).set({ notes: updatedNotes }, { merge: true });
+    }
+    setNoteModal({ isOpen: false, id: null, title: '', initialText: '' });
+  }, [noteModal.id, progressState.notes, activeEpisodeId, user, config]);
+
   // --- CENTRALIZED PROMPT BUILDER ---
   const generatePromptString = async (isForAPI = false) => {
-    // Prioritize 'accumulated' or 'entries' so the newest custom words appear first
     let prioritizedWords = [];
     let otherWords = [];
     
@@ -1031,7 +1094,7 @@ export default function LanguageCourse({ config }) {
     });
 
     const flatLexicon = [...prioritizedWords, ...otherWords].map(w => {
-        if (typeof w === 'string') return w; // <--- Add this line
+        if (typeof w === 'string') return w;
         if (w && typeof w === 'object') return w.word || w[config.primaryTextKey] || w.targetText || '';
         return '';
     }).filter(Boolean).join(', ');
@@ -1046,7 +1109,6 @@ export default function LanguageCourse({ config }) {
     let pastContext = '';
     const pastEps = episodesList.slice(0, 10).reverse();
     
-    // NEW: Fetch all progress documents at the exact same time
     const progressPromises = pastEps.map(ep => 
       db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get()
     );
@@ -1056,9 +1118,9 @@ export default function LanguageCourse({ config }) {
       const ep = pastEps[i];
       let epContext = '';
       
-      // NEW: Grab the result from our pre-fetched array instead of waiting for the network
       const progSnap = progressSnaps[i];
       const prog = progSnap.exists ? progSnap.data() : {};
+      const notes = { ...(prog.mistakes || prog.test?.mistakes || {}), ...(prog.notes || {}) };
 
       if (ep.userPrompt) epContext += `User Request: ${ep.userPrompt}\n`;
       if (ep.tutorIntroduction) epContext += `Tutor Response: ${ep.tutorIntroduction}\n\n`;
@@ -1068,10 +1130,26 @@ export default function LanguageCourse({ config }) {
           if (targetText) epContext += `Reading Passage:\n${targetText}\n\n`;
           if (ep.reading.focus && ep.reading.focus.length > 0) {
               const focusNotes = ep.reading.focus.map(f => `- ${f.word}: ${f.explanation || f.text}`).join('\n');
-              epContext += `Focus:\n${focusNotes}\n\n`;
+              epContext += `Focus:\n${focusNotes}\n`;
+              if (notes['reading_focus']) epContext += `User Note: ${notes['reading_focus']}\n`;
+              epContext += `\n`;
           }
       }
       
+      if (ep.drills) {
+        let drillNotes = [];
+        ep.drills.forEach((section, sIdx) => {
+            section.examples?.forEach((ex, eIdx) => {
+                const exId = `drill_${sIdx}_${eIdx}`;
+                if (notes[exId]) {
+                    const targetText = ex[config.primaryTextKey];
+                    drillNotes.push(`- Drill "${targetText}": ${notes[exId]}`);
+                }
+            });
+        });
+        if (drillNotes.length > 0) epContext += `Drill Notes:\n${drillNotes.join('\n')}\n\n`;
+      }
+
       if (ep.quiz) {
         let quizDetails = [];
         const selections = prog.selections || {};
@@ -1091,11 +1169,13 @@ export default function LanguageCourse({ config }) {
                 ? q.distractors.join(', ') 
                 : (q.options ? q.options.filter(o => o !== correctAns).join(', ') : 'None');
 
+            let noteStr = notes[qId] ? ` | User Note: ${notes[qId]}` : '';
+
             if (userAns) {
                 const isCorrect = (userAns === correctAns);
-                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: ${isCorrect ? 'Correct' : 'Incorrect (Guessed: ' + userAns + ')'}`);
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: ${isCorrect ? 'Correct' : 'Incorrect (Guessed: ' + userAns + ')'}${noteStr}`);
             } else {
-                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: Not answered`);
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: Not answered${noteStr}`);
             }
         });
         
@@ -1104,9 +1184,11 @@ export default function LanguageCourse({ config }) {
 
       if (ep.sweep) {
          let sweepSentences = [];
-         ep.sweep.forEach(s => {
+         ep.sweep.forEach((s, sIdx) => {
              const text = s[config.primaryTextKey] || s.hungarian;
-             if (text) sweepSentences.push(text);
+             const sId = `sweep_${sIdx}`;
+             let noteStr = notes[sId] ? ` (User Note: ${notes[sId]})` : '';
+             if (text) sweepSentences.push(text + noteStr);
          });
          if (sweepSentences.length > 0) epContext += `Sweep Sentences:\n- ${sweepSentences.join('\n- ')}\n\n`;
       }
@@ -1114,7 +1196,8 @@ export default function LanguageCourse({ config }) {
       if (ep.test) {
         let testSentences = [];
         ep.test.forEach((t, tIdx) => {
-            const m = prog.mistakes?.[`test_${tIdx}`] || prog.test?.mistakes?.[`test_${tIdx}`];
+            const qId = `test_${tIdx}`;
+            const m = notes[qId];
             const correctAns = t[config.primaryTextKey] || t.hungarian;
             if (m && m.trim()) testSentences.push(`EN: ${t.english} -> Correct: ${correctAns} | User Note: ${m.trim()}`);
             else testSentences.push(`EN: ${t.english} -> Correct: ${correctAns}`);
@@ -1159,7 +1242,6 @@ export default function LanguageCourse({ config }) {
   const handleGenerateLLM = async () => {
     if (!topicInput.trim() || !user) return;
     
-    // SAFE GUARD: Do not execute if Lexicon hasn't loaded
     if (!globalLexicon) {
       setGenError("Database is still syncing. Please wait a few seconds and try again.");
       setShowGenerateConfirm(false);
@@ -1284,7 +1366,7 @@ export default function LanguageCourse({ config }) {
             gradedIds: normalizedGraded,
             testMastered: d.testMastered || d.test?.mastered || {},
             testRevealed: d.testRevealed || d.test?.revealed || {},
-            mistakes: d.mistakes || d.test?.mistakes || {},
+            notes: { ...(d.mistakes || d.test?.mistakes || {}), ...(d.notes || {}) },
             sweepMastered: d.sweepMastered || d.sweep?.mastered || {},
             sweepRevealed: d.sweepRevealed || d.sweep?.revealed || {},
             listenedDrills: d.listenedDrills || Object.keys(d.drills?.mastered || {}).map(id => id.replace(/_/g, '-')), 
@@ -1310,7 +1392,6 @@ export default function LanguageCourse({ config }) {
   };
 
   const processImportedJSON = async (textToParse) => {
-    // SAFE GUARD: Do not execute if Lexicon hasn't loaded
     if (!globalLexicon) {
       setGenError("Error: Database is still syncing. Please wait a moment and try again.");
       setIsGenerating(false);
@@ -1330,7 +1411,6 @@ export default function LanguageCourse({ config }) {
       const validNewLemmas = (lessonJSON.newLemmas || []).map(w => {
           const uniqueId = `dict_${Date.now()}_${Math.random().toString(36).substring(7)}`;
           
-          // 1. If the AI took a shortcut and returned raw strings:
           if (typeof w === 'string') {
               return {
                   id: uniqueId,
@@ -1341,9 +1421,7 @@ export default function LanguageCourse({ config }) {
               };
           }
           
-          // 2. If the AI returned objects properly:
           if (typeof w === 'object' && w !== null) {
-              // Safeguard in case the AI hallucinates a weird key like "Target" or "lemma"
               const targetText = w[config.primaryTextKey] || w.word || w.target || w.Target || w.lemma || Object.values(w)[0] || '';
               
               return { 
@@ -1637,13 +1715,23 @@ export default function LanguageCourse({ config }) {
       )}
 
       {config.hasStories && <div className={activeTab === 'episode' ? 'block animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
-      {config.hasReading && <div className={activeTab === 'reading' ? 'block animate-in fade-in duration-300' : 'hidden'}><ReadingTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
-      <div className={activeTab === 'drill' ? 'block animate-in fade-in duration-300' : 'hidden'}><DrillTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} isLatestEpisode={isLatestEpisode} /></div>
-      <div className={activeTab === 'quiz' ? 'block animate-in fade-in duration-300' : 'hidden'}><QuizTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>
-      {config.hasTestTab && <div className={activeTab === 'test' ? 'block animate-in fade-in duration-300' : 'hidden'}><TestTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
-      {config.hasSweepTab && <div className={activeTab === 'sweep' ? 'block animate-in fade-in duration-300' : 'hidden'}><SweepTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
+      {config.hasReading && <div className={activeTab === 'reading' ? 'block animate-in fade-in duration-300' : 'hidden'}><ReadingTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} progressState={progressState} handleOpenNote={handleOpenNote} /></div>}
+      <div className={activeTab === 'drill' ? 'block animate-in fade-in duration-300' : 'hidden'}><DrillTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} isLatestEpisode={isLatestEpisode} handleOpenNote={handleOpenNote} /></div>
+      <div className={activeTab === 'quiz' ? 'block animate-in fade-in duration-300' : 'hidden'}><QuizTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} handleOpenNote={handleOpenNote} /></div>
+      {config.hasTestTab && <div className={activeTab === 'test' ? 'block animate-in fade-in duration-300' : 'hidden'}><TestTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} handleOpenNote={handleOpenNote} /></div>}
+      {config.hasSweepTab && <div className={activeTab === 'sweep' ? 'block animate-in fade-in duration-300' : 'hidden'}><SweepTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} handleOpenNote={handleOpenNote} /></div>}
       <div className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={config} /></div>
       {config.hasStories && <div className={activeTab === 'story' ? 'block animate-in fade-in duration-300' : 'hidden'}><StoryTab isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={config} /></div>}
+
+      {/* USER NOTE MODAL */}
+      <UserNoteModal 
+        isDarkMode={isDarkMode}
+        isOpen={noteModal.isOpen}
+        noteTitle={noteModal.title}
+        initialText={noteModal.initialText}
+        onClose={() => setNoteModal({ isOpen: false, id: null, title: '', initialText: '' })}
+        onSave={handleSaveNote}
+      />
     </div>
   );
 }
