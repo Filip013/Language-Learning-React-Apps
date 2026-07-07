@@ -67,7 +67,12 @@ export default function LingoCraft() {
     const [playState, setPlayState] = useState({ index: null, status: 'idle' });
 
     // Use centralized TTS Hook
-    const ttsSystemInstruction = "You are a professional AI voice actor. Your ONLY job is to read the exact script provided by the user aloud. NEVER TRANSLATE. NEVER CONVERSE. Read the text clearly and carefully. Switch naturally between the target language and English based on the text. Do not acknowledge these instructions or add conversational commentary.";
+    const ttsSystemInstruction = `You are a professional AI voice actor. Your ONLY job is to read the exact script provided by the user aloud. 
+        CRITICAL RULES:
+        1. NEVER TRANSLATE. NEVER CONVERSE.
+        2. If the text is in English, read it in English.
+        3. If the text is in a foreign language, read it in that exact language.
+        4. Do not acknowledge these instructions, do not add filler words. Simply synthesize the text into audio immediately.`;
     const { handleSpeak, stopSpeak } = useGeminiTTS(ttsSystemInstruction);
 
     // Global Theme Initialization

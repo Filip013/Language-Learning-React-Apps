@@ -700,7 +700,16 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
     
     // SAFE MATCH: Strictly checking unique object IDs prevents overwriting issues
-    const isMatch = (w) => w.id && editingWord.id && w.id === editingWord.id;
+    const isMatch = (w) => {
+        // 1. If both have an ID, do a strict ID match
+        if (w.id && editingWord.id) {
+            return w.id === editingWord.id;
+        }
+        // 2. Fallback for legacy words without IDs: match by target language text
+        const targetW = w[config.primaryTextKey] || w.word;
+        const targetEdit = editingWord[config.primaryTextKey] || editingWord.word;
+        return targetW && targetEdit && targetW === targetEdit;
+    };
 
     try {
       if (isObjectArray) {
@@ -724,13 +733,22 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
     
     // SAFE MATCH: Strictly checking unique object IDs 
-    const isMatch = (w) => w.id && editingWord.id && w.id === editingWord.id;
+    const isMatch = (w) => {
+        // 1. If both have an ID, do a strict ID match
+        if (w.id && editingWord.id) {
+            return w.id === editingWord.id;
+        }
+        // 2. Fallback for legacy words without IDs: match by target language text
+        const targetW = w[config.primaryTextKey] || w.word;
+        const targetEdit = editingWord[config.primaryTextKey] || editingWord.word;
+        return targetW && targetEdit && targetW === targetEdit;
+    };
 
     try {
       if (isObjectArray) {
           const list = globalLexicon.entries || globalLexicon || [];
           const newList = list.filter(w => !isMatch(w));
-          await lexRef.set({ entries: newList }); 
+          await lexRef.set({ entries: newList }, { merge: true }); 
       } else {
           const list = globalLexicon[editListKey] || [];
           const newList = list.filter(w => !isMatch(w));
@@ -798,11 +816,13 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
             </h2>
             
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-              {items.map(({ word, listKey }) => {
-                const displayWord = word[config.primaryTextKey] || word.word;
-                const displayEn = word.english || word.meaning || word.translation || "";
-                const pos = word.pos || "";
-                const wId = word.id;
+              {items.map(({ word, listKey }, idx) => {
+                // --- ADD THESE STRING-SAFE CHECKS ---
+                const isString = typeof word === 'string';
+                const displayWord = isString ? word : (word[config.primaryTextKey] || word.word);
+                const displayEn = isString ? "" : (word.english || word.meaning || word.translation || "");
+                const pos = isString ? "" : (word.pos || "");
+                const wId = isString ? `raw_${idx}_${displayWord}` : word.id;
                 const isDuplicate = duplicateWords.has((displayWord || "").toLowerCase().trim());
 
                 return (
@@ -952,6 +972,7 @@ export default function LanguageCourse({ config }) {
     });
 
     const flatLexicon = [...prioritizedWords, ...otherWords].map(w => {
+        if (typeof w === 'string') return w; // <--- Add this line
         if (w && typeof w === 'object') return w.word || w[config.primaryTextKey] || w.targetText || '';
         return '';
     }).filter(Boolean).join(', ');
@@ -1241,10 +1262,32 @@ export default function LanguageCourse({ config }) {
       if (lessonJSON.drills) lessonJSON.drills.forEach(d => { if (d.examples) d.examples = d.examples.slice(0, 5); });
       
       const validNewLemmas = (lessonJSON.newLemmas || []).map(w => {
-          if (typeof w === 'object' && w !== null && !w.id) {
-              return { ...w, id: `dict_${Date.now()}_${Math.random().toString(36).substring(7)}` };
+          const uniqueId = `dict_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          
+          // 1. If the AI took a shortcut and returned raw strings:
+          if (typeof w === 'string') {
+              return {
+                  id: uniqueId,
+                  [config.primaryTextKey]: w.trim(),
+                  word: w.trim(),
+                  english: "",
+                  pos: ""
+              };
           }
-          return w;
+          
+          // 2. If the AI returned objects properly:
+          if (typeof w === 'object' && w !== null) {
+              // Safeguard in case the AI hallucinates a weird key like "Target" or "lemma"
+              const targetText = w[config.primaryTextKey] || w.word || w.target || w.Target || w.lemma || Object.values(w)[0] || '';
+              
+              return { 
+                  ...w, 
+                  id: uniqueId,
+                  [config.primaryTextKey]: targetText,
+                  word: targetText
+              };
+          }
+          return null;
       }).filter(Boolean);
 
       const episodeDoc = { ...lessonJSON, newLemmas: validNewLemmas, id: newEpisodeId, timestamp: Date.now(), userPrompt: topicInput || "Imported JSON Lesson" };
