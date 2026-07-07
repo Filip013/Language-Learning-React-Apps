@@ -158,7 +158,6 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
     const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
-    // Array creates a sequence: Target Language -> English -> Target Language
     handleSpeak([targetText, ex.english, targetText], () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
@@ -218,7 +217,6 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
             })}
           </div>
 
-          {/* Drill Notes / Grammar Focus */}
           {section.notes && section.notes.length > 0 && (
             <div className={`mt-8 p-6 rounded-2xl border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
               <div className={`flex items-center gap-3 mb-4 border-b pb-3 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
@@ -338,27 +336,27 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   );
                 })()}
               </p>
-                            <div className="relative mt-6">
+              <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
                   <div className="mb-6">
-  <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
-    </div>
-    {(() => {
-      const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
-      const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
+                    <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
+                  </div>
+                  {(() => {
+                    const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
+                    const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
 
-      return (
-        <div className={`grid gap-3 mb-6 ${gridClasses}`}>
-          {q.options.map((option, optIdx) => {
-            let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[26px] md:text-2xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
-            if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
-            else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
-            return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
-          })}
-        </div>
-      );
-    })()}
-    <div className="flex justify-between items-center mt-4 font-sans">
+                    return (
+                      <div className={`grid gap-3 mb-6 ${gridClasses}`}>
+                        {q.options.map((option, optIdx) => {
+                          let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[26px] md:text-2xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
+                          if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
+                          else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
+                          return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
+                        })}
+                      </div>
+                    );
+                  })()}
+                  <div className="flex justify-between items-center mt-4 font-sans">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
                         Grade Answer
@@ -537,10 +535,10 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   const [newWordPos, setNewWordPos] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Determine language structure (Chinese uses keys like 'accumulated', 'hsk1', others use an array/entries)
+  // Determine language structure
   const isObjectArray = Array.isArray(globalLexicon) || (globalLexicon && globalLexicon.entries && Array.isArray(globalLexicon.entries));
 
-  // Flatten all words into a tagged array so we know where they came from
+  // Flatten all words into a tagged array
   const allTaggedWords = useMemo(() => {
     if (!globalLexicon || Object.keys(globalLexicon).length === 0) return [];
     let arr = [];
@@ -556,12 +554,12 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     return arr;
   }, [globalLexicon, isObjectArray]);
 
-  // Find duplicates across all words
+  // Find duplicates
   const duplicateWords = useMemo(() => {
     const counts = {};
     const duplicates = new Set();
     allTaggedWords.forEach(({ word }) => {
-      const text = (typeof word === 'object' ? (word[config.primaryTextKey] || word.word) : word);
+      const text = word[config.primaryTextKey] || word.word;
       if (text) {
         const norm = text.toLowerCase().trim();
         counts[norm] = (counts[norm] || 0) + 1;
@@ -571,7 +569,7 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     return duplicates;
   }, [allTaggedWords, config.primaryTextKey]);
 
-  // Generate dynamic dropdown filter options (HSK for Chinese, POS for other languages)
+  // Generate dynamic dropdown filters
   const filterOptions = useMemo(() => {
     const options = [{ id: 'all', label: 'All Words' }];
     
@@ -586,29 +584,18 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     } else {
       const posTags = new Set();
       allTaggedWords.forEach(({ word }) => {
-        if (word && typeof word === 'object' && word.pos) posTags.add(word.pos.toLowerCase().trim());
+        if (word.pos) posTags.add(word.pos.toLowerCase().trim());
       });
       
-      // Dictionary to map short POS tags to pretty labels
       const posLabels = {
-        'n': 'Nouns',
-        'v': 'Verbs',
-        'adj': 'Adjectives',
-        'adv': 'Adverbs',
-        'pron': 'Pronouns',
-        'prep': 'Prepositions',
-        'conj': 'Conjunctions',
-        'part': 'Particles',
-        'mw': 'Measure Words',
-        'num': 'Numeral',
-        'post': 'Postposition',
-        'suf': 'Suffix'
+        'n': 'Nouns', 'v': 'Verbs', 'adj': 'Adjectives', 'adv': 'Adverbs',
+        'pron': 'Pronouns', 'prep': 'Prepositions', 'conj': 'Conjunctions',
+        'part': 'Particles', 'mw': 'Measure Words', 'num': 'Numeral'
       };
 
       Array.from(posTags).sort().forEach(pos => {
         if (pos) {
-          const prettyLabel = posLabels[pos] || `POS: ${pos}`;
-          options.push({ id: `pos_${pos}`, label: prettyLabel });
+          options.push({ id: `pos_${pos}`, label: posLabels[pos] || `POS: ${pos}` });
         }
       });
     }
@@ -616,18 +603,18 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     return options;
   }, [isObjectArray, allTaggedWords]);
 
-  // Filter words based on Active Filter and Search Term
+  // Filter words
   const displayedTaggedWords = useMemo(() => {
     let filtered = allTaggedWords;
 
     if (activeFilter === 'duplicates') {
       filtered = filtered.filter(({ word }) => {
-        const text = typeof word === 'object' ? (word[config.primaryTextKey] || word.word) : word;
+        const text = word[config.primaryTextKey] || word.word;
         return duplicateWords.has((text || '').toLowerCase().trim());
       });
     } else if (activeFilter.startsWith('pos_')) {
       const targetPos = activeFilter.replace('pos_', '');
-      filtered = filtered.filter(({ word }) => typeof word === 'object' && word.pos?.toLowerCase().trim() === targetPos);
+      filtered = filtered.filter(({ word }) => word.pos?.toLowerCase().trim() === targetPos);
     } else if (activeFilter !== 'all') {
       filtered = filtered.filter(({ listKey }) => listKey === activeFilter);
     }
@@ -635,29 +622,21 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     const term = removeDiacritics(searchTerm);
     if (term) {
       filtered = filtered.filter(({ word }) => {
-        if (typeof word === 'string') return removeDiacritics(word).includes(term);
-        if (typeof word === 'object' && word !== null) {
-          const target = word[config.primaryTextKey] || word.word || "";
-          const en = word.english || word.meaning || word.translation || "";
-          return removeDiacritics(target).includes(term) || removeDiacritics(en).includes(term);
-        }
-        return false;
+        const target = word[config.primaryTextKey] || word.word || "";
+        const en = word.english || word.meaning || word.translation || "";
+        return removeDiacritics(target).includes(term) || removeDiacritics(en).includes(term);
       });
     }
     return filtered;
   }, [allTaggedWords, activeFilter, searchTerm, duplicateWords, config.primaryTextKey]);
 
-  // Group words for rendering: Chinese groups by HSK/listKey, others use a single flat list
   const groupedWords = useMemo(() => {
     const groups = {};
     displayedTaggedWords.forEach(item => {
       let groupKey;
-      
       if (!isObjectArray) {
-        // Chinese: Always group by its source list (HSK / Accumulated)
         groupKey = item.listKey === 'accumulated' ? 'Accumulated Words' : item.listKey.toUpperCase();
       } else {
-        // Other languages: No grouping. Just use the active filter's label as the single section header.
         groupKey = filterOptions.find(o => o.id === activeFilter)?.label || 'All Vocabulary';
       }
 
@@ -700,46 +679,37 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   const handleOpenEdit = (word, listKey) => {
     setEditingWord(word);
     setEditListKey(listKey);
-    if (typeof word === 'object') {
-      setEditTarget(word[config.primaryTextKey] || word.word || '');
-      setEditEnglish(word.english || word.meaning || word.translation || '');
-      setEditPos(word.pos || '');
-    } else {
-      setEditTarget(word);
-      setEditEnglish('');
-      setEditPos('');
-    }
+    setEditTarget(word[config.primaryTextKey] || word.word || '');
+    setEditEnglish(word.english || word.meaning || word.translation || '');
+    setEditPos(word.pos || '');
   };
 
   const handleSaveEdit = async () => {
-    if (!editTarget.trim() || !user || !globalLexicon) return;
+    if (!editTarget.trim() || !user || !globalLexicon || !editingWord) return;
     setIsSubmitting(true);
     
-    const updatedWord = typeof editingWord === 'object' ? {
+    const updatedWord = {
         ...editingWord,
         [config.primaryTextKey]: editTarget.trim(),
         word: editTarget.trim(), 
-        english: editEnglish.trim(),
-        pos: editPos.trim()
-    } : {
-        id: `dict_manual_${Date.now()}`,
-        [config.primaryTextKey]: editTarget.trim(),
-        word: editTarget.trim(),
         english: editEnglish.trim(),
         pos: editPos.trim()
     };
 
     const docName = config.lexiconDoc || 'lexicon';
     const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+    
+    // SAFE MATCH: Strictly checking unique object IDs prevents overwriting issues
+    const isMatch = (w) => w.id && editingWord.id && w.id === editingWord.id;
 
     try {
       if (isObjectArray) {
           const list = globalLexicon.entries || globalLexicon || [];
-          const newList = list.map(w => (w === editingWord || w.id === editingWord?.id) ? updatedWord : w);
+          const newList = list.map(w => isMatch(w) ? updatedWord : w);
           await lexRef.set({ entries: newList }, { merge: true });
       } else {
           const list = globalLexicon[editListKey] || [];
-          const newList = list.map(w => (w === editingWord || w.id === editingWord?.id) ? updatedWord : w);
+          const newList = list.map(w => isMatch(w) ? updatedWord : w);
           await lexRef.set({ [editListKey]: newList }, { merge: true });
       }
       setEditingWord(null);
@@ -748,19 +718,22 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   };
 
   const handleDeleteFromEdit = async () => {
-    if (!user || !globalLexicon) return;
+    if (!user || !globalLexicon || !editingWord) return;
     setIsSubmitting(true);
     const docName = config.lexiconDoc || 'lexicon';
     const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+    
+    // SAFE MATCH: Strictly checking unique object IDs 
+    const isMatch = (w) => w.id && editingWord.id && w.id === editingWord.id;
 
     try {
       if (isObjectArray) {
           const list = globalLexicon.entries || globalLexicon || [];
-          const newList = list.filter(w => w !== editingWord && w.id !== editingWord?.id);
+          const newList = list.filter(w => !isMatch(w));
           await lexRef.set({ entries: newList }); 
       } else {
           const list = globalLexicon[editListKey] || [];
-          const newList = list.filter(w => w !== editingWord && w.id !== editingWord?.id);
+          const newList = list.filter(w => !isMatch(w));
           await lexRef.set({ [editListKey]: newList }, { merge: true });
       }
       setEditingWord(null);
@@ -825,12 +798,11 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
             </h2>
             
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-              {items.map(({ word, listKey }, idx) => {
-                const isObj = typeof word === 'object' && word !== null;
-                const displayWord = isObj ? (word[config.primaryTextKey] || word.word) : word;
-                const displayEn = isObj ? (word.english || word.meaning || word.translation) : "";
-                const pos = isObj ? word.pos : "";
-                const wId = isObj ? word.id : `${displayWord}-${idx}`;
+              {items.map(({ word, listKey }) => {
+                const displayWord = word[config.primaryTextKey] || word.word;
+                const displayEn = word.english || word.meaning || word.translation || "";
+                const pos = word.pos || "";
+                const wId = word.id;
                 const isDuplicate = duplicateWords.has((displayWord || "").toLowerCase().trim());
 
                 return (
@@ -965,8 +937,21 @@ export default function LanguageCourse({ config }) {
 
   // --- CENTRALIZED PROMPT BUILDER ---
   const generatePromptString = async (isForAPI = false) => {
-    const flatLexicon = Object.values(globalLexicon || {}).flat().map(w => {
-        if (typeof w === 'string') return w;
+    // Prioritize 'accumulated' or 'entries' so the newest custom words appear first
+    let prioritizedWords = [];
+    let otherWords = [];
+    
+    const lex = globalLexicon || {};
+    if (lex.accumulated) prioritizedWords = [...lex.accumulated];
+    else if (lex.entries) prioritizedWords = [...lex.entries];
+    
+    Object.keys(lex).forEach(key => {
+      if (key !== 'accumulated' && key !== 'entries' && Array.isArray(lex[key])) {
+        otherWords = [...otherWords, ...lex[key]];
+      }
+    });
+
+    const flatLexicon = [...prioritizedWords, ...otherWords].map(w => {
         if (w && typeof w === 'object') return w.word || w[config.primaryTextKey] || w.targetText || '';
         return '';
     }).filter(Boolean).join(', ');
@@ -1002,34 +987,26 @@ export default function LanguageCourse({ config }) {
       
       if (ep.quiz) {
         let quizDetails = [];
-        
-        // Support both modern and legacy database structures
         const selections = prog.selections || {};
         const legacy1 = prog.quizAnswers || {};
         const legacy2 = prog.quiz?.answers || {};
 
         ep.quiz.forEach((q, idx) => {
             const qId = `quiz_${idx}`; 
-            
-            // Check all possible locations for the user's answer
             let userAns = selections[qId] || selections[idx] || selections[String(idx)] ||
                           legacy1[qId] || legacy1[idx] || legacy1[String(idx)] ||
                           legacy2[qId] || legacy2[idx] || legacy2[String(idx)];
                           
             if (typeof userAns === 'string') userAns = userAns.trim();
-            
             const rawQuestion = q.sentence || q.text || "";
             const correctAns = (q.answer || q.correct || "").trim();
-            
-            // Safely extract distractors
             const distractorsList = q.distractors && Array.isArray(q.distractors) 
                 ? q.distractors.join(', ') 
                 : (q.options ? q.options.filter(o => o !== correctAns).join(', ') : 'None');
 
-            // Format the output cleanly for the LLM
             if (userAns) {
                 const isCorrect = (userAns === correctAns);
-                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: ${isCorrect ? 'Correct' : `Incorrect (Guessed: ${userAns})`}`);
+                quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: ${isCorrect ? 'Correct' : 'Incorrect (Guessed: ' + userAns + ')'}`);
             } else {
                 quizDetails.push(`- Q: ${rawQuestion} | Correct Answer: ${correctAns} | Distractors: [${distractorsList}] | Result: Not answered`);
             }
@@ -1063,8 +1040,6 @@ export default function LanguageCourse({ config }) {
 
     const storyContextBlock = config.hasStories && currentStoryText ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
     const pastContextBlock = pastContext ? `\nRECENT CONTEXT & PERFORMANCE (Last 10 lessons):\n${pastContext}\n` : '';
-    
-    // API vs Chatbot output instructions
     const outputInstruction = isForAPI 
         ? `OUTPUT FORMAT (Provide response strictly as raw JSON, without any markdown formatting or backticks. Do NOT wrap in \`\`\`json):\n${config.promptOutputFormat}`
         : `OUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${config.promptOutputFormat}`;
@@ -1072,13 +1047,12 @@ export default function LanguageCourse({ config }) {
     return `SYSTEM INSTRUCTION:\n${config.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\n${outputInstruction}`;
   };
 
-  // --- EXPORT PROMPT FUNCTION ---
   const handleExportPrompt = async () => {
     if (!topicInput.trim() || !user) return;
-    setIsExporting(true); // <-- Uses distinct state
+    setIsExporting(true);
     setGenError('');
     try {
-      const exportedText = await generatePromptString(false); // isForAPI = false
+      const exportedText = await generatePromptString(false);
       const blob = new Blob([exportedText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1095,9 +1069,16 @@ export default function LanguageCourse({ config }) {
     }
   };
 
-  // --- API GENERATION FUNCTION ---
   const handleGenerateLLM = async () => {
     if (!topicInput.trim() || !user) return;
+    
+    // SAFE GUARD: Do not execute if Lexicon hasn't loaded
+    if (!globalLexicon) {
+      setGenError("Database is still syncing. Please wait a few seconds and try again.");
+      setShowGenerateConfirm(false);
+      return;
+    }
+
     const apiKey = localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey');
     
     if (!apiKey) {
@@ -1111,7 +1092,7 @@ export default function LanguageCourse({ config }) {
     setShowGenerateConfirm(false);
 
     try {
-      const promptText = await generatePromptString(true); // isForAPI = true
+      const promptText = await generatePromptString(true);
       
       const payload = {
           contents: [{ parts: [{ text: promptText }] }],
@@ -1242,6 +1223,13 @@ export default function LanguageCourse({ config }) {
   };
 
   const processImportedJSON = async (textToParse) => {
+    // SAFE GUARD: Do not execute if Lexicon hasn't loaded
+    if (!globalLexicon) {
+      setGenError("Error: Database is still syncing. Please wait a moment and try again.");
+      setIsGenerating(false);
+      return;
+    }
+
     try {
       if (textToParse.startsWith('```json')) textToParse = textToParse.replace(/^```json\n?/, '');
       else if (textToParse.startsWith('```')) textToParse = textToParse.replace(/^```\n?/, '');
@@ -1342,7 +1330,7 @@ export default function LanguageCourse({ config }) {
             const newEntries = list.filter(w => !toDeleteIds.includes(w.id));
             batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries }, { merge: true });
         } else {
-            const newAcc = (globalLexicon?.accumulated || []).filter(w => !activeEpisode.newLemmas.includes(w));
+            const newAcc = (globalLexicon?.accumulated || []).filter(w => !activeEpisode.newLemmas.some(lemma => lemma.id === w.id));
             batch.set(db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
         }
       }
@@ -1357,7 +1345,7 @@ export default function LanguageCourse({ config }) {
   const navItems = [
     { id: 'studio', label: 'Studio', icon: MessageSquare },
     ...(config.hasStories ? [{ id: 'episode', label: 'Audio', icon: Volume2 }] : []),
-    ...(config.hasStories ? [{ id: 'story', label: 'Story', icon: Book }] : []), // <--- ADD THIS LINE
+    ...(config.hasStories ? [{ id: 'story', label: 'Story', icon: Book }] : []),
     ...(config.hasReading ? [{ id: 'reading', label: 'Reading', icon: BookOpen }] : []),
     { id: 'drill', label: 'Drills', icon: BookMarked },
     { id: 'quiz', label: 'Quiz', icon: CheckCircle2 },
@@ -1427,8 +1415,6 @@ export default function LanguageCourse({ config }) {
               />
               
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                
-                {/* 1. API Generation Button */}
                 {!showGenerateConfirm ? (
                   <button 
                       onClick={() => setShowGenerateConfirm(true)} 
@@ -1448,7 +1434,6 @@ export default function LanguageCourse({ config }) {
                   </div>
                 )}
 
-                {/* 2. Export Button */}
                 <button 
                     onClick={handleExportPrompt} 
                     disabled={isGenerating || isExporting || !topicInput.trim()} 
@@ -1460,7 +1445,6 @@ export default function LanguageCourse({ config }) {
                     <span className="truncate sm:hidden">Export</span>
                 </button>
 
-                {/* 3. Paste Button */}
                 <button 
                     onClick={handlePasteLesson} 
                     disabled={isGenerating || isExporting} 
@@ -1472,7 +1456,6 @@ export default function LanguageCourse({ config }) {
                     <span className="truncate sm:hidden">Paste</span>
                 </button>
                 
-                {/* 4. Import Button */}
                 <label className={`cursor-pointer font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 ${(isGenerating || isExporting) ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}>
                   <Upload className="w-5 h-5 shrink-0" /> 
                   <span className="truncate hidden sm:inline">Import File</span>
@@ -1551,6 +1534,7 @@ export default function LanguageCourse({ config }) {
       {config.hasTestTab && <div className={activeTab === 'test' ? 'block animate-in fade-in duration-300' : 'hidden'}><TestTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
       {config.hasSweepTab && <div className={activeTab === 'sweep' ? 'block animate-in fade-in duration-300' : 'hidden'}><SweepTab isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={config} /></div>}
       <div className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={config} /></div>
-      {config.hasStories && <div className={activeTab === 'story' ? 'block animate-in fade-in duration-300' : 'hidden'}><StoryTab isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={config} /></div>}    </div>
+      {config.hasStories && <div className={activeTab === 'story' ? 'block animate-in fade-in duration-300' : 'hidden'}><StoryTab isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={config} /></div>}
+    </div>
   );
 }

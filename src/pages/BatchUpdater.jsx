@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { courseConfigs } from '../config/courseConfigs';
-import { ArrowLeft, Copy, Save, Database, AlertTriangle, CheckCircle2, FileEdit, Eye } from 'lucide-react';
+import { ArrowLeft, Copy, Save, Database, AlertTriangle, CheckCircle2, FileEdit, Eye, PlusCircle } from 'lucide-react';
 
 const COURSES = Object.keys(courseConfigs).map(key => ({
     id: key,
@@ -12,7 +12,7 @@ const COURSES = Object.keys(courseConfigs).map(key => ({
 
 export default function BatchUpdater() {
     const [user, setUser] = useState(null);
-    const [selectedCourseId, setSelectedCourseId] = useState('portuguese');
+    const [selectedCourseId, setSelectedCourseId] = useState('mandarin');
     
     const [originalData, setOriginalData] = useState(null);
     const [allWords, setAllWords] = useState([]);
@@ -118,9 +118,10 @@ export default function BatchUpdater() {
         const prompt = `I have a Markdown table containing my language learning lexicon. Please analyze it and strictly fix any inconsistent 'POS' (Part of Speech) column tags to be uniform (e.g., 'noun', 'verb', 'adjective', 'adverb', 'phrase', 'conjunction', 'pronoun', 'particle', 'measure word'). 
 
 RULES:
-1. Do NOT add or remove any rows or columns.
+1. Do NOT add or remove any rows or columns for existing words.
 2. Preserve all IDs, Lists, Target words, and English translations exactly as they are.
-3. Only output the raw, modified Markdown table so I can paste it back.
+3. IF I asked you to add NEW words, add them as new rows at the bottom of the table. For new words, set the ID column to "NEW" and the List column to "accumulated".
+4. Only output the raw, modified Markdown table so I can paste it back.
 
 Here is the table:\n\n${markdownText}`;
 
@@ -134,6 +135,7 @@ Here is the table:\n\n${markdownText}`;
         const primaryKey = config.primaryTextKey || 'word';
         
         try {
+            // Filter out empty lines, headers, and separator lines
             const lines = pastedMarkdown.split('\n').map(l => l.trim()).filter(l => l.startsWith('|') && !l.includes('|---|') && !l.toLowerCase().includes('| id |'));
             
             const parsedList = lines.map(line => {
@@ -145,26 +147,48 @@ Here is the table:\n\n${markdownText}`;
                     english: cols[4],
                     pos: cols[5]
                 };
-            }).filter(item => item.id);
+            }).filter(item => item.target); // Ensure there's actually a target word
 
             const detectedChanges = [];
 
             parsedList.forEach(parsedWord => {
+                const isNew = !parsedWord.id || parsedWord.id.toUpperCase() === 'NEW';
                 const origWord = allWords.find(w => w.id === parsedWord.id);
-                if (origWord) {
+
+                if (isNew || (!origWord && parsedWord.target)) {
+                    // Treat as an ADDITION
+                    detectedChanges.push({
+                        type: 'add',
+                        id: 'NEW',
+                        targetList: parsedWord._originalList || 'accumulated', // Default to accumulated
+                        wordDisplay: parsedWord.target,
+                        diffs: {
+                            target: { from: null, to: parsedWord.target },
+                            english: { from: null, to: parsedWord.english },
+                            pos: { from: null, to: parsedWord.pos }
+                        }
+                    });
+                } else if (origWord) {
+                    // Treat as a MODIFICATION (Upgrade string -> object or object -> object)
                     let diffs = {};
+                    
+                    // Legacy string upgrade detection
+                    const isLegacyString = origWord._originalType === 'string';
+                    
                     const origTarget = origWord[primaryKey] || origWord.word || '';
                     const origEn = origWord.english || origWord.meaning || origWord.translation || '';
                     const origPos = origWord.pos || '';
 
-                    if (origTarget !== parsedWord.target) diffs.target = { from: origTarget, to: parsedWord.target };
-                    if (origEn !== parsedWord.english) diffs.english = { from: origEn, to: parsedWord.english };
-                    if (origPos !== parsedWord.pos) diffs.pos = { from: origPos, to: parsedWord.pos };
+                    if (origTarget !== parsedWord.target || isLegacyString) diffs.target = { from: origTarget, to: parsedWord.target };
+                    if (origEn !== parsedWord.english || isLegacyString) diffs.english = { from: origEn, to: parsedWord.english };
+                    if (origPos !== parsedWord.pos || isLegacyString) diffs.pos = { from: origPos, to: parsedWord.pos };
 
                     if (Object.keys(diffs).length > 0) {
                         detectedChanges.push({
+                            type: 'modify',
                             id: parsedWord.id,
                             wordDisplay: origTarget,
+                            isLegacyString: isLegacyString,
                             diffs
                         });
                     }
@@ -173,10 +197,14 @@ Here is the table:\n\n${markdownText}`;
 
             setChanges(detectedChanges);
             setIsReviewing(true);
+            
+            const additions = detectedChanges.filter(c => c.type === 'add').length;
+            const modifications = detectedChanges.filter(c => c.type === 'modify').length;
+            
             if (detectedChanges.length === 0) {
                 setStatus({ type: 'success', msg: 'No changes detected. Everything matches the database.' });
             } else {
-                setStatus(null);
+                setStatus({ type: 'success', msg: `Found ${modifications} modifications and ${additions} new additions.` });
             }
         } catch (err) {
             setStatus({ type: 'error', msg: `Error parsing markdown: Check for formatting issues.` });
@@ -191,36 +219,52 @@ Here is the table:\n\n${markdownText}`;
         try {
             const config = courseConfigs[selectedCourseId];
             const primaryKey = config.primaryTextKey || 'word';
-            let updatedData = JSON.parse(JSON.stringify(originalData)); 
+            let updatedData = JSON.parse(JSON.stringify(originalData || {})); 
 
             changes.forEach(change => {
-                const origWord = allWords.find(w => w.id === change.id);
-                const listKey = origWord._originalList;
-                
-                // Logic for upgrading legacy strings to objects
-                if (origWord._originalType === 'string') {
-                    const idx = origWord._originalIndex;
-                    let newObj = {
-                        id: origWord.id, // Assign the temporary ID permanently
-                        [primaryKey]: change.diffs.target ? change.diffs.target.to : origWord.word,
-                        word: change.diffs.target ? change.diffs.target.to : origWord.word,
+                if (change.type === 'add') {
+                    // Logic for ADDING new words
+                    const listKey = change.targetList === 'entries' && !updatedData.entries ? 'accumulated' : change.targetList;
+                    
+                    if (!updatedData[listKey]) updatedData[listKey] = [];
+                    
+                    const newObj = {
+                        id: `dict_manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                        [primaryKey]: change.diffs.target?.to || '',
+                        word: change.diffs.target?.to || '',
+                        english: change.diffs.english?.to || '',
+                        pos: change.diffs.pos?.to || ''
                     };
                     
-                    if (change.diffs.english) newObj.english = change.diffs.english.to;
-                    if (change.diffs.pos) newObj.pos = change.diffs.pos.to;
-                    
-                    updatedData[listKey][idx] = newObj; // Replace plain string with object
+                    updatedData[listKey].unshift(newObj); // Add to the top of the list
                 } 
-                // Logic for standard objects
-                else {
-                    const idx = updatedData[listKey].findIndex(w => typeof w === 'object' && w !== null && w.id === change.id);
-                    if (idx !== -1) {
-                        if (change.diffs.target) {
-                            updatedData[listKey][idx][primaryKey] = change.diffs.target.to;
-                            updatedData[listKey][idx].word = change.diffs.target.to;
+                else if (change.type === 'modify') {
+                    // Logic for MODIFYING (or upgrading) existing words
+                    const origWord = allWords.find(w => w.id === change.id);
+                    const listKey = origWord._originalList;
+                    
+                    if (origWord._originalType === 'string') {
+                        const idx = origWord._originalIndex;
+                        let newObj = {
+                            id: origWord.id, // Make the temporary string ID permanent
+                            [primaryKey]: change.diffs.target ? change.diffs.target.to : origWord.word,
+                            word: change.diffs.target ? change.diffs.target.to : origWord.word,
+                        };
+                        
+                        if (change.diffs.english?.to) newObj.english = change.diffs.english.to;
+                        if (change.diffs.pos?.to) newObj.pos = change.diffs.pos.to;
+                        
+                        updatedData[listKey][idx] = newObj; // Overwrite string with object
+                    } else {
+                        const idx = updatedData[listKey].findIndex(w => typeof w === 'object' && w !== null && w.id === change.id);
+                        if (idx !== -1) {
+                            if (change.diffs.target?.to) {
+                                updatedData[listKey][idx][primaryKey] = change.diffs.target.to;
+                                updatedData[listKey][idx].word = change.diffs.target.to;
+                            }
+                            if (change.diffs.english?.to !== undefined) updatedData[listKey][idx].english = change.diffs.english.to;
+                            if (change.diffs.pos?.to !== undefined) updatedData[listKey][idx].pos = change.diffs.pos.to;
                         }
-                        if (change.diffs.english) updatedData[listKey][idx].english = change.diffs.english.to;
-                        if (change.diffs.pos) updatedData[listKey][idx].pos = change.diffs.pos.to;
                     }
                 }
             });
@@ -229,14 +273,14 @@ Here is the table:\n\n${markdownText}`;
             const docName = config.lexiconDoc || 'lexicon';
             const docRef = db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
             
-            await docRef.set(updatedData, { merge: true });
+            await docRef.set(updatedData); // Overwrite entirely to clean out legacy strings
             
-            setStatus({ type: 'success', msg: `Successfully updated ${changes.length} entries in ${config.name}!` });
+            setStatus({ type: 'success', msg: `Successfully applied ${changes.length} updates/additions in ${config.name}!` });
             
             setPastedMarkdown('');
             setChanges([]);
             setIsReviewing(false);
-            fetchDatabase(); // Refresh data
+            fetchDatabase(); // Refresh data to get the new true state
             
         } catch (err) {
             setStatus({ type: 'error', msg: `Update failed: ${err.message}` });
@@ -260,7 +304,7 @@ Here is the table:\n\n${markdownText}`;
                         <Database className="text-emerald-500" size={32} /> Markdown Batch Updater
                     </h1>
                     <p className="text-stone-500 dark:text-zinc-400 mt-2 font-medium">
-                        Export your database as a Markdown Table, fix inconsistences using an LLM, paste it back, and review the visual Diff before saving.
+                        Export your database, fix inconsistences or add new words using an LLM, paste it back, and review the Diff before saving.
                     </p>
                 </header>
 
@@ -349,13 +393,21 @@ Here is the table:\n\n${markdownText}`;
                                 
                                 <div className="flex-1 overflow-y-auto pr-2 space-y-3 mb-6 max-h-[20rem]">
                                     {changes.map((c, i) => (
-                                        <div key={i} className="p-3 bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl text-sm">
-                                            <div className="font-bold text-stone-800 dark:text-zinc-200 mb-2 border-b dark:border-zinc-800 pb-1">{c.wordDisplay}</div>
+                                        <div key={i} className={`p-3 border rounded-xl text-sm ${c.type === 'add' ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/40' : 'bg-stone-50 dark:bg-zinc-950 border-stone-200 dark:border-zinc-800'}`}>
+                                            <div className="flex items-center gap-2 font-bold text-stone-800 dark:text-zinc-200 mb-2 border-b dark:border-zinc-800/80 pb-1">
+                                                {c.type === 'add' && <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded tracking-widest uppercase"><PlusCircle size={10} className="inline mr-1" />New</span>}
+                                                {c.isLegacyString && <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded tracking-widest uppercase">Upgrading</span>}
+                                                {c.wordDisplay}
+                                            </div>
                                             {Object.entries(c.diffs).map(([key, diff]) => (
                                                 <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs mb-1">
                                                     <span className="font-bold uppercase tracking-widest text-stone-400 w-16">{key}</span>
-                                                    <span className="bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400 px-2 py-0.5 rounded truncate max-w-[120px] sm:max-w-none">{diff.from || '(empty)'}</span>
-                                                    <span className="text-stone-400">→</span>
+                                                    {c.type === 'modify' && (
+                                                        <>
+                                                            <span className="bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400 px-2 py-0.5 rounded truncate max-w-[120px] sm:max-w-none">{diff.from || '(empty)'}</span>
+                                                            <span className="text-stone-400">→</span>
+                                                        </>
+                                                    )}
                                                     <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-0.5 rounded font-bold truncate max-w-[120px] sm:max-w-none">{diff.to || '(empty)'}</span>
                                                 </div>
                                             ))}
