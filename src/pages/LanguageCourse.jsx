@@ -319,14 +319,18 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
 
           return (
             <div key={q.id} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-              <div className="flex items-center justify-between mb-4">
+              
+              {/* FIX 1: Locked height of the header so it doesn't shrink when Eye is clicked */}
+              <div className="flex items-center justify-between mb-4 min-h-[40px]">
                 <div className="text-sm text-stone-400 font-bold uppercase tracking-wider">Question {String(q.id + 1).padStart(2, '0')}</div>
-                {!isRevealed && (
-                  <button onClick={() => updateFirebase({ revealed: [...revealedIds, qId] })} className={`p-2.5 rounded-full transition-colors border shadow-sm ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600'}`}>
-                    <Eye size={18} />
-                  </button>
-                )}
+                <button 
+                  onClick={() => !isRevealed && updateFirebase({ revealed: [...revealedIds, qId] })} 
+                  className={`p-2.5 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : 'opacity-0 pointer-events-none'}`}
+                >
+                  <Eye size={18} />
+                </button>
               </div>
+
               <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
                 {(() => {
                   const match = q.sentence?.match(/(_{2,}|\.{3,}|(?:_\s*){2,})/);
@@ -338,23 +342,28 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                   return (
                     <>
                       {before}
+                      {/* FIX 2: Made empty and filled blanks mathematically identical in padding & borders */}
                       {userChoice ? (
-                        <span className={`inline-block align-bottom px-2 py-0.5 mx-1 rounded-lg border-b-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>
+                        <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>
                           {userChoice}
                         </span>
                       ) : (
-                        <span className={`inline-block align-middle min-w-[3.5em] h-[1.25em] mx-1 rounded-md border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40' : 'border-amber-300/80 bg-amber-50/60'}`}></span>
+                        <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40 text-transparent' : 'border-amber-300/80 bg-amber-50/60 text-transparent'}`}>
+                          &nbsp;
+                        </span>
                       )}
                       {after}
                     </>
                   );
                 })()}
               </p>
+              
               <div className="relative mt-6">
                 <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
                   <div className="mb-6">
                     <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
                   </div>
+                  
                   {(() => {
                     const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
                     const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
@@ -362,7 +371,10 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                     return (
                       <div className={`grid gap-3 mb-6 ${gridClasses}`}>
                         {q.options.map((option, optIdx) => {
-                          let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[26px] md:text-2xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
+                          
+                          {/* FIX 3: Updated text size from text-2xl to text-3xl to perfectly match the main sentence size */}
+                          let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
+                          
                           if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
                           else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
                           return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
@@ -370,7 +382,9 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                       </div>
                     );
                   })()}
-                  <div className="flex justify-between items-center mt-4 font-sans">
+                  
+                  {/* FIX 4: Locked height of the grading button area */}
+                  <div className="flex justify-between items-center mt-4 font-sans min-h-[44px]">
                     {!isGraded ? (
                      <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
                         Grade Answer
