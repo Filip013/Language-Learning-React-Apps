@@ -155,7 +155,7 @@ export default function Home() {
                 </div>
             </nav>
 
-            <main className="max-w-4xl mx-auto py-12 px-6 animate-in fade-in duration-500">
+            <main className="max-w-6xl mx-auto py-12 px-6 animate-in fade-in duration-500">
                 <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
                         <h1 className="text-4xl font-extrabold tracking-tight mb-2">Welcome back.</h1>

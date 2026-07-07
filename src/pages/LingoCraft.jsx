@@ -307,7 +307,7 @@ export default function LingoCraft() {
             `}} />
 
             <nav className={`sticky top-0 z-50 backdrop-blur-md border-b shadow-sm ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800' : 'bg-white/80 border-stone-200'}`}>
-                <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link 
                             to="/" 
@@ -344,7 +344,7 @@ export default function LingoCraft() {
 
                 {activeTab === 'main' && (
                     <div className={`border-t py-3 ${isDarkMode ? 'border-zinc-800 bg-zinc-900/50' : 'border-stone-200 bg-stone-100/50'}`}>
-                        <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row gap-3">
+                        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row gap-3">
                             <div className="relative flex-1">
                                 <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-zinc-500' : 'text-stone-400'}`} />
                                 <input
@@ -386,7 +386,7 @@ export default function LingoCraft() {
             </nav>
 
             {activeTab === 'main' ? (
-                <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+                <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
                     {error && (
                         <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 flex items-start gap-3">
                             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -522,7 +522,7 @@ export default function LingoCraft() {
                     )}
                 </main>
             ) : (
-                <main className="max-w-3xl mx-auto px-4 py-8 animate-in fade-in duration-300">
+                <main className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in duration-300">
                     <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center mb-8">
                         <h2 className={`text-2xl font-extrabold flex items-center gap-3 ${isDarkMode ? 'text-zinc-100' : 'text-stone-800'}`}>
                             <History className="w-6 h-6 text-blue-500" /> Session History
