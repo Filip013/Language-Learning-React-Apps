@@ -571,9 +571,10 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     return duplicates;
   }, [allTaggedWords, config.primaryTextKey]);
 
-  // Generate dynamic dropdown filter options
+  // Generate dynamic dropdown filter options (HSK for Chinese, POS for other languages)
   const filterOptions = useMemo(() => {
     const options = [{ id: 'all', label: 'All Words' }];
+    
     if (!isObjectArray) {
       options.push(
         { id: 'accumulated', label: 'Accumulated' },
@@ -587,8 +588,28 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       allTaggedWords.forEach(({ word }) => {
         if (word && typeof word === 'object' && word.pos) posTags.add(word.pos.toLowerCase().trim());
       });
+      
+      // Dictionary to map short POS tags to pretty labels
+      const posLabels = {
+        'n': 'Nouns',
+        'v': 'Verbs',
+        'adj': 'Adjectives',
+        'adv': 'Adverbs',
+        'pron': 'Pronouns',
+        'prep': 'Prepositions',
+        'conj': 'Conjunctions',
+        'part': 'Particles',
+        'mw': 'Measure Words',
+        'num': 'Numeral',
+        'post': 'Postposition',
+        'suf': 'Suffix'
+      };
+
       Array.from(posTags).sort().forEach(pos => {
-        options.push({ id: `pos_${pos}`, label: `POS: ${pos}` });
+        if (pos) {
+          const prettyLabel = posLabels[pos] || `POS: ${pos}`;
+          options.push({ id: `pos_${pos}`, label: prettyLabel });
+        }
       });
     }
     options.push({ id: 'duplicates', label: 'Duplicates' });
@@ -626,20 +647,20 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
     return filtered;
   }, [allTaggedWords, activeFilter, searchTerm, duplicateWords, config.primaryTextKey]);
 
-  // Group words beautifully for rendering
+  // Group words for rendering: Chinese groups by HSK/listKey, others use a single flat list
   const groupedWords = useMemo(() => {
     const groups = {};
     displayedTaggedWords.forEach(item => {
-      let groupKey = 'Vocabulary';
-      if (activeFilter === 'all' || activeFilter === 'duplicates') {
-        if (!isObjectArray) {
-          groupKey = item.listKey === 'accumulated' ? 'Accumulated Words' : item.listKey.toUpperCase();
-        } else {
-          groupKey = (item.word && typeof item.word === 'object' && item.word.pos) ? `POS: ${item.word.pos}` : 'Uncategorized';
-        }
+      let groupKey;
+      
+      if (!isObjectArray) {
+        // Chinese: Always group by its source list (HSK / Accumulated)
+        groupKey = item.listKey === 'accumulated' ? 'Accumulated Words' : item.listKey.toUpperCase();
       } else {
-        groupKey = filterOptions.find(o => o.id === activeFilter)?.label || 'Vocabulary';
+        // Other languages: No grouping. Just use the active filter's label as the single section header.
+        groupKey = filterOptions.find(o => o.id === activeFilter)?.label || 'All Vocabulary';
       }
+
       if (!groups[groupKey]) groups[groupKey] = [];
       groups[groupKey].push(item);
     });

@@ -149,7 +149,7 @@ TASKS:
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in PT/EN.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY.`,
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: `{
   "title": "Lesson Title",
@@ -176,7 +176,7 @@ TASKS:
     }
   ],
   "newLemmas": [
-    { "portuguese": "...", "english": "...", "pos": "Noun" }
+    { "portuguese": "...", "english": "...", "pos": "n" }
   ]
 }`
     },
@@ -201,7 +201,7 @@ TASKS:
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in RO/EN.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY.`,
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: `{
   "title": "Lesson Title",
@@ -228,7 +228,7 @@ TASKS:
     }
   ],
   "newLemmas": [
-    { "romanian": "...", "english": "...", "pos": "Noun" }
+    { "romanian": "...", "english": "...", "pos": "n" }
   ]
 }`
     }

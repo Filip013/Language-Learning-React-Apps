@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut } from 'lucide-react';
+import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
 
 const ALL_COURSES = [
@@ -174,10 +174,13 @@ export default function Home() {
                         </div>
                         <div className="border-t border-stone-200 dark:border-zinc-800 pt-8 flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-bold text-stone-800 dark:text-zinc-100">Legacy Tools</h3>
-                                <p className="text-xs text-stone-500 dark:text-zinc-400 mt-1">Access the old migration interface.</p>
+                                <h3 className="text-sm font-bold text-stone-800 dark:text-zinc-100">Service Apps</h3>
+                                <p className="text-xs text-stone-500 dark:text-zinc-400 mt-1">Tools for managing internal data.</p>
                             </div>
-                            <Link to="/migrate" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform active:scale-95"><Database size={16} /> Migration Tool</Link>
+                            <div className="flex gap-3">
+                                <Link to="/batch-updater" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95"><Wrench size={16} /> Batch Updater</Link>
+                                <Link to="/migrate" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95"><Database size={16} /> Data Migration</Link>
+                            </div>
                         </div>
                     </div>
                 )}
