@@ -157,81 +157,95 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   const playDrill = (ex, exId, isListened) => {
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
-    const targetText = ex[config.primaryTextKey];
+    const targetText = ex[config.primaryTextKey]; // Cleaned up magic strings!
     handleSpeak([targetText, ex.english, targetText], () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-16 py-12 px-4 md:px-8">
+    // 1. Removed space-y-16 from this top container
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8">
+      
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookMarked size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Audio Drills</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Listen & Repeat</p>
       </header>
 
-      {activeEpisode.drills.map((section, sectionIdx) => (
-        <section key={sectionIdx} className={`space-y-8 p-6 md:p-10 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
-          <div className="text-center mb-8">
-            <div className={`inline-block rounded-2xl p-4 md:p-6 border shadow-sm ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100' : 'bg-stone-100 border-stone-200 text-stone-800'}`}>
-              <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-xl md:text-2xl font-bold font-sans tracking-wide px-4'}`}>{section.word}</h2>
-              {config.transliterationKey && section[config.transliterationKey] && <p className="mt-2 font-sans text-sm opacity-70">{section[config.transliterationKey]}</p>}
+      {/* 2. ADDED the wrapper div here with space-y-16 */}
+      <div className="space-y-16">
+        {activeEpisode.drills.map((section, sectionIdx) => (
+          
+          <section key={sectionIdx} className={`space-y-8 p-6 md:p-10 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
+            
+            {/* Target Word Header */}
+            <div className="text-center mb-8">
+              <div className={`inline-block rounded-2xl p-4 md:p-6 border shadow-sm ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100' : 'bg-stone-100 border-stone-200 text-stone-800'}`}>
+                <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-xl md:text-2xl font-bold font-sans tracking-wide px-4'}`}>{section.word}</h2>
+                {config.transliterationKey && section[config.transliterationKey] && <p className="mt-2 font-sans text-sm opacity-70">{section[config.transliterationKey]}</p>}
+              </div>
             </div>
-          </div>
-          <div className="space-y-10 pl-2">
-            {section.examples?.map((ex, exIndex) => {
-              const exId = `drill_${sectionIdx}_${exIndex}`;
-              const isListened = !isLatestEpisode || listenedIds.includes(exId);
-              const targetText = ex[config.primaryTextKey];
-              
-              return (
-                <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <h3 className={`text-xl font-bold font-sans tracking-wide ${isDarkMode ? 'text-stone-400' : 'text-stone-450'}`}>Example {exIndex + 1}</h3>
-                      {isListened && <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Listened ✓</span>}
-                    </div>
-                    <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(ex, exId, isListened)} size={20} />
-                  </div>
-                  <div className="relative mt-2">
-                    <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
-                      <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{targetText}</p>
-                      <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.english || ex.translation}</p>
-                      
-                      {config.secondaryScriptKey && ex[config.secondaryScriptKey] && (
-                        <p className={`text-[28px] md:text-3xl ${config.secondaryFontClass || ''} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ex[config.secondaryScriptKey]}</p>
-                      )}
-                      {config.transliterationKey && ex[config.transliterationKey] && (
-                        <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex[config.transliterationKey]}</p>
-                      )}
-                    </div>
-                    {!isListened && (
-                      <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <button onClick={() => playDrill(ex, exId, isListened)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
-                          {playingId === exId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Play to Reveal
-                        </button>
+            
+            {/* Example Sentences */}
+            <div className="space-y-10 pl-2">
+              {section.examples?.map((ex, exIndex) => {
+                const exId = `drill_${sectionIdx}_${exIndex}`;
+                const isListened = !isLatestEpisode || listenedIds.includes(exId);
+                const targetText = ex[config.primaryTextKey]; // Cleaned up magic strings!
+                
+                return (
+                  <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <h3 className={`text-xl font-bold font-sans tracking-wide ${isDarkMode ? 'text-stone-400' : 'text-stone-450'}`}>Example {exIndex + 1}</h3>
+                        {isListened && <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Listened ✓</span>}
                       </div>
-                    )}
+                      <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(ex, exId, isListened)} size={20} />
+                    </div>
+                    <div className="relative mt-2">
+                      <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
+                        <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{targetText}</p>
+                        <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.english || ex.translation}</p>
+                        
+                        {config.secondaryScriptKey && ex[config.secondaryScriptKey] && (
+                          <p className={`text-[28px] md:text-3xl ${config.secondaryFontClass || ''} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ex[config.secondaryScriptKey]}</p>
+                        )}
+                        {config.transliterationKey && ex[config.transliterationKey] && (
+                          <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex[config.transliterationKey]}</p>
+                        )}
+                      </div>
+                      {!isListened && (
+                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                          <button onClick={() => playDrill(ex, exId, isListened)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
+                            {playingId === exId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Play to Reveal
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {section.notes && section.notes.length > 0 && (
-            <div className={`mt-8 p-6 rounded-2xl border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
-              <div className={`flex items-center gap-3 mb-4 border-b pb-3 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-                <Lightbulb className="text-amber-500" size={20} />
-                <h4 className={`text-lg font-bold ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Focus & Grammar</h4>
-              </div>
-              <div className="space-y-3">
-                {section.notes.map((note, noteIdx) => (
-                  <p key={noteIdx} className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{note}</p>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
-        </section>
-      ))}
+
+            {/* Notes Section */}
+            {section.notes && section.notes.length > 0 && (
+              <div className={`mt-8 p-6 rounded-2xl border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
+                <div className={`flex items-center gap-3 mb-4 border-b pb-3 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+                  <Lightbulb className="text-amber-500" size={20} />
+                  <h4 className={`text-lg font-bold ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Focus & Grammar</h4>
+                </div>
+                <div className="space-y-3">
+                  {section.notes.map((note, noteIdx) => (
+                    <p key={noteIdx} className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{note}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+          </section>
+        ))}
+      </div>
+      {/* End of new wrapper div */}
+      
     </div>
   );
 }
@@ -891,37 +905,68 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
 }
 
 function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, config }) {
-  if (storyList.length === 0) return <div className="p-20 text-center font-sans opacity-50">Loading archive...</div>;
+  if (!storyList) return <div className="p-20 text-center font-sans opacity-50">Loading archive...</div>;
+  if (storyList.length === 0) return <div className="p-20 text-center font-sans opacity-50">No stories generated yet.</div>;
+  
   const activeStoryData = storyList.find(s => s.id === activeStoryId) || storyList[0];
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className={`mb-12 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
-        
-        {storyList.length > 1 && (
-          <div className="mb-6 relative">
-             <select 
-               value={activeStoryId}
-               onChange={(e) => setActiveStoryId(e.target.value)}
-               className={`appearance-none font-bold text-sm pl-4 pr-10 py-2.5 rounded-xl border shadow-sm outline-none transition-all ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-100' : 'bg-white border-stone-200 text-stone-800'}`}
-             >
-               {storyList.map(s => (
-                 <option key={s.id} value={s.id}>{s.currentTitle || s.id.replace('_', ' ').toUpperCase()}</option>
-               ))}
-             </select>
-             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none opacity-50" />
-          </div>
-        )}
-        
-        <h1 className={`text-3xl font-bold mb-3 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeStoryData.currentTitle || 'Archive'}</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Story Library</p>
+    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans animate-in fade-in duration-300">
+      
+      {/* 1. Header (Mirrors Studio exactly) */}
+      <header className={`mb-8 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
+          <Book size={32} />
+        </div>
+        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Story Library</h1>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Browse your generated books</p>
       </header>
+
+      {/* 2. Dropdown (Visually mirrors Studio button, but uses native select for mobile ease) */}
+      {storyList.length > 1 && (
+        <div className="mb-12 relative z-20 group">
+          <div className={`w-full flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border-2 shadow-sm transition-all group-hover:border-stone-400 ${isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-200' : 'bg-white border-stone-200 text-stone-700'}`}>
+            <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
+              <List size={20} className={`shrink-0 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+              <span className="font-bold text-lg truncate">
+                {activeStoryData.currentTitle || activeStoryData.id.replace('_', ' ').toUpperCase()}
+              </span>
+            </div>
+            <ChevronDown size={20} className="shrink-0 pointer-events-none" />
+          </div>
+          {/* Invisible select element overlaid on top */}
+          <select 
+            value={activeStoryId}
+            onChange={(e) => setActiveStoryId(e.target.value)}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          >
+            {storyList.map(s => (
+              <option key={s.id} value={s.id}>
+                {s.currentTitle || s.id.replace('_', ' ').toUpperCase()}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 3. Nice Large Title */}
+      <div className="mb-12 text-center animate-in slide-in-from-bottom-4 duration-700">
+         <h2 className={`text-4xl md:text-5xl font-bold mb-6 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
+           {activeStoryData.currentTitle || 'Archive'}
+         </h2>
+         <div className={`h-1.5 w-24 mx-auto rounded-full ${isDarkMode ? 'bg-amber-600' : 'bg-amber-400'}`}></div>
+      </div>
+
+      {/* 4. Episodes */}
       <div className="space-y-12">
         {activeStoryData.episodes?.map((ep, i) => (
-          <article key={ep.id || i} className={`p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
-            <h2 className={`text-3xl font-bold mb-6 border-b pb-4 moe-font ${isDarkMode ? 'text-stone-100 border-stone-700' : 'text-stone-800 border-stone-100'}`}>{ep.title}</h2>
-            <div className={`text-[28px] md:text-3xl leading-relaxed space-y-6 moe-font ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ep.text.split('\n\n').map((p, idx) => <p key={idx}>{p}</p>)}</div>
+          <article key={ep.id || i} className={`p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
+            <h3 className={`text-3xl font-bold mb-6 border-b pb-4 moe-font ${isDarkMode ? 'text-stone-100 border-stone-800' : 'text-stone-800 border-stone-100'}`}>
+              {ep.title}
+            </h3>
+            <div className={`text-[28px] md:text-3xl leading-relaxed space-y-6 moe-font ${isDarkMode ? 'text-stone-300' : 'text-stone-800'}`}>
+              {ep.text.split('\n\n').map((p, idx) => <p key={idx}>{p}</p>)}
+            </div>
           </article>
         ))}
       </div>
