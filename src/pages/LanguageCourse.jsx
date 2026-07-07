@@ -1357,6 +1357,7 @@ export default function LanguageCourse({ config }) {
   const navItems = [
     { id: 'studio', label: 'Studio', icon: MessageSquare },
     ...(config.hasStories ? [{ id: 'episode', label: 'Audio', icon: Volume2 }] : []),
+    ...(config.hasStories ? [{ id: 'story', label: 'Story', icon: Book }] : []), // <--- ADD THIS LINE
     ...(config.hasReading ? [{ id: 'reading', label: 'Reading', icon: BookOpen }] : []),
     { id: 'drill', label: 'Drills', icon: BookMarked },
     { id: 'quiz', label: 'Quiz', icon: CheckCircle2 },
