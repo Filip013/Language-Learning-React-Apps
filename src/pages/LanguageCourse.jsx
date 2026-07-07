@@ -157,7 +157,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   const playDrill = (ex, exId, isListened) => {
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
-    const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
+    const targetText = ex[config.primaryTextKey];
     handleSpeak([targetText, ex.english, targetText], () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
   };
 
@@ -181,7 +181,7 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
             {section.examples?.map((ex, exIndex) => {
               const exId = `drill_${sectionIdx}_${exIndex}`;
               const isListened = !isLatestEpisode || listenedIds.includes(exId);
-              const targetText = ex[config.primaryTextKey] || ex.traditional || ex.portuguese || ex.hungarian || ex.romanian;
+              const targetText = ex[config.primaryTextKey];
               
               return (
                 <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
@@ -987,11 +987,18 @@ export default function LanguageCourse({ config }) {
     let pastContext = '';
     const pastEps = episodesList.slice(0, 10).reverse();
     
+    // NEW: Fetch all progress documents at the exact same time
+    const progressPromises = pastEps.map(ep => 
+      db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get()
+    );
+    const progressSnaps = await Promise.all(progressPromises);
+    
     for (let i = 0; i < pastEps.length; i++) {
       const ep = pastEps[i];
       let epContext = '';
       
-      const progSnap = await db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get();
+      // NEW: Grab the result from our pre-fetched array instead of waiting for the network
+      const progSnap = progressSnaps[i];
       const prog = progSnap.exists ? progSnap.data() : {};
 
       if (ep.userPrompt) epContext += `User Request: ${ep.userPrompt}\n`;
@@ -1402,7 +1409,7 @@ export default function LanguageCourse({ config }) {
   if (!user) return null;
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang={config.id === 'mandarin' ? 'zh-Hant' : 'en'}>
+    <div className={`min-h-screen transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang={config.id === 'mandarin' ? 'zh-Hant' : config.id.substring(0, 2)}>
       <style dangerouslySetInnerHTML={{__html: `@import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB'); @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti'); .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; } .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }`}} />
 
       <nav className={`sticky top-0 z-50 border-b backdrop-blur-md px-4 py-3 flex justify-between shadow-sm ${isDarkMode ? 'bg-stone-900/85 border-stone-850' : 'bg-white/90 border-stone-200'}`}>
