@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
 import MigrationTool from './pages/MigrationTool';
 import BatchUpdater from './pages/BatchUpdater';
+import CharacterDrill from './pages/CharacterDrill'; // <-- Added import
 
 // The new Config Engine
 import LanguageCourse from './pages/LanguageCourse';
@@ -30,9 +31,10 @@ function App() {
         <Route path="/portuguese" element={<LanguageCourse config={courseConfigs.portuguese} />} />
         <Route path="/romanian" element={<LanguageCourse config={courseConfigs.romanian} />} />
         
-        {/* SERVICE APPS */}
+        {/* SERVICE APPS & GAMES */}
         <Route path="/migrate" element={<MigrationTool />} />
         <Route path="/batch-updater" element={<BatchUpdater />} />
+        <Route path="/character-drill" element={<CharacterDrill />} /> {/* <-- Added route */}
       </Routes>
     </Router>
   );

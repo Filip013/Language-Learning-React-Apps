@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench } from 'lucide-react';
+import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench, Gamepad2 } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
 
 const ALL_COURSES = [
@@ -63,7 +63,7 @@ const ApiKeyManager = ({ title, description, storageKey, user }) => {
 
 export default function Home() {
     const [user, setUser] = useState(null);
-    const [showSettings, setShowSettings] = useState(false);
+    const [activePanel, setActivePanel] = useState(null); // null | 'tools' | 'settings'
     const [recentActivity, setRecentActivity] = useState({});
     const [isDarkMode, setIsDarkMode] = useState(false);
     const navigate = useNavigate();
@@ -156,28 +156,60 @@ export default function Home() {
             </nav>
 
             <main className="max-w-6xl mx-auto py-12 px-6 animate-in fade-in duration-500">
-                <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <header className="mb-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
                     <div>
                         <h1 className="text-4xl font-extrabold tracking-tight mb-2">Welcome back.</h1>
                         <p className="text-stone-500 dark:text-zinc-400 font-medium">Select a master database to continue.</p>
                     </div>
-                    <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-3 rounded-2xl border font-bold text-sm transition-all shadow-sm ${showSettings ? 'bg-stone-800 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-white dark:bg-zinc-900 border-stone-200 dark:border-zinc-800 hover:border-stone-300 dark:hover:border-zinc-700'}`}>
-                        <Settings size={18} /> API Config <ChevronDown size={16} className={`transition-transform ${showSettings ? 'rotate-180' : ''}`} />
-                    </button>
+                    
+                    {/* Toggle Buttons */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button 
+                            onClick={() => setActivePanel(activePanel === 'tools' ? null : 'tools')} 
+                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl border font-bold text-sm transition-all shadow-sm ${activePanel === 'tools' ? 'bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white border-transparent' : 'bg-white dark:bg-zinc-900 border-stone-200 dark:border-zinc-800 hover:border-stone-300 dark:hover:border-zinc-700 text-stone-700 dark:text-zinc-300'}`}
+                        >
+                            <Gamepad2 size={18} /> Games & Tools <ChevronDown size={16} className={`transition-transform ${activePanel === 'tools' ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        <button 
+                            onClick={() => setActivePanel(activePanel === 'settings' ? null : 'settings')} 
+                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl border font-bold text-sm transition-all shadow-sm ${activePanel === 'settings' ? 'bg-stone-800 text-white dark:bg-white dark:text-zinc-900 border-transparent' : 'bg-white dark:bg-zinc-900 border-stone-200 dark:border-zinc-800 hover:border-stone-300 dark:hover:border-zinc-700 text-stone-700 dark:text-zinc-300'}`}
+                        >
+                            <Settings size={18} /> API & Config <ChevronDown size={16} className={`transition-transform ${activePanel === 'settings' ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
                 </header>
                 
-                {showSettings && (
+                {/* Tools Panel */}
+                {activePanel === 'tools' && (
+                    <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-6 sm:p-8 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/50 mb-12 animate-in slide-in-from-top-4">
+                        <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-200">Interactive Experiments</h3>
+                        <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-1 mb-5">Supplemental learning mini-games and tools.</p>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <Link to="/character-drill" className="flex flex-col p-5 bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all active:scale-95 group">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
+                                    <Gamepad2 size={20} />
+                                </div>
+                                <h4 className="font-bold text-stone-800 dark:text-zinc-100 mb-1">Character Drills</h4>
+                                <p className="text-xs text-stone-500 dark:text-zinc-400">AI-generated radical assembly and visual discrimination.</p>
+                            </Link>
+                        </div>
+                    </div>
+                )}
+
+                {/* Settings Panel */}
+                {activePanel === 'settings' && (
                     <div className="bg-stone-100/50 dark:bg-zinc-900/50 p-6 sm:p-8 rounded-[2rem] border border-stone-200 dark:border-zinc-800 mb-12 animate-in slide-in-from-top-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <ApiKeyManager user={user} title="Free Gemini Key" description="Powers TTS dictation and drills." storageKey="geminiApiKey" />
+                            <ApiKeyManager user={user} title="Free Gemini Key" description="Powers TTS dictation and voice." storageKey="geminiApiKey" />
                             <ApiKeyManager user={user} title="Paid Gemini Key" description="Powers LLM context generation." storageKey="geminiPaidApiKey" />
                         </div>
-                        <div className="border-t border-stone-200 dark:border-zinc-800 pt-8 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-sm font-bold text-stone-800 dark:text-zinc-100">Service Apps</h3>
-                                <p className="text-xs text-stone-500 dark:text-zinc-400 mt-1">Tools for managing internal data.</p>
-                            </div>
-                            <div className="flex gap-3">
+                        
+                        <div className="border-t border-stone-200 dark:border-zinc-800 pt-8">
+                            <h3 className="text-sm font-bold text-stone-800 dark:text-zinc-100">Service Apps</h3>
+                            <p className="text-xs text-stone-500 dark:text-zinc-400 mt-1 mb-4">Tools for managing internal master data.</p>
+                            <div className="flex gap-3 flex-wrap">
                                 <Link to="/batch-updater" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95"><Wrench size={16} /> Batch Updater</Link>
                                 <Link to="/migrate" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95"><Database size={16} /> Data Migration</Link>
                             </div>
@@ -185,6 +217,7 @@ export default function Home() {
                     </div>
                 )}
 
+                {/* Course Grid */}
                 <h3 className="text-sm font-bold uppercase tracking-widest text-stone-400 dark:text-zinc-500 mb-4 ml-2">Pinned Courses</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
                     {pinnedCourses.map(c => <CourseCard key={c.id} course={c} />)}
