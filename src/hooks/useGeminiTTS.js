@@ -1,16 +1,20 @@
 // src/hooks/useGeminiTTS.js
 import { useRef, useCallback } from 'react';
 
+const MAX_RETRIES = 2; // Initial try + 2 retries = 3 attempts total
+
 export function useGeminiTTS(systemInstruction) {
     const ws = useRef(null);
     const audioContext = useRef(null);
     const nextAudioTime = useRef(0);
     const activeAudioNodes = useRef([]);
     const textQueue = useRef([]); // Queue for sequential TTS requests
+    const currentTurnData = useRef(null); // Tracks the current text and its retry count
+    const audioReceivedForCurrentTurn = useRef(false); // Flags if audio was successfully received
     const currentOnComplete = useRef(null);
     const currentOnError = useRef(null);
     
-    // NEW: Ref to hold our silent HTML5 audio player
+    // Ref to hold our silent HTML5 audio player
     const silentAudioRef = useRef(null);
 
     const playPCMChunk = useCallback((base64Data) => {
@@ -47,9 +51,11 @@ export function useGeminiTTS(systemInstruction) {
             n.onended = null;
         });
         activeAudioNodes.current = [];
-        textQueue.current = []; // Clear the sequence queue
+        textQueue.current = []; 
+        currentTurnData.current = null;
+        audioReceivedForCurrentTurn.current = false;
         
-        // NEW: Pause the background silent audio
+        // Pause the background silent audio
         if (silentAudioRef.current) {
             silentAudioRef.current.pause();
         }
@@ -76,20 +82,16 @@ export function useGeminiTTS(systemInstruction) {
         
         stopSpeak();
 
-        // NEW: Initialize and play the silent audio element to keep mobile JS alive
+        // Initialize and play the silent audio element to keep mobile JS alive
         if (!silentAudioRef.current) {
-            // This is a tiny, valid silent MP3 file encoded in base64
             silentAudioRef.current = new Audio('data:audio/mp3;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq');
             silentAudioRef.current.loop = true;
         }
         
-        // Browsers require user interaction to play audio. 
-        // Because handleSpeak is triggered by clicking a play button, this is allowed.
         silentAudioRef.current.play().catch(e => {
             // console.warn("Background audio hack failed:", e);
         });
 
-        // NEW: Tell the OS that media is playing so it shows on the lock screen
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: 'Reading Text...',
@@ -102,17 +104,27 @@ export function useGeminiTTS(systemInstruction) {
         currentOnComplete.current = onComplete;
         currentOnError.current = onError;
         
-        textQueue.current = texts;
+        // Map strings into objects to track retry attempts
+        textQueue.current = texts.map(t => ({ text: t, retries: 0 }));
 
         const sendNextText = () => {
             while (textQueue.current.length > 0) {
-                const nextText = textQueue.current.shift();
-                if (nextText && nextText.trim()) {
-                    // console.log("📤 Sending text to Gemini:", nextText);
+                const nextItem = textQueue.current.shift();
+                
+                if (nextItem && nextItem.text.trim()) {
+                    currentTurnData.current = nextItem;
+                    audioReceivedForCurrentTurn.current = false; // Reset flag for this turn
+
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                         ws.current.send(JSON.stringify({
                             clientContent: {
-                                turns: [{ role: "user", parts: [{ text: nextText }] }],
+                                turns: [{ 
+                                    role: "user", 
+                                    parts: [{ 
+                                        // Wrap the text in a direct command
+                                        text: `Read the following text aloud exactly as written: "${nextItem.text}"` 
+                                    }] 
+                                }],
                                 turnComplete: true
                             }
                         }));
@@ -124,9 +136,7 @@ export function useGeminiTTS(systemInstruction) {
         };
 
         const setupMessageHandlers = () => {
-            ws.current.onclose = (event) => {
-                // console.log(`🔴 Gemini TTS WebSocket Closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
-            };
+            ws.current.onclose = (event) => {};
 
             ws.current.onmessage = async (event) => {
                 let rawData = event.data;
@@ -134,32 +144,46 @@ export function useGeminiTTS(systemInstruction) {
                 const msg = JSON.parse(rawData);
                 
                 if (msg.setupComplete) {
-                    // console.log("🟢 Gemini TTS Setup Complete");
                     sendNextText(); 
                 }
-
-                // if (msg.error) console.error("❌ Gemini TTS Error:", msg.error);
-                // if (msg.serverContent && msg.serverContent.interrupted) console.warn("⚠️ Gemini TTS Interrupted (Likely Safety Filter):", msg);
 
                 if (msg.serverContent) {
                     if (msg.serverContent.modelTurn) {
                         for (const part of msg.serverContent.modelTurn.parts) {
-                            // if (part.text) console.info("🤖 Gemini Text Output (Should be audio!):", part.text);
                             if (part.inlineData && part.inlineData.mimeType.startsWith("audio/pcm")) {
+                                audioReceivedForCurrentTurn.current = true; // Mark that we got audio
                                 playPCMChunk(part.inlineData.data);
                             }
                         }
                     }
                     
                     if (msg.serverContent.turnComplete) {
-                        // console.log("✅ Gemini TTS Turn Complete");
+                        // REPLAY/RETRY LOGIC: If the turn completed but the model gave us no audio
+                        if (!audioReceivedForCurrentTurn.current && currentTurnData.current) {
+                            if (currentTurnData.current.retries < MAX_RETRIES) {
+                                console.warn(`TTS empty response detected. Retrying... (${currentTurnData.current.retries + 1}/${MAX_RETRIES})`);
+                                
+                                // Put it back at the front of the queue with an incremented retry counter
+                                textQueue.current.unshift({
+                                    text: currentTurnData.current.text,
+                                    retries: currentTurnData.current.retries + 1
+                                });
+                                
+                                sendNextText(); // Fire it off immediately
+                                return; // Skip the completion check block below for this failed turn
+                            } else {
+                                console.warn("Max TTS retries reached. Skipping to next text segment.");
+                                // Fall through to allow the interval below to move to the next item
+                            }
+                        }
+
+                        // Normal completion check
                         const checkCompletion = setInterval(() => {
                             if (activeAudioNodes.current.length === 0) {
                                 clearInterval(checkCompletion);
                                 
                                 const hasMore = sendNextText();
                                 if (!hasMore) {
-                                    // NEW: Pause the silent background audio when all TTS is finished
                                     if (silentAudioRef.current) silentAudioRef.current.pause();
 
                                     if (currentOnComplete.current) {
@@ -174,7 +198,6 @@ export function useGeminiTTS(systemInstruction) {
             };
 
             ws.current.onerror = (e) => {
-                // console.error("💥 TTS WebSocket Error:", e);
                 if (currentOnError.current) currentOnError.current();
                 alert("Audio connection failed. Check console for details.");
             };
