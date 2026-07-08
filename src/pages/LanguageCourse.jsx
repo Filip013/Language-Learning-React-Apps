@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Fragment, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus, Edit, FileText } from 'lucide-react';
 import { auth, db } from '../firebase';
@@ -619,7 +619,7 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
   );
 }
 
-function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
+const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
 
@@ -995,7 +995,7 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       )}
     </div>
   );
-}
+});
 
 function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, config }) {
   if (!storyList) return <div className="p-20 text-center font-sans opacity-50">Loading archive...</div>;
@@ -1571,7 +1571,7 @@ export default function LanguageCourse({ config }) {
   const isLatestEpisode = episodesList.length > 0 && activeEpisodeId === episodesList[0].id;
 
   if (!user) return null;
-
+  
   return (
     <div className={`min-h-screen transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang={config.id === 'mandarin' ? 'zh-Hant' : config.id.substring(0, 2)}>
       <style dangerouslySetInnerHTML={{__html: `@import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB'); @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti'); .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; } .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }`}} />
