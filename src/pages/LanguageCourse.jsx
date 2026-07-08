@@ -724,10 +724,15 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
 
     const term = removeDiacritics(searchTerm);
     if (term) {
+      // Escape standard Regex characters (except the dot)
+      const escapedTerm = term.replace(/[-\/\\^$*+?()|[\]{}]/g, '\\$&');
+      // Treat dot as a wildcard (.*) and enforce exact match anchors (^ and $)
+      const searchRegex = new RegExp('^' + escapedTerm.replace(/\./g, '.*') + '$', 'i');
+
       filtered = filtered.filter(({ word }) => {
-        const target = word[config.primaryTextKey] || word.word || "";
-        const en = word.english || word.meaning || word.translation || "";
-        return removeDiacritics(target).includes(term) || removeDiacritics(en).includes(term);
+        const target = removeDiacritics(word[config.primaryTextKey] || word.word || "");
+        const en = removeDiacritics(word.english || word.meaning || word.translation || "");
+        return searchRegex.test(target) || searchRegex.test(en);
       });
     }
     return filtered;
@@ -1554,13 +1559,13 @@ export default function LanguageCourse({ config }) {
   const navItems = [
     { id: 'studio', label: 'Studio', icon: MessageSquare },
     ...(config.hasStories ? [{ id: 'episode', label: 'Audio', icon: Volume2 }] : []),
-    ...(config.hasStories ? [{ id: 'story', label: 'Story', icon: Book }] : []),
     ...(config.hasReading ? [{ id: 'reading', label: 'Reading', icon: BookOpen }] : []),
     { id: 'drill', label: 'Drills', icon: BookMarked },
     { id: 'quiz', label: 'Quiz', icon: CheckCircle2 },
     ...(config.hasTestTab ? [{ id: 'test', label: 'Test', icon: PenTool }] : []),
     ...(config.hasSweepTab ? [{ id: 'sweep', label: 'Sweep', icon: Activity }] : []),
-    { id: 'lexicon', label: 'Lexicon', icon: Search }
+    { id: 'lexicon', label: 'Lexicon', icon: Search },
+    ...(config.hasStories ? [{ id: 'story', label: 'Story', icon: Book }] : [])
   ];
 
   const isLatestEpisode = episodesList.length > 0 && activeEpisodeId === episodesList[0].id;
