@@ -378,12 +378,34 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                 <div className="text-sm text-stone-400 font-bold uppercase tracking-wider">Question {String(q.id + 1).padStart(2, '0')}</div>
                 <div className="flex items-center gap-2">
                   <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
-                  <button 
-                    onClick={() => !isRevealed && updateFirebase({ revealed: [...revealedIds, qId] })} 
-                    className={`p-2.5 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : 'opacity-0 pointer-events-none'}`}
-                  >
-                    <Eye size={18} />
-                  </button>
+                  
+                  {isGraded ? (
+                    <div className="animate-in fade-in zoom-in duration-300">
+                      <PlayButton 
+                        isDarkMode={isDarkMode} 
+                        isPlaying={playingId === `quiz-audio-${qId}`} 
+                        onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} 
+                        size={18} 
+                      />
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        if (isRevealed) {
+                          updateFirebase({ revealed: revealedIds.filter(id => id !== qId) });
+                        } else {
+                          updateFirebase({ revealed: [...revealedIds, qId] });
+                        }
+                      }}
+                      className={`p-2.5 rounded-full transition-all border shadow-sm ${
+                        !isRevealed 
+                          ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') 
+                          : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')
+                      }`}
+                    >
+                      <Eye size={18} className={isRevealed ? "opacity-60" : ""} />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -441,11 +463,10 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
                         Grade Answer
                      </button>
                     ) : (
-                      <div className="flex items-center gap-4 animate-in duration-300 w-full justify-between">
+                      <div className="flex items-center gap-4 animate-in duration-300 w-full">
                         <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
                           {isCorrect ? "Correct!" : "Incorrect"}
                         </span>
-                        <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} size={18} />
                       </div>
                     )}
                   </div>
