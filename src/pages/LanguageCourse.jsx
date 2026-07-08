@@ -671,7 +671,8 @@ function LexiconTab({ isDarkMode, globalLexicon, user, config }) {
       const posLabels = {
         'n': 'Nouns', 'v': 'Verbs', 'adj': 'Adjectives', 'adv': 'Adverbs',
         'pron': 'Pronouns', 'prep': 'Prepositions', 'conj': 'Conjunctions',
-        'part': 'Particles', 'mw': 'Measure Words', 'num': 'Numeral'
+        'part': 'Particles', 'mw': 'Measure Words', 'num': 'Numeral',
+        'post': 'Postposition', 'suf': 'Suffix'
       };
 
       Array.from(posTags).sort().forEach(pos => {
