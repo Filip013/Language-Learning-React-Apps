@@ -37,6 +37,20 @@ function UserNoteModal({ isDarkMode, isOpen, noteTitle, initialText, onClose, on
     if (isOpen) setText(initialText || '');
   }, [isOpen, initialText]);
 
+  // Close modal when Escape key is pressed
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -52,11 +66,18 @@ function UserNoteModal({ isDarkMode, isOpen, noteTitle, initialText, onClose, on
         </div>
         <p className={`text-sm mb-4 truncate ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{noteTitle}</p>
         <textarea
+          autoFocus
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="Log your mistake, note, or mnemonic here..."
-          rows="4"
-          className={`w-full p-4 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all mb-6 resize-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 placeholder-stone-600' : 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400'}`}
+          onKeyDown={e => {
+            if (e.ctrlKey && e.key === 'Enter') {
+              e.preventDefault();
+              onSave(text);
+            }
+          }}
+          placeholder="Log your mistake, note, or mnemonic here (Ctrl + Enter to save)..."
+          rows="2"
+          className={`w-full p-4 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all mb-6 resize-y ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 placeholder-stone-600' : 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400'}`}
         />
         <div className="flex justify-end gap-3">
            <button onClick={onClose} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${isDarkMode ? 'text-stone-400 hover:text-stone-200' : 'text-stone-500 hover:text-stone-800'}`}>Cancel</button>
@@ -1622,10 +1643,11 @@ export default function LanguageCourse({ config }) {
           <section className={`p-6 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
             <h3 className="text-xl font-bold mb-4 font-sans">Prompt the AI</h3>
             <div className="flex flex-col gap-4">
-              <input 
-                type="text" value={topicInput} onChange={e => setTopicInput(e.target.value)} disabled={isGenerating} 
+              <textarea 
+                value={topicInput} onChange={e => setTopicInput(e.target.value)} disabled={isGenerating} 
                 placeholder="e.g., Focus on grammar. Review words: table, sky." 
-                className={`w-full px-4 py-3 rounded-xl border focus:outline-none transition-all ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} 
+                rows="2"
+                className={`w-full px-4 py-3 rounded-xl border focus:outline-none transition-all resize-y min-h-[80px] ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} 
               />
               
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
