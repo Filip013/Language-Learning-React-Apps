@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench, Gamepad2 } from 'lucide-react';
+import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench, Gamepad2, History, XCircle, Trash2, DownloadCloud } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
 
 const ALL_COURSES = [
@@ -66,6 +66,20 @@ export default function Home() {
     const [activePanel, setActivePanel] = useState(null); // null | 'tools' | 'settings'
     const [recentActivity, setRecentActivity] = useState({});
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+    const [activityLogs, setActivityLogs] = useState([]);
+
+    useEffect(() => {
+        if (!user || !isLogModalOpen) return;
+        const unsub = db.collection('artifacts').doc('hub').collection('users').doc(user.uid).collection('logs')
+            .orderBy('timestamp', 'desc')
+            .limit(50) // Fetch the last 50 actions
+            .onSnapshot(snap => {
+                setActivityLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            });
+        return () => unsub();
+    }, [user, isLogModalOpen]);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -159,6 +173,56 @@ export default function Home() {
         </div>
     );
 
+    const ActivityLogModal = () => {
+        if (!isLogModalOpen) return null;
+
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
+                <div className="w-full max-w-xl h-[80vh] flex flex-col bg-white dark:bg-zinc-900 rounded-3xl shadow-xl border border-stone-200 dark:border-zinc-800 overflow-hidden">
+                    
+                    <div className="flex items-center justify-between p-6 border-b border-stone-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-stone-100 dark:bg-zinc-800 p-2 rounded-xl">
+                                <History size={20} className="text-stone-700 dark:text-zinc-300" />
+                            </div>
+                            <h3 className="text-xl font-bold text-stone-800 dark:text-zinc-100">Activity Log</h3>
+                        </div>
+                        <button onClick={() => setIsLogModalOpen(false)} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+                            <XCircle size={24} />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-stone-50 dark:bg-zinc-950/50">
+                        {activityLogs.length === 0 ? (
+                            <p className="text-center text-stone-500 dark:text-zinc-500 mt-10 text-sm font-medium">No activity recorded yet.</p>
+                        ) : (
+                            activityLogs.map(log => (
+                                <div key={log.id} className="flex items-start gap-4 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-stone-200 dark:border-zinc-800 shadow-sm">
+                                    <div className={`p-2 rounded-full shrink-0 ${log.action === 'import' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-500' : 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-500'}`}>
+                                        {log.action === 'import' ? <DownloadCloud size={16} /> : <Trash2 size={16} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
+                                                {log.courseName}
+                                            </span>
+                                            <span className="text-xs text-stone-400 dark:text-zinc-500 whitespace-nowrap ml-2">
+                                                {new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-medium text-stone-800 dark:text-zinc-200 truncate">
+                                            {log.action === 'import' ? 'Imported' : 'Deleted'}: {log.episodeTitle}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-zinc-950 transition-colors duration-500 font-sans text-stone-900 dark:text-zinc-100">
             <nav className="sticky top-0 z-50 border-b backdrop-blur-md px-6 py-4 flex justify-between items-center border-stone-200/80 dark:border-zinc-800/80 bg-stone-50/80 dark:bg-zinc-950/80">
@@ -231,6 +295,9 @@ export default function Home() {
                             <h3 className="text-sm font-bold text-stone-800 dark:text-zinc-100">Service Apps</h3>
                             <p className="text-xs text-stone-500 dark:text-zinc-400 mt-1 mb-4">Tools for managing internal master data.</p>
                             <div className="flex gap-3 flex-wrap">
+                                <button onClick={() => setIsLogModalOpen(true)} className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95">
+                                    <History size={16} /> Activity Log
+                                </button>
                                 <Link to="/batch-updater" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95"><Wrench size={16} /> Batch Updater</Link>
                                 <Link to="/migrate" className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl transition-transform hover:bg-stone-50 dark:hover:bg-zinc-800 active:scale-95"><Database size={16} /> Data Migration</Link>
                             </div>
@@ -249,6 +316,7 @@ export default function Home() {
                     {dynamicCourses.map(c => <CourseCard key={c.id} course={c} />)}
                 </div>
             </main>
+            <ActivityLogModal />
         </div>
     );
 }

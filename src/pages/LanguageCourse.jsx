@@ -1510,6 +1510,15 @@ export default function LanguageCourse({ config }) {
       }
       
       await batch.commit();
+      try {
+          await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).collection('logs').add({
+              appId: config.dbAppId,
+              courseName: config.name,
+              action: 'import',
+              episodeTitle: lessonJSON.title || lessonJSON.storyTitle || "Untitled Lesson",
+              timestamp: Date.now()
+          });
+      } catch(e) { console.error("Failed to log import", e); }
       setActiveEpisodeId(newEpisodeId);
       setTopicInput('');
       setGenError('');
@@ -1571,6 +1580,15 @@ export default function LanguageCourse({ config }) {
       }
 
       await batch.commit();
+      try {
+          await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).collection('logs').add({
+              appId: config.dbAppId,
+              courseName: config.name,
+              action: 'delete',
+              episodeTitle: activeEpisode?.title || "Untitled Lesson",
+              timestamp: Date.now()
+          });
+      } catch(e) { console.error("Failed to log deletion", e); }
       setDeletingEpisodeId(null);
       const nextEp = episodesList.find(e => e.id !== activeEpisodeId) || null;
       setActiveEpisodeId(nextEp ? nextEp.id : null);
