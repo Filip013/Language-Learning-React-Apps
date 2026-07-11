@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/Language-Learning-React-Apps/', // <-- Add this exact line!
+  base: '/Language-Learning-React-Apps/',
   plugins: [
     react(),
     VitePWA({
@@ -20,7 +20,7 @@ export default defineConfig({
         theme_color: '#2563eb',
         background_color: '#fafaf9',
         display: 'standalone',
-        start_url: '/Language-Learning-React-Apps/', // <-- Update start_url for GitHub Pages subfolder
+        start_url: '/Language-Learning-React-Apps/',
         "icons": [
           {
             "src": "/icon-192.png",
