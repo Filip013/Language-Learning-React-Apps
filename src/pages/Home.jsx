@@ -68,6 +68,7 @@ export default function Home() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
     const [activityLogs, setActivityLogs] = useState([]);
+    const [deletingLogId, setDeletingLogId] = useState(null);
 
     useEffect(() => {
         if (!user || !isLogModalOpen) return;
@@ -173,7 +174,23 @@ export default function Home() {
         </div>
     );
 
-    const ActivityLogModal = () => {
+    const handleDeleteLog = async (logId) => {
+        if (!user) return;
+        try {
+            await db.collection('artifacts')
+                .doc('hub')
+                .collection('users')
+                .doc(user.uid)
+                .collection('logs')
+                .doc(logId)
+                .delete();
+            setDeletingLogId(null); // Reset after deleting
+        } catch (error) {
+            console.error("Failed to delete log entry:", error);
+        }
+    };
+
+    const renderActivityLogModal = () => {
         if (!isLogModalOpen) return null;
 
         return (
@@ -187,7 +204,7 @@ export default function Home() {
                             </div>
                             <h3 className="text-xl font-bold text-stone-800 dark:text-zinc-100">Activity Log</h3>
                         </div>
-                        <button onClick={() => setIsLogModalOpen(false)} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+                        <button onClick={() => { setIsLogModalOpen(false); setDeletingLogId(null); }} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
                             <XCircle size={24} />
                         </button>
                     </div>
@@ -203,12 +220,31 @@ export default function Home() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start mb-1">
-                                            <span className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 mt-0.5">
                                                 {log.courseName}
                                             </span>
-                                            <span className="text-xs text-stone-400 dark:text-zinc-500 whitespace-nowrap ml-2">
-                                                {new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs text-stone-400 dark:text-zinc-500 whitespace-nowrap">
+                                                    {new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                
+                                                {deletingLogId === log.id ? (
+                                                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-md border border-red-100 dark:border-red-900/50">
+                                                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Sure?</span>
+                                                        <button onClick={() => handleDeleteLog(log.id)} className="text-xs font-bold text-red-600 dark:text-red-400 hover:underline">Yes</button>
+                                                        <span className="text-stone-300 dark:text-zinc-700">|</span>
+                                                        <button onClick={() => setDeletingLogId(null)} className="text-xs font-bold text-stone-500 dark:text-zinc-400 hover:underline">No</button>
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => setDeletingLogId(log.id)}
+                                                        className="text-stone-300 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-500 transition-colors"
+                                                        title="Delete this entry"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <p className="text-sm font-medium text-stone-800 dark:text-zinc-200 truncate">
                                             {log.action === 'import' ? 'Imported' : 'Deleted'}: {log.episodeTitle}
@@ -316,7 +352,7 @@ export default function Home() {
                     {dynamicCourses.map(c => <CourseCard key={c.id} course={c} />)}
                 </div>
             </main>
-            <ActivityLogModal />
+            {renderActivityLogModal()}
         </div>
     );
 }
