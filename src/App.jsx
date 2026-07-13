@@ -30,6 +30,7 @@ function App() {
         <Route path="/hungarian" element={<LanguageCourse config={courseConfigs.hungarian} />} />
         <Route path="/portuguese" element={<LanguageCourse config={courseConfigs.portuguese} />} />
         <Route path="/romanian" element={<LanguageCourse config={courseConfigs.romanian} />} />
+        <Route path="/russian" element={<LanguageCourse config={courseConfigs.russian} />} />
         
         {/* SERVICE APPS & GAMES */}
         <Route path="/migrate" element={<MigrationTool />} />

@@ -9,6 +9,7 @@ const ALL_COURSES = [
     { id: "mandarin", name: "Mandarin", url: "/mandarin", color: "hover:border-red-500", flag: "🇹🇼" },
     { id: "portuguese", name: "Portuguese", url: "/portuguese", color: "hover:border-emerald-600", flag: "🇵🇹" },
     { id: "romanian", name: "Romanian", url: "/romanian", color: "hover:border-indigo-500", flag: "🇷🇴" },
+    { id: "russian", name: "Russian", url: "/russian", color: "hover:border-sky-500", flag: "🇷🇺" },
 ];
 
 const PINNED_ORDER = ["hungarian", "lingocraft", "mandarin"];

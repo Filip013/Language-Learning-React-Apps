@@ -117,15 +117,8 @@ export function useGeminiTTS(systemInstruction) {
 
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                         ws.current.send(JSON.stringify({
-                            clientContent: {
-                                turns: [{ 
-                                    role: "user", 
-                                    parts: [{ 
-                                        // Wrap the text in a direct command
-                                        text: `Read the following text aloud exactly as written: "${nextItem.text}"` 
-                                    }] 
-                                }],
-                                turnComplete: true
+                            realtimeInput: {
+                                text: `Read the following text aloud exactly as written: "${nextItem.text}"` 
                             }
                         }));
                     }
