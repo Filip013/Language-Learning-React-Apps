@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, Eye, CheckCircle2, ChevronDown, AlertCircle, Search, Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, Activity, Lightbulb, ClipboardPaste, Sparkles, Plus, Edit, FileText } from 'lucide-react';
+import { BookOpen, Volume2, Pause, RotateCcw, MessageSquare, Sun, Moon, BookMarked, 
+  Eye, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Check, AlertCircle, Search, 
+  Book, Trash2, XCircle, Copy, Award, Upload, Download, List, Loader2, ArrowLeft, PenTool, 
+  Activity, Lightbulb, ClipboardPaste, Sparkles, Plus, Edit, FileText } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
@@ -224,100 +227,248 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config,
 function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, isLatestEpisode, handleOpenNote }) {
   const listenedIds = progressState.listenedDrills || [];
   const notes = progressState.notes || {};
+  
+  const [currentWordIdx, setCurrentWordIdx] = useState(0);
+  const [currentExIdx, setCurrentExIdx] = useState(0);
   const [playingId, setPlayingId] = useState(null);
+  const [showLexicalNote, setShowLexicalNote] = useState(false);
+
+  // Reset example index and note toggle when changing words
+  useEffect(() => {
+    setCurrentExIdx(0);
+    setShowLexicalNote(false);
+  }, [currentWordIdx]);
 
   if (!activeEpisode?.drills?.length) return <div className="p-10 text-center font-sans opacity-50">No drills generated yet.</div>;
+
+  const totalWords = activeEpisode.drills.length;
+  const currentSection = activeEpisode.drills[currentWordIdx];
+  const totalExamples = currentSection.examples?.length || 0;
+  const currentExample = currentSection.examples?.[currentExIdx];
 
   const playDrill = (ex, exId, isListened) => {
     if (playingId === exId) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(exId);
     const targetText = ex[config.primaryTextKey]; 
-    handleSpeak([targetText, ex.english, targetText], () => { setPlayingId(null); if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); }, () => setPlayingId(null));
+    handleSpeak(
+      [targetText, ex.english, targetText], 
+      () => { 
+        setPlayingId(null); 
+        if (!isListened) updateFirebase({ listenedDrills: [...listenedIds, exId] }); 
+      }, 
+      () => setPlayingId(null)
+    );
   };
 
+  const handleNext = () => {
+    stopSpeak();
+    if (currentExIdx < totalExamples - 1) {
+      setCurrentExIdx(prev => prev + 1);
+    } else if (currentWordIdx < totalWords - 1) {
+      setCurrentWordIdx(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    stopSpeak();
+    if (currentExIdx > 0) {
+      setCurrentExIdx(prev => prev - 1);
+    } else if (currentWordIdx > 0) {
+      setCurrentWordIdx(prev => prev - 1);
+      setCurrentExIdx(activeEpisode.drills[currentWordIdx - 1].examples.length - 1);
+    }
+  };
+
+  // Check if all examples for a word are listened to
+  const isWordCompleted = (wordIdx) => {
+    if (!isLatestEpisode) return true;
+    const section = activeEpisode.drills[wordIdx];
+    return section.examples?.every((_, exIdx) => listenedIds.includes(`drill_${wordIdx}_${exIdx}`));
+  };
+
+  if (!currentExample) return null;
+
+  const exId = `drill_${currentWordIdx}_${currentExIdx}`;
+  const isListened = !isLatestEpisode || listenedIds.includes(exId);
+  const targetText = currentExample[config.primaryTextKey];
+  const hasNotes = currentSection.notes && currentSection.notes.length > 0;
+
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 pb-32">
       
+      {/* Header (Restored to match other tabs) */}
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookMarked size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Audio Drills</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Listen & Repeat</p>
+        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
+          <BookMarked size={32} />
+        </div>
+        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Drills</h1>
+        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Master one context at a time</p>
       </header>
 
-      <div className="space-y-16">
-        {activeEpisode.drills.map((section, sectionIdx) => (
-          
-          <section key={sectionIdx} className={`space-y-8 p-6 md:p-10 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
+      {/* Mini Cards (Word Navigation) - Centered & Customized Font */}
+      <div className="mb-6 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-3 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+          {activeEpisode.drills.map((drill, idx) => {
+            const isActive = idx === currentWordIdx;
+            const isCompleted = isWordCompleted(idx);
+            const wordFontClass = config.useLargeDrillFont ? 'moe-font text-xl md:text-2xl pt-1' : `${config.fontClass || 'font-sans'} text-base md:text-lg`;
             
-            {/* Target Word Header */}
-            <div className="text-center mb-8">
-              <div className={`inline-block rounded-2xl p-4 md:p-6 border shadow-sm ${isDarkMode ? 'bg-stone-700 border-stone-600 text-stone-100' : 'bg-stone-100 border-stone-200 text-stone-800'}`}>
-                <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-xl md:text-2xl font-bold font-sans tracking-wide px-4'}`}>{section.word}</h2>
-                {config.transliterationKey && section[config.transliterationKey] && <p className="mt-2 font-sans text-sm opacity-70">{section[config.transliterationKey]}</p>}
-              </div>
-            </div>
+            let cardClasses = `shrink-0 flex items-center justify-center px-5 py-2.5 rounded-xl font-bold transition-all border shadow-sm cursor-pointer whitespace-nowrap ${wordFontClass} `;
             
-            {/* Example Sentences */}
-            <div className="space-y-10 pl-2">
-              {section.examples?.map((ex, exIndex) => {
-                const exId = `drill_${sectionIdx}_${exIndex}`;
-                const isListened = !isLatestEpisode || listenedIds.includes(exId);
-                const targetText = ex[config.primaryTextKey];
-                
-                return (
-                  <div key={exId} className={`group border-b pb-8 last:border-0 last:pb-0 ${isDarkMode ? 'border-stone-700' : 'border-stone-100'}`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <h3 className={`text-xl font-bold font-sans tracking-wide ${isDarkMode ? 'text-stone-400' : 'text-stone-450'}`}>Example {exIndex + 1}</h3>
-                        {isListened && <span className="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Listened ✓</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
-                        <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(ex, exId, isListened)} size={20} />
-                      </div>
-                    </div>
-                    <div className="relative mt-2">
-                      <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
-                        <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{targetText}</p>
-                        <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex.english || ex.translation}</p>
-                        
-                        {config.secondaryScriptKey && ex[config.secondaryScriptKey] && (
-                          <p className={`text-[28px] md:text-3xl ${config.secondaryFontClass || ''} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{ex[config.secondaryScriptKey]}</p>
-                        )}
-                        {config.transliterationKey && ex[config.transliterationKey] && (
-                          <p className={`text-lg font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{ex[config.transliterationKey]}</p>
-                        )}
-                      </div>
-                      {!isListened && (
-                        <div className="absolute inset-0 flex items-center justify-center z-10">
-                          <button onClick={() => playDrill(ex, exId, isListened)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
-                            {playingId === exId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Play to Reveal
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            if (isActive) {
+              cardClasses += isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900' : 'bg-amber-500 border-amber-400 text-stone-900';
+            } else {
+              cardClasses += isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-300' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800';
+            }
 
-            {/* Notes Section */}
-            {section.notes && section.notes.length > 0 && (
-              <div className={`mt-8 p-6 rounded-2xl border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
-                <div className={`flex items-center gap-3 mb-4 border-b pb-3 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-                  <Lightbulb className="text-amber-500" size={20} />
-                  <h4 className={`text-lg font-bold ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Focus & Grammar</h4>
-                </div>
-                <div className="space-y-3">
-                  {section.notes.map((note, noteIdx) => (
+            return (
+              <button key={idx} onClick={() => { stopSpeak(); setCurrentWordIdx(idx); }} className={cardClasses}>
+                {drill.word}
+                {isCompleted && !isActive && <Check size={16} strokeWidth={3} className="ml-2 text-emerald-500" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-4">
+        
+        {/* Target Word Header */}
+        <div className="text-center py-2">
+          <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-3xl md:text-4xl font-bold font-sans tracking-wide px-4'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
+            {currentSection.word}
+          </h2>
+          {config.transliterationKey && currentExample[config.transliterationKey] && (
+            <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{currentExample[config.transliterationKey]}</p>
+          )}
+        </div>
+
+        {/* Collapsible Lexical Note */}
+        {hasNotes && (
+          <div className={`mx-auto max-w-2xl rounded-2xl border transition-all duration-300 ${isDarkMode ? 'bg-stone-900/50 border-stone-800' : 'bg-stone-50/50 border-stone-200'}`}>
+            <button 
+              onClick={() => setShowLexicalNote(!showLexicalNote)} 
+              className={`w-full flex items-center justify-between p-4 text-sm font-bold uppercase tracking-wider transition-colors ${showLexicalNote ? (isDarkMode ? 'text-amber-400' : 'text-amber-600') : (isDarkMode ? 'text-stone-400 hover:text-stone-300' : 'text-stone-500 hover:text-stone-700')}`}
+            >
+              <span className="flex items-center gap-2"><Lightbulb size={16} /> Lexical Note</span>
+              <ChevronDown size={18} className={`transition-transform duration-300 ${showLexicalNote ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <div className={`grid transition-all duration-300 ${showLexicalNote ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="p-4 pt-0 space-y-3 border-t border-transparent">
+                  {currentSection.notes.map((note, noteIdx) => (
                     <p key={noteIdx} className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{note}</p>
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
+
+        {/* Focused Single Example Card */}
+        <div className={`p-5 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-stone-500' : 'text-stone-400'}`}>
+                Example {currentExIdx + 1}
+              </span>
+              {isListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
+              <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isListened)} size={20} />
+            </div>
+          </div>
+          
+          <div className="relative min-h-[140px] flex flex-col justify-center">
+            <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
+              
+              {/* Primary Script */}
+              <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+                {targetText}
+              </p>
+              
+              {/* Group without the divider border */}
+              <div className="space-y-2">
+                
+                {/* English Translation (Matches Transliteration Style) */}
+                <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>
+                  {currentExample.english || currentExample.translation}
+                </p>
+
+                {/* Secondary Script (Matches Primary Style) */}
+                {config.secondaryScriptKey && currentExample[config.secondaryScriptKey] && (
+                  <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.secondaryFontClass || config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+                    {currentExample[config.secondaryScriptKey]}
+                  </p>
+                )}
+                
+                {/* Transliteration (Matches English Style) */}
+                {config.transliterationKey && currentExample[config.transliterationKey] && (
+                  <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>
+                    {currentExample[config.transliterationKey]}
+                  </p>
+                )}
+                
+              </div>
+            </div>
             
-          </section>
-        ))}
+            {!isListened && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <button onClick={() => playDrill(currentExample, exId, isListened)} className={`flex items-center gap-2 px-8 py-4 rounded-full shadow-lg font-sans text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
+                  {playingId === exId ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />} Play to Reveal
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM NAVIGATION BAR */}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-md z-40 flex justify-center ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
+        <div className="w-full max-w-4xl flex items-center justify-between gap-2 md:gap-4">
+          
+          <button 
+            onClick={handlePrev} 
+            disabled={currentWordIdx === 0 && currentExIdx === 0}
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold transition-all ${currentWordIdx === 0 && currentExIdx === 0 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'hover:bg-stone-800 text-stone-200' : 'hover:bg-stone-200 text-stone-800')}`}
+          >
+            <ChevronLeft size={20} /> <span className="hidden sm:inline">Prev</span>
+          </button>
+          
+          {/* Fast-switch Example Number Cards */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-2">
+            {currentSection.examples?.map((_, idx) => {
+              const isCurrent = currentExIdx === idx;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => { stopSpeak(); setCurrentExIdx(idx); }}
+                  className={`w-9 h-9 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                    isCurrent 
+                      ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm')
+                      : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <button 
+            onClick={handleNext} 
+            disabled={currentWordIdx === totalWords - 1 && currentExIdx === totalExamples - 1}
+            className={`flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-bold transition-all border ${currentWordIdx === totalWords - 1 && currentExIdx === totalExamples - 1 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'bg-stone-800 border-stone-700 text-amber-400 hover:bg-stone-700' : 'bg-white border-stone-300 text-amber-600 hover:bg-stone-100')}`}
+          >
+            <span className="hidden sm:inline">
+              {currentExIdx === totalExamples - 1 ? 'Next Word' : 'Next'}
+            </span> 
+            <ChevronRight size={20} />
+          </button>
+
+        </div>
       </div>
       
     </div>
