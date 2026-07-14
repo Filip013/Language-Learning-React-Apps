@@ -116,11 +116,10 @@ function EpisodeTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config 
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
-        <h1 className={`text-3xl font-bold mb-3 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>AI-Generated Chapter</p>
+    <div className="max-w-6xl mx-auto pt-6 pb-12 px-4 md:px-8">
+      <header className={`mb-8 border-b-2 pb-6 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={28} /></div>
+        <h1 className={`text-2xl md:text-3xl font-bold mb-0 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Story Content'}</h1>
       </header>
       <main className="space-y-8">
         {filteredVersions.map((v) => (
@@ -154,11 +153,10 @@ function ReadingTab({ isDarkMode, activeEpisode, handleSpeak, stopSpeak, config,
   const notes = progressState?.notes || {};
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Reading'}</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Reading & Comprehension</p>
+    <div className="max-w-6xl mx-auto pt-6 pb-12 px-4 md:px-8 font-sans">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><BookOpen size={28} /></div>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{activeEpisode.title || 'Reading'}</h1>
       </header>
 
       <div className="space-y-8">
@@ -233,14 +231,12 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const [playingId, setPlayingId] = useState(null);
   const [showLexicalNote, setShowLexicalNote] = useState(false);
 
-  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  // We now track which episode we have navigated for, rather than a generic boolean
+  const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
 
-  // Reset auto-nav when episode changes
-  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
-
-  // Auto-jump to first unfinished example, or the end if fully completed
+  // Auto-jump ONLY when the tab is actively visible
   useEffect(() => {
-    if (!hasAutoNavigated && activeEpisode?.drills) {
+    if (isActive && activeEpisode?.id && autoNavigatedEpisodeId !== activeEpisode.id && activeEpisode.drills) {
       let foundWordIdx = -1;
       let foundExIdx = -1;
       let found = false;
@@ -258,15 +254,15 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
         setCurrentWordIdx(foundWordIdx);
         setCurrentExIdx(foundExIdx);
       } else if (activeEpisode.drills.length > 0) {
-        // Everything is listened to! Go to the very end.
         const lastWordIdx = activeEpisode.drills.length - 1;
         setCurrentWordIdx(lastWordIdx);
         setCurrentExIdx((activeEpisode.drills[lastWordIdx].examples?.length || 1) - 1);
       }
       
-      setHasAutoNavigated(true);
+      // Mark this episode as navigated so it doesn't fight the user's manual clicks
+      setAutoNavigatedEpisodeId(activeEpisode.id);
     }
-  }, [activeEpisode, listenedIds, hasAutoNavigated]);
+  }, [isActive, activeEpisode, listenedIds, autoNavigatedEpisodeId]);
 
   const totalWords = activeEpisode?.drills?.length || 0;
   const currentSection = activeEpisode?.drills?.[currentWordIdx];
@@ -331,6 +327,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
           if (hasNotes) setShowLexicalNote(p => !p);
           break;
         case 'n': case 'N':
+          e.preventDefault();
           handleOpenNote(exId, `Drill: ${targetText}`, notes[exId]);
           break;
       }
@@ -349,17 +346,16 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   if (!currentExample) return null;
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 pb-32">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
-          <BookMarked size={32} />
+    <div className="max-w-6xl mx-auto pt-6 px-4 md:px-8 pb-32">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
+          <BookMarked size={28} />
         </div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Drills</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Master one context at a time</p>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Interactive Drills</h1>
       </header>
 
-      <div className="mb-8 flex justify-center">
-        <div className="mx-auto w-max max-w-full flex gap-3 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+      <div className="mb-4 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-3 overflow-x-auto px-2 pb-2 no-scrollbar mask-edges-right sm:mask-edges">
           {activeEpisode.drills.map((drill, idx) => {
             const isActive = idx === currentWordIdx;
             const isCompleted = isWordCompleted(idx);
@@ -383,8 +379,8 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
         </div>
       </div>
 
-      <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-4">
-        <div className="text-center py-2">
+      <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-3">
+        <div className="text-center">
           <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-3xl md:text-4xl font-bold font-sans tracking-wide px-4'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
             {currentSection.word}
           </h2>
@@ -473,31 +469,27 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
 
-  // Variables defined FIRST
   const userSelections = progressState.selections || {};
   const revealedIds = progressState.revealed || [];
   const gradedIds = progressState.gradedIds || [];
   const notes = progressState.notes || {};
 
-  // NOW we can safely use gradedIds
-  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
-
+  // Auto-jump ONLY when the tab is actively visible
   useEffect(() => {
-    if (!hasAutoNavigated && shuffledData.length > 0) {
+    if (isActive && activeEpisode?.id && autoNavigatedEpisodeId !== activeEpisode.id && shuffledData.length > 0) {
       const firstUnfinished = shuffledData.findIndex(q => !gradedIds.includes(`quiz_${q.id}`));
       
       if (firstUnfinished !== -1) {
         setCurrentIdx(firstUnfinished);
       } else {
-        // Everything is graded! Go to the very end.
         setCurrentIdx(shuffledData.length - 1);
       }
       
-      setHasAutoNavigated(true);
+      setAutoNavigatedEpisodeId(activeEpisode.id);
     }
-  }, [shuffledData, gradedIds, hasAutoNavigated]);
+  }, [isActive, activeEpisode, shuffledData, gradedIds, autoNavigatedEpisodeId]);
 
   useEffect(() => {
     if (activeEpisode?.quiz) {
@@ -555,6 +547,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
           if (!isGraded && q.options && q.options[optIdx]) handleSelect(qId, q.options[optIdx]);
           break;
         case 'n': case 'N':
+          e.preventDefault();
           handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId]);
           break;
       }
@@ -573,9 +566,9 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   }).length;
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 pb-32 font-sans">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className="absolute right-0 top-0">
+    <div className="max-w-6xl mx-auto pt-6 px-4 md:px-8 pb-32 font-sans">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className="absolute right-0 top-2">
           {!showConfirmReset ? (
             <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> 重置</button>
           ) : (
@@ -587,13 +580,12 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
             </div>
           )}
         </div>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><CheckCircle2 size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Review Quiz</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Chapter Comprehension & Vocabulary</p>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><CheckCircle2 size={28} /></div>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Review Quiz</h1>
       </header>
 
-      <div className="mb-8 flex justify-center">
-        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+      <div className="mb-4 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-2 no-scrollbar mask-edges-right sm:mask-edges">
           {shuffledData.map((item, idx) => {
             const iterQid = `quiz_${item.id}`;
             const isCompleted = gradedIds.includes(iterQid);
@@ -721,30 +713,26 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
 
-  // Variables defined FIRST
   const mst = progressState.testMastered || {};
   const rev = progressState.testRevealed || {};
   const notes = progressState.notes || {};
 
-  // NOW we can safely use rev
-  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
-
+  // Auto-jump ONLY when the tab is actively visible
   useEffect(() => {
-    if (!hasAutoNavigated && activeEpisode?.test) {
+    if (isActive && activeEpisode?.id && autoNavigatedEpisodeId !== activeEpisode.id && activeEpisode.test) {
       const firstUnfinished = activeEpisode.test.findIndex((_, idx) => !rev[`test_${idx}`]);
       
       if (firstUnfinished !== -1) {
         setCurrentIdx(firstUnfinished);
       } else if (activeEpisode.test.length > 0) {
-        // Everything is translated! Go to the very end.
         setCurrentIdx(activeEpisode.test.length - 1);
       }
       
-      setHasAutoNavigated(true);
+      setAutoNavigatedEpisodeId(activeEpisode.id);
     }
-  }, [activeEpisode, rev, hasAutoNavigated]);
+  }, [isActive, activeEpisode, rev, autoNavigatedEpisodeId]);
 
   const totalItems = activeEpisode?.test?.length || 0;
   const item = activeEpisode?.test?.[currentIdx];
@@ -773,6 +761,7 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
           playAnswer(qId, item[config.primaryTextKey], rev[qId]);
           break;
         case 'n': case 'N':
+          e.preventDefault();
           handleOpenNote(qId, `Translate: ${item.english}`, notes[qId]);
           break;
       }
@@ -785,9 +774,9 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   if (!item) return null;
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 pb-32 font-sans">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className="absolute right-0 top-0">
+    <div className="max-w-6xl mx-auto pt-6 px-4 md:px-8 pb-32 font-sans">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className="absolute right-0 top-2">
           {!showConfirmReset ? (
             <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> 重置</button>
           ) : (
@@ -799,13 +788,12 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
             </div>
           )}
         </div>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><PenTool size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Translate from English to {config.name.replace(' Master', '')}</p>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><PenTool size={28} /></div>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
       </header>
 
-      <div className="mb-8 flex justify-center">
-        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+      <div className="mb-4 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-2 no-scrollbar mask-edges-right sm:mask-edges">
           {activeEpisode.test.map((_, idx) => {
             const iterQid = `test_${idx}`;
             const isCompleted = rev[iterQid];
@@ -878,30 +866,26 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+  const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
 
-  // Variables defined FIRST
   const mst = progressState.sweepMastered || {};
   const rev = progressState.sweepRevealed || {};
   const notes = progressState.notes || {};
 
-  // NOW we can safely use rev
-  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
-
+  // Auto-jump ONLY when the tab is actively visible
   useEffect(() => {
-    if (!hasAutoNavigated && activeEpisode?.sweep) {
+    if (isActive && activeEpisode?.id && autoNavigatedEpisodeId !== activeEpisode.id && activeEpisode.sweep) {
       const firstUnfinished = activeEpisode.sweep.findIndex((_, idx) => !rev[`sweep_${idx}`]);
       
       if (firstUnfinished !== -1) {
         setCurrentIdx(firstUnfinished);
       } else if (activeEpisode.sweep.length > 0) {
-        // Everything is checked! Go to the very end.
         setCurrentIdx(activeEpisode.sweep.length - 1);
       }
       
-      setHasAutoNavigated(true);
+      setAutoNavigatedEpisodeId(activeEpisode.id);
     }
-  }, [activeEpisode, rev, hasAutoNavigated]);
+  }, [isActive, activeEpisode, rev, autoNavigatedEpisodeId]);
 
   const totalItems = activeEpisode?.sweep?.length || 0;
   const item = activeEpisode?.sweep?.[currentIdx];
@@ -931,6 +915,7 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
           playSweep(qId, textToRead, rev[qId]);
           break;
         case 'n': case 'N':
+          e.preventDefault();
           handleOpenNote(qId, `Sweep: ${item.word}`, notes[qId]);
           break;
       }
@@ -943,9 +928,9 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   if (!item) return null;
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 pb-32 font-sans">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className="absolute right-0 top-0">
+    <div className="max-w-6xl mx-auto pt-6 px-4 md:px-8 pb-32 font-sans">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className="absolute right-0 top-2">
           {!showConfirmReset ? (
             <button onClick={() => setShowConfirmReset(true)} className="flex items-center gap-2 text-stone-400 hover:text-red-500 text-sm px-3 py-2"><RotateCcw size={16} /> 重置</button>
           ) : (
@@ -957,13 +942,12 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
             </div>
           )}
         </div>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Activity size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Diagnostic Sweep</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Fluency & Comprehension Check</p>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Activity size={28} /></div>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Diagnostic Sweep</h1>
       </header>
 
-      <div className="mb-8 flex justify-center">
-        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+      <div className="mb-4 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-2 no-scrollbar mask-edges-right sm:mask-edges">
           {activeEpisode.sweep.map((_, idx) => {
             const iterQid = `sweep_${idx}`;
             const isCompleted = rev[iterQid];
@@ -1284,11 +1268,10 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
   if (!globalLexicon || Object.keys(globalLexicon).length === 0) return <div className="p-20 text-center text-stone-500 font-sans">Loading master lexicon...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans relative">
-      <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Search size={32} /></div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{config.name} Lexicon</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Saved Vocabulary</p>
+    <div className="max-w-6xl mx-auto pt-6 pb-12 px-4 md:px-8 font-sans relative">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Search size={28} /></div>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>{config.name} Lexicon</h1>
       </header>
 
       <div className={`p-6 rounded-2xl shadow-sm border mb-8 sticky top-4 z-10 ${isDarkMode ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'}`}>
@@ -1418,14 +1401,12 @@ function StoryTab({ isDarkMode, activeStoryId, setActiveStoryId, storyList, conf
   const activeStoryData = storyList.find(s => s.id === activeStoryId) || storyList[0];
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans animate-in fade-in duration-300">
-      
-      <header className={`mb-8 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
-          <Book size={32} />
+    <div className="max-w-6xl mx-auto pt-6 pb-12 px-4 md:px-8 font-sans animate-in fade-in duration-300">
+      <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+        <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
+          <Book size={28} />
         </div>
-        <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Story Library</h1>
-        <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Browse your generated books</p>
+        <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Story Library</h1>
       </header>
 
       {storyList.length > 1 && (
@@ -2005,8 +1986,7 @@ export default function LanguageCourse({ config }) {
   if (!user) return null;
   
   return (
-    <div className={`min-h-screen transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang={config.id === 'mandarin' ? 'zh-Hant' : config.id.substring(0, 2)}>
-      <style dangerouslySetInnerHTML={{__html: `@import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB'); @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti'); .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; } .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }`}} />
+    <div className={`min-h-screen overflow-y-scroll transition-colors duration-300 font-sans ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang={config.id === 'mandarin' ? 'zh-Hant' : config.id.substring(0, 2)}>      <style dangerouslySetInnerHTML={{__html: `@import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB'); @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti'); .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; } .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }`}} />
 
       <nav className={`sticky top-0 z-50 border-b backdrop-blur-md px-4 py-3 flex justify-between shadow-sm ${isDarkMode ? 'bg-stone-900/85 border-stone-850' : 'bg-white/90 border-stone-200'}`}>
         <div className="flex gap-1 md:gap-4 overflow-x-auto no-scrollbar mask-edges pr-8 flex-1">
@@ -2020,13 +2000,12 @@ export default function LanguageCourse({ config }) {
       </nav>
 
       {activeTab === 'studio' && (
-        <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 animate-in fade-in duration-300">
-          <header className={`mb-8 border-b-2 pb-8 text-center flex flex-col items-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-            <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
-              <MessageSquare size={32} />
+        <div className="max-w-6xl mx-auto pt-6 pb-12 px-4 md:px-8 animate-in fade-in duration-300">
+          <header className={`mb-8 border-b-2 pb-6 flex flex-col items-center text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+            <div className={`inline-flex items-center justify-center p-3 rounded-full mb-3 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}>
+              <MessageSquare size={28} />
             </div>
-            <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Studio</h1>
-            <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Generate next lesson</p>
+            <h1 className={`text-2xl md:text-3xl font-bold font-sans mb-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Studio</h1>
           </header>
 
           <div className="mb-8 relative z-20">
