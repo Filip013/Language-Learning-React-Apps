@@ -43,14 +43,14 @@ function UserNoteModal({ isDarkMode, isOpen, noteTitle, initialText, onClose, on
   // Close modal when Escape key is pressed
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // ADD isActive CHECK HERE:
-      if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || !currentExample) return;
       if (e.key === 'Escape') {
         onClose();
       }
     };
     
-    window.addEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
@@ -233,10 +233,40 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const [playingId, setPlayingId] = useState(null);
   const [showLexicalNote, setShowLexicalNote] = useState(false);
 
+  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
+
+  // Reset auto-nav when episode changes
+  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
+
+  // Auto-jump to first unfinished example, or the end if fully completed
   useEffect(() => {
-    setCurrentExIdx(0);
-    setShowLexicalNote(false);
-  }, [currentWordIdx]);
+    if (!hasAutoNavigated && activeEpisode?.drills) {
+      let foundWordIdx = -1;
+      let foundExIdx = -1;
+      let found = false;
+      for (let wIdx = 0; wIdx < activeEpisode.drills.length; wIdx++) {
+        const section = activeEpisode.drills[wIdx];
+        for (let eIdx = 0; eIdx < (section.examples?.length || 0); eIdx++) {
+          if (!listenedIds.includes(`drill_${wIdx}_${eIdx}`)) {
+            foundWordIdx = wIdx; foundExIdx = eIdx; found = true; break;
+          }
+        }
+        if (found) break;
+      }
+      
+      if (found) {
+        setCurrentWordIdx(foundWordIdx);
+        setCurrentExIdx(foundExIdx);
+      } else if (activeEpisode.drills.length > 0) {
+        // Everything is listened to! Go to the very end.
+        const lastWordIdx = activeEpisode.drills.length - 1;
+        setCurrentWordIdx(lastWordIdx);
+        setCurrentExIdx((activeEpisode.drills[lastWordIdx].examples?.length || 1) - 1);
+      }
+      
+      setHasAutoNavigated(true);
+    }
+  }, [activeEpisode, listenedIds, hasAutoNavigated]);
 
   const totalWords = activeEpisode?.drills?.length || 0;
   const currentSection = activeEpisode?.drills?.[currentWordIdx];
@@ -257,14 +287,21 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
 
   const handleNext = useCallback(() => {
     stopSpeak();
-    if (currentExIdx < totalExamples - 1) setCurrentExIdx(prev => prev + 1);
-    else if (currentWordIdx < totalWords - 1) setCurrentWordIdx(prev => prev + 1);
+    setShowLexicalNote(false);
+    if (currentExIdx < totalExamples - 1) {
+      setCurrentExIdx(prev => prev + 1);
+    } else if (currentWordIdx < totalWords - 1) {
+      setCurrentWordIdx(prev => prev + 1);
+      setCurrentExIdx(0);
+    }
   }, [currentExIdx, currentWordIdx, totalExamples, totalWords, stopSpeak]);
 
   const handlePrev = useCallback(() => {
     stopSpeak();
-    if (currentExIdx > 0) setCurrentExIdx(prev => prev - 1);
-    else if (currentWordIdx > 0) {
+    setShowLexicalNote(false);
+    if (currentExIdx > 0) {
+      setCurrentExIdx(prev => prev - 1);
+    } else if (currentWordIdx > 0) {
       setCurrentWordIdx(prev => prev - 1);
       setCurrentExIdx(activeEpisode.drills[currentWordIdx - 1].examples.length - 1);
     }
@@ -301,7 +338,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive, currentExample, exId, isListened, currentWordIdx, totalWords, hasNotes, targetText, notes, handleNext, handlePrev, playDrill, stopSpeak, handleOpenNote]);
-  
+
   const isWordCompleted = (wordIdx) => {
     if (!isLatestEpisode) return true;
     const section = activeEpisode.drills[wordIdx];
@@ -328,11 +365,18 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
             const isCompleted = isWordCompleted(idx);
             const wordFontClass = config.useLargeDrillFont ? 'moe-font text-xl md:text-2xl pt-1' : `${config.fontClass || 'font-sans'} text-base md:text-lg`;
             let cardClasses = `shrink-0 flex items-center justify-center px-5 py-2.5 rounded-xl font-bold transition-all border shadow-sm cursor-pointer whitespace-nowrap ${wordFontClass} `;
-            if (isActive) cardClasses += isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900' : 'bg-amber-500 border-amber-400 text-stone-900';
-            else cardClasses += isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-300' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800';
+            
+            if (isActive) {
+              cardClasses += isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900' : 'bg-amber-500 border-amber-400 text-stone-900';
+            } else if (isCompleted) {
+              cardClasses += isDarkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-500 hover:bg-emerald-900/40' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100';
+            } else {
+              cardClasses += isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-300' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800';
+            }
+
             return (
-              <button key={idx} onClick={() => { stopSpeak(); setCurrentWordIdx(idx); }} className={cardClasses}>
-                {drill.word} {isCompleted && !isActive && <Check size={16} strokeWidth={3} className="ml-2 text-emerald-500" />}
+              <button key={idx} onClick={() => { stopSpeak(); setCurrentWordIdx(idx); setCurrentExIdx(0); setShowLexicalNote(false); }} className={cardClasses}>
+                {drill.word}
               </button>
             );
           })}
@@ -429,11 +473,31 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
 
+  // Variables defined FIRST
   const userSelections = progressState.selections || {};
   const revealedIds = progressState.revealed || [];
   const gradedIds = progressState.gradedIds || [];
   const notes = progressState.notes || {};
+
+  // NOW we can safely use gradedIds
+  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
+
+  useEffect(() => {
+    if (!hasAutoNavigated && shuffledData.length > 0) {
+      const firstUnfinished = shuffledData.findIndex(q => !gradedIds.includes(`quiz_${q.id}`));
+      
+      if (firstUnfinished !== -1) {
+        setCurrentIdx(firstUnfinished);
+      } else {
+        // Everything is graded! Go to the very end.
+        setCurrentIdx(shuffledData.length - 1);
+      }
+      
+      setHasAutoNavigated(true);
+    }
+  }, [shuffledData, gradedIds, hasAutoNavigated]);
 
   useEffect(() => {
     if (activeEpisode?.quiz) {
@@ -535,8 +599,18 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
             const isCompleted = gradedIds.includes(iterQid);
             const isCurrent = currentIdx === idx;
             return (
-              <button key={idx} onClick={() => { stopSpeak(); setCurrentIdx(idx); }} className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${isCurrent ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm') : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')}`}>
-                {isCompleted && !isCurrent ? <Check size={16} strokeWidth={3} className="text-emerald-500" /> : idx + 1}
+              <button 
+                key={idx} 
+                onClick={() => { stopSpeak(); setCurrentIdx(idx); }} 
+                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                  isCurrent 
+                    ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm') 
+                    : isCompleted 
+                      ? (isDarkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-500 hover:bg-emerald-900/40' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100')
+                      : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                }`}
+              >
+                {idx + 1}
               </button>
             );
           })}
@@ -647,10 +721,30 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
 
+  // Variables defined FIRST
   const mst = progressState.testMastered || {};
   const rev = progressState.testRevealed || {};
   const notes = progressState.notes || {};
+
+  // NOW we can safely use rev
+  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
+
+  useEffect(() => {
+    if (!hasAutoNavigated && activeEpisode?.test) {
+      const firstUnfinished = activeEpisode.test.findIndex((_, idx) => !rev[`test_${idx}`]);
+      
+      if (firstUnfinished !== -1) {
+        setCurrentIdx(firstUnfinished);
+      } else if (activeEpisode.test.length > 0) {
+        // Everything is translated! Go to the very end.
+        setCurrentIdx(activeEpisode.test.length - 1);
+      }
+      
+      setHasAutoNavigated(true);
+    }
+  }, [activeEpisode, rev, hasAutoNavigated]);
 
   const totalItems = activeEpisode?.test?.length || 0;
   const item = activeEpisode?.test?.[currentIdx];
@@ -717,8 +811,18 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
             const isCompleted = rev[iterQid];
             const isCurrent = currentIdx === idx;
             return (
-              <button key={idx} onClick={() => { stopSpeak(); setCurrentIdx(idx); }} className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${isCurrent ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm') : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')}`}>
-                {isCompleted && !isCurrent ? <Check size={16} strokeWidth={3} className="text-emerald-500" /> : idx + 1}
+              <button 
+                key={idx} 
+                onClick={() => { stopSpeak(); setCurrentIdx(idx); }} 
+                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                  isCurrent 
+                    ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm') 
+                    : isCompleted 
+                      ? (isDarkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-500 hover:bg-emerald-900/40' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100')
+                      : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                }`}
+              >
+                {idx + 1}
               </button>
             );
           })}
@@ -774,10 +878,30 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
 
+  // Variables defined FIRST
   const mst = progressState.sweepMastered || {};
   const rev = progressState.sweepRevealed || {};
   const notes = progressState.notes || {};
+
+  // NOW we can safely use rev
+  useEffect(() => { setHasAutoNavigated(false); }, [activeEpisode?.id]);
+
+  useEffect(() => {
+    if (!hasAutoNavigated && activeEpisode?.sweep) {
+      const firstUnfinished = activeEpisode.sweep.findIndex((_, idx) => !rev[`sweep_${idx}`]);
+      
+      if (firstUnfinished !== -1) {
+        setCurrentIdx(firstUnfinished);
+      } else if (activeEpisode.sweep.length > 0) {
+        // Everything is checked! Go to the very end.
+        setCurrentIdx(activeEpisode.sweep.length - 1);
+      }
+      
+      setHasAutoNavigated(true);
+    }
+  }, [activeEpisode, rev, hasAutoNavigated]);
 
   const totalItems = activeEpisode?.sweep?.length || 0;
   const item = activeEpisode?.sweep?.[currentIdx];
@@ -845,8 +969,18 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
             const isCompleted = rev[iterQid];
             const isCurrent = currentIdx === idx;
             return (
-              <button key={idx} onClick={() => { stopSpeak(); setCurrentIdx(idx); }} className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${isCurrent ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm') : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')}`}>
-                {isCompleted && !isCurrent ? <Check size={16} strokeWidth={3} className="text-emerald-500" /> : idx + 1}
+              <button 
+                key={idx} 
+                onClick={() => { stopSpeak(); setCurrentIdx(idx); }} 
+                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                  isCurrent 
+                    ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm') 
+                    : isCompleted 
+                      ? (isDarkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-500 hover:bg-emerald-900/40' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100')
+                      : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                }`}
+              >
+                {idx + 1}
               </button>
             );
           })}
