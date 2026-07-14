@@ -1,7 +1,7 @@
 // src/hooks/useGeminiTTS.js
 import { useRef, useCallback } from 'react';
 
-const MAX_RETRIES = 2; // Initial try + 2 retries = 3 attempts total
+const MAX_RETRIES = 4; // Initial try + 2 retries = 3 attempts total
 
 export function useGeminiTTS(systemInstruction) {
     const ws = useRef(null);
@@ -165,8 +165,19 @@ export function useGeminiTTS(systemInstruction) {
                                 sendNextText(); // Fire it off immediately
                                 return; // Skip the completion check block below for this failed turn
                             } else {
-                                console.warn("Max TTS retries reached. Skipping to next text segment.");
-                                // Fall through to allow the interval below to move to the next item
+                                console.warn("Max TTS retries reached. Aborting playback.");
+                                
+                                // Save error callback before wiping
+                                const errorCb = currentOnError.current;
+                                
+                                // Detach onComplete so stopSpeak doesn't accidentally trigger a success reveal
+                                currentOnComplete.current = null; 
+                                currentOnError.current = null;
+                                
+                                stopSpeak(); // Clean up audio nodes, queues, and sockets
+                                
+                                if (errorCb) errorCb(); // Let the UI know it failed
+                                return; // Skip the success block
                             }
                         }
 
