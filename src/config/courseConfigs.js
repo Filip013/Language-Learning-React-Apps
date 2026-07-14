@@ -92,7 +92,7 @@ DRILL AND QUIZ DESIGN:
         hasTestTab: true,
         hasSweepTab: true,
         
-        ttsSystemInstruction: SHARED_TTS_PROMPT,
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: Evaluate the primary language of the sentence before speaking. If the sentence is in English but starts with or contains a Hungarian name (e.g., 'Tamás', 'János'), you MUST read the entire sentence with a natural, native English accent. Do not switch to a Hungarian accent for the English words.",
         promptSystemInstruction: `You are an expert Hungarian language curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULES:
