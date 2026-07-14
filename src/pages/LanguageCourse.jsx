@@ -338,12 +338,70 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
           <h2 className={`${config.useLargeDrillFont ? 'text-6xl md:text-7xl moe-font tracking-widest' : 'text-3xl md:text-4xl font-bold font-sans tracking-wide px-4'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
             {currentSection.word}
           </h2>
-          {config.transliterationKey && currentExample[config.transliterationKey] && (
-            <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{currentExample[config.transliterationKey]}</p>
+          {config.transliterationKey && currentSection[config.transliterationKey] && (
+            <p className="mt-1 font-sans text-lg opacity-70">{currentSection[config.transliterationKey]}</p>
           )}
         </div>
 
-        {/* Collapsible Lexical Note */}
+        {/* Focused Single Example Card (Moved above Lexical Note) */}
+        <div className={`p-5 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-stone-500' : 'text-stone-400'}`}>
+                Example {currentExIdx + 1}
+              </span>
+              {isListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
+              <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isListened)} size={20} />
+            </div>
+          </div>
+          
+          <div className="relative min-h-[140px] flex flex-col justify-center">
+            <div className={`space-y-4 transition-all ${!isListened ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
+              
+              {/* Primary Script */}
+              <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+                {targetText}
+              </p>
+              
+              {/* Group without the divider border */}
+              <div className="space-y-2">
+                
+                {/* English Translation */}
+                <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>
+                  {currentExample.english || currentExample.translation}
+                </p>
+
+                {/* Secondary Script */}
+                {config.secondaryScriptKey && currentExample[config.secondaryScriptKey] && (
+                  <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.secondaryFontClass || config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+                    {currentExample[config.secondaryScriptKey]}
+                  </p>
+                )}
+                
+                {/* Transliteration */}
+                {config.transliterationKey && currentExample[config.transliterationKey] && (
+                  <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>
+                    {currentExample[config.transliterationKey]}
+                  </p>
+                )}
+                
+              </div>
+            </div>
+            
+            {!isListened && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <button onClick={() => playDrill(currentExample, exId, isListened)} className={`flex items-center gap-2 px-8 py-4 rounded-full shadow-lg font-sans text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
+                  {playingId === exId ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />} Play to Reveal
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Collapsible Lexical Note (Moved below Example Card) */}
         {hasNotes && (
           <div className={`mx-auto max-w-2xl rounded-2xl border transition-all duration-300 ${isDarkMode ? 'bg-stone-900/50 border-stone-800' : 'bg-stone-50/50 border-stone-200'}`}>
             <button 
@@ -366,63 +424,6 @@ function DrillTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
           </div>
         )}
 
-        {/* Focused Single Example Card */}
-        <div className={`p-5 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'}`}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <span className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-stone-500' : 'text-stone-400'}`}>
-                Example {currentExIdx + 1}
-              </span>
-              {isListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
-            </div>
-            <div className="flex items-center gap-2">
-              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
-              <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isListened)} size={20} />
-            </div>
-          </div>
-          
-          <div className="relative min-h-[140px] flex flex-col justify-center">
-            <div className={`space-y-4 transition-all duration-700 ${!isListened ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
-              
-              {/* Primary Script */}
-              <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
-                {targetText}
-              </p>
-              
-              {/* Group without the divider border */}
-              <div className="space-y-2">
-                
-                {/* English Translation (Matches Transliteration Style) */}
-                <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>
-                  {currentExample.english || currentExample.translation}
-                </p>
-
-                {/* Secondary Script (Matches Primary Style) */}
-                {config.secondaryScriptKey && currentExample[config.secondaryScriptKey] && (
-                  <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.secondaryFontClass || config.fontClass || 'font-sans'} leading-relaxed ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
-                    {currentExample[config.secondaryScriptKey]}
-                  </p>
-                )}
-                
-                {/* Transliteration (Matches English Style) */}
-                {config.transliterationKey && currentExample[config.transliterationKey] && (
-                  <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>
-                    {currentExample[config.transliterationKey]}
-                  </p>
-                )}
-                
-              </div>
-            </div>
-            
-            {!isListened && (
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <button onClick={() => playDrill(currentExample, exId, isListened)} className={`flex items-center gap-2 px-8 py-4 rounded-full shadow-lg font-sans text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
-                  {playingId === exId ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />} Play to Reveal
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* BOTTOM NAVIGATION BAR */}
@@ -479,6 +480,9 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
   const [shuffledData, setShuffledData] = useState([]);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [playingId, setPlayingId] = useState(null);
+  
+  // Pagination state
+  const [currentIdx, setCurrentIdx] = useState(0);
 
   const userSelections = progressState.selections || {};
   const revealedIds = progressState.revealed || [];
@@ -495,7 +499,7 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
     }
   }, [activeEpisode?.quiz]);
 
-  if (!activeEpisode?.quiz?.length) return <div className="p-10 text-center font-sans opacity-50">No quiz generated yet.</div>;
+  if (!shuffledData.length) return <div className="p-10 text-center font-sans opacity-50">No quiz generated yet.</div>;
 
   const handleSelect = (qId, choice) => {
     if (gradedIds.includes(qId)) return;
@@ -508,15 +512,31 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
     handleSpeak(text, () => setPlayingId(null), () => setPlayingId(null));
   };
 
-  const resetQuiz = () => { updateFirebase({ selections: {}, revealed: [], gradedIds: [] }); setShowConfirmReset(false); };
+  const resetQuiz = () => { 
+    updateFirebase({ selections: {}, revealed: [], gradedIds: [] }); 
+    setShowConfirmReset(false); 
+    setCurrentIdx(0);
+  };
 
   const correctCount = Object.entries(userSelections).filter(([qId, val]) => {
     const question = shuffledData.find(q => `quiz_${q.id}` === qId);
     return question && question.answer === val && gradedIds.includes(qId);
   }).length;
 
+  const handleNext = () => { stopSpeak(); if (currentIdx < shuffledData.length - 1) setCurrentIdx(prev => prev + 1); };
+  const handlePrev = () => { stopSpeak(); if (currentIdx > 0) setCurrentIdx(prev => prev - 1); };
+
+  const q = shuffledData[currentIdx];
+  const qId = `quiz_${q.id}`;
+  const isRevealed = revealedIds.includes(qId);
+  const isGraded = gradedIds.includes(qId);
+  const userChoice = userSelections[qId];
+  const isCorrect = userChoice === q.answer;
+
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 pb-32 font-sans">
+      
+      {/* Header */}
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className="absolute right-0 top-0">
           {!showConfirmReset ? (
@@ -535,147 +555,185 @@ function QuizTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Chapter Comprehension & Vocabulary</p>
       </header>
 
-      <div className="space-y-16 pb-32">
-        {shuffledData.map((q) => {
-          const qId = `quiz_${q.id}`;
-          const isRevealed = revealedIds.includes(qId);
-          const isGraded = gradedIds.includes(qId);
-          const userChoice = userSelections[qId];
-          const isCorrect = userChoice === q.answer;
-
-          return (
-            <div key={q.id} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-              
-              <div className="flex items-center justify-between mb-4 min-h-[40px]">
-                <div className="text-sm text-stone-400 font-bold uppercase tracking-wider">Question {String(q.id + 1).padStart(2, '0')}</div>
-                <div className="flex items-center gap-2">
-                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
-                  
-                  {isGraded ? (
-                    <div className="animate-in fade-in zoom-in duration-300">
-                      <PlayButton 
-                        isDarkMode={isDarkMode} 
-                        isPlaying={playingId === `quiz-audio-${qId}`} 
-                        onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} 
-                        size={18} 
-                      />
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => {
-                        if (isRevealed) {
-                          updateFirebase({ revealed: revealedIds.filter(id => id !== qId) });
-                        } else {
-                          updateFirebase({ revealed: [...revealedIds, qId] });
-                        }
-                      }}
-                      className={`p-2.5 rounded-full transition-all border shadow-sm ${
-                        !isRevealed 
-                          ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') 
-                          : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')
-                      }`}
-                    >
-                      <Eye size={18} className={isRevealed ? "opacity-60" : ""} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-4 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
-                {(() => {
-                  const match = q.sentence?.match(/(_{2,}|\.{3,}|(?:_\s*){2,})/);
-                  if (!match) return q.sentence;
-                  
-                  const before = q.sentence.substring(0, match.index);
-                  const after = q.sentence.substring(match.index + match[0].length);
-                  
-                  return (
-                    <>
-                      {before}
-                      {userChoice ? (
-                        <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>
-                          {userChoice}
-                        </span>
-                      ) : (
-                        <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40 text-transparent' : 'border-amber-300/80 bg-amber-50/60 text-transparent'}`}>
-                          &nbsp;
-                        </span>
-                      )}
-                      {after}
-                    </>
-                  );
-                })()}
-              </p>
-              
-              <div className="relative mt-6">
-                <div className={`transition-all duration-700 ${!isRevealed ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'}`}>
-                  <div className="mb-6">
-                    <p className={`font-sans text-lg ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
-                  </div>
-                  
-                  {(() => {
-                    const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
-                    const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
-
-                    return (
-                      <div className={`grid gap-3 mb-6 ${gridClasses}`}>
-                        {q.options.map((option, optIdx) => {
-                          let btnClass = `px-4 py-3 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-lg font-bold'} ${config.fontClass || 'font-sans'} `;
-                          if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
-                          else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
-                          return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
-                        })}
-                      </div>
-                    );
-                  })()}
-                  
-                  <div className="flex justify-between items-center mt-4 font-sans min-h-[44px]">
-                    {!isGraded ? (
-                     <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
-                        Grade Answer
-                     </button>
-                    ) : (
-                      <div className="flex items-center gap-4 animate-in duration-300 w-full">
-                        <span className={`text-sm font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {isCorrect ? "Correct!" : "Incorrect"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* Top Number Navigation */}
+      <div className="mb-8 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+          {shuffledData.map((item, idx) => {
+            const iterQid = `quiz_${item.id}`;
+            const isCompleted = gradedIds.includes(iterQid);
+            const isCurrent = currentIdx === idx;
+            
+            return (
+              <button
+                key={idx}
+                onClick={() => { stopSpeak(); setCurrentIdx(idx); }}
+                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                  isCurrent 
+                    ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm')
+                    : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                }`}
+              >
+                {isCompleted && !isCurrent ? <Check size={16} strokeWidth={3} className="text-emerald-500" /> : idx + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <footer className={`fixed bottom-0 left-0 right-0 py-3 px-6 backdrop-blur-md border-t font-sans z-10 ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
-        <div className="max-w-6xl mx-auto flex justify-between items-center text-stone-500">
-          <div className="flex gap-8 items-center w-full justify-around">
-            <div className="text-center">
-              <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5">Graded</span>
-              <span className={`text-xl font-bold ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>{gradedIds.length} / {shuffledData.length}</span>
+      {/* Single Quiz Card */}
+      <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-4">
+        <div className={`p-5 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
+          
+          <div className="flex items-center justify-between mb-6 min-h-[40px]">
+            <div className="text-sm text-stone-400 font-bold uppercase tracking-wider">Question {currentIdx + 1}</div>
+            <div className="flex items-center gap-2">
+              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
+              
+              {isGraded ? (
+                <div className="animate-in fade-in zoom-in duration-300">
+                  <PlayButton 
+                    isDarkMode={isDarkMode} 
+                    isPlaying={playingId === `quiz-audio-${qId}`} 
+                    onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} 
+                    size={20} 
+                  />
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    if (isRevealed) updateFirebase({ revealed: revealedIds.filter(id => id !== qId) });
+                    else updateFirebase({ revealed: [...revealedIds, qId] });
+                  }}
+                  className={`p-2.5 rounded-full transition-all border shadow-sm ${
+                    !isRevealed 
+                      ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') 
+                      : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')
+                  }`}
+                >
+                  <Eye size={20} className={isRevealed ? "opacity-60" : ""} />
+                </button>
+              )}
             </div>
-            {gradedIds.length > 0 && (
-              <div className="text-center">
-                <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5">Score</span>
-                <span className="text-xl font-bold text-emerald-500 flex items-center justify-center gap-1">{correctCount} <CheckCircle2 size={18} /></span>
+          </div>
+
+          <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.fontClass || 'font-sans'} leading-relaxed mb-6 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+            {(() => {
+              const match = q.sentence?.match(/(_{2,}|\.{3,}|(?:_\s*){2,})/);
+              if (!match) return q.sentence;
+              const before = q.sentence.substring(0, match.index);
+              const after = q.sentence.substring(match.index + match[0].length);
+              
+              return (
+                <>
+                  {before}
+                  {userChoice ? (
+                    <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>
+                      {userChoice}
+                    </span>
+                  ) : (
+                    <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40 text-transparent' : 'border-amber-300/80 bg-amber-50/60 text-transparent'}`}>
+                      &nbsp;
+                    </span>
+                  )}
+                  {after}
+                </>
+              );
+            })()}
+          </p>
+          
+          <div className="relative mt-6 min-h-[140px] flex flex-col">
+            <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
+              <div className="mb-6">
+                <p className={`font-sans text-xl ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
               </div>
-            )}
+              
+              {(() => {
+                const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
+                const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
+
+                return (
+                  <div className={`grid gap-3 mb-6 ${gridClasses}`}>
+                    {q.options.map((option, optIdx) => {
+                      let btnClass = `px-4 py-4 rounded-xl border-2 transition-all text-center ${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} `;
+                      if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
+                      else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-850 bg-stone-900/10 text-stone-600 opacity-40";
+                      return <button key={optIdx} disabled={isGraded} onClick={() => !isGraded && handleSelect(qId, option)} className={btnClass}>{option}</button>;
+                    })}
+                  </div>
+                );
+              })()}
+              
+              <div className="flex justify-between items-center mt-4 font-sans min-h-[44px]">
+                {!isGraded ? (
+                 <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`px-6 py-3 rounded-xl text-base font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 hover:bg-amber-400')}`}>
+                    Grade Answer
+                 </button>
+                ) : (
+                  <div className="flex items-center gap-4 animate-in duration-300 w-full">
+                    <span className={`text-base font-bold flex items-center gap-1.5 ${isCorrect ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {isCorrect ? "Correct!" : "Incorrect"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
+      </div>
+
+      {/* BOTTOM NAVIGATION BAR */}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-md z-40 flex justify-center ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
+        <div className="w-full max-w-4xl flex items-center justify-between gap-2 md:gap-4">
+          <button 
+            onClick={handlePrev} 
+            disabled={currentIdx === 0}
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold transition-all ${currentIdx === 0 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'hover:bg-stone-800 text-stone-200' : 'hover:bg-stone-200 text-stone-800')}`}
+          >
+            <ChevronLeft size={20} /> <span className="hidden sm:inline">Prev</span>
+          </button>
+          
+          <div className="flex items-center gap-6 px-2">
+            <div className="text-center">
+              <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5">Graded</span>
+              <span className={`text-base font-bold ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>{gradedIds.length} / {shuffledData.length}</span>
+            </div>
+            {gradedIds.length > 0 && (
+              <>
+                <div className="w-px h-6 bg-stone-300 dark:bg-stone-700"></div>
+                <div className="text-center">
+                  <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5">Score</span>
+                  <span className="text-base font-bold text-emerald-500 flex items-center justify-center gap-1">{correctCount} <CheckCircle2 size={16} /></span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <button 
+            onClick={handleNext} 
+            disabled={currentIdx === shuffledData.length - 1}
+            className={`flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-bold transition-all border ${currentIdx === shuffledData.length - 1 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'bg-stone-800 border-stone-700 text-amber-400 hover:bg-stone-700' : 'bg-white border-stone-300 text-amber-600 hover:bg-stone-100')}`}
+          >
+            <span className="hidden sm:inline">Next</span> <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  
   if (!activeEpisode?.test?.length) return null;
 
   const mst = progressState.testMastered || {};
   const rev = progressState.testRevealed || {};
   const notes = progressState.notes || {};
+
+  const totalItems = activeEpisode.test.length;
+  const item = activeEpisode.test[currentIdx];
+  const qId = `test_${currentIdx}`;
 
   const playAnswer = (id, text, isRev) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
@@ -686,55 +744,119 @@ function TestTab({ isDarkMode, activeEpisode, progressState, updateFirebase, han
     }, () => setPlayingId(null));
   };
 
+  const handleNext = () => { stopSpeak(); if (currentIdx < totalItems - 1) setCurrentIdx(prev => prev + 1); };
+  const handlePrev = () => { stopSpeak(); if (currentIdx > 0) setCurrentIdx(prev => prev - 1); };
+
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 pb-32 font-sans">
+      
+      {/* Header */}
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><PenTool size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Active Translation</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Translate from English to {config.name.replace(' Master', '')}</p>
       </header>
 
-      <div className="space-y-8">
-        {activeEpisode.test.map((item, i) => {
-          const qId = `test_${i}`;
-          return (
-            <div key={qId} className={`p-6 md:p-8 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-              <div className="flex items-center justify-between mb-4 border-b pb-4 border-stone-100 dark:border-stone-800">
-                <div className="text-sm font-bold uppercase tracking-wider text-amber-500">Sentence {String(i + 1).padStart(2, '0')}</div>
-                <div className="flex items-center gap-2">
-                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Translate: ${item.english}`, notes[qId])} />
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playAnswer(qId, item[config.primaryTextKey], rev[qId])} size={20} />
-                </div>
-              </div>
-              <p className={`text-xl font-bold leading-relaxed mb-6 ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>{item.english}</p>
-              
-              <div className="relative mt-6">
-                <div className={`transition-all duration-700 ${!rev[qId] ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'} pt-4 border-t border-dashed border-stone-200 dark:border-stone-700`}>
-                  <p className={`text-2xl font-bold ${config.fontClass || ''} ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{item[config.primaryTextKey]}</p>
-                </div>
-                {!rev[qId] && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <button onClick={() => playAnswer(qId, item[config.primaryTextKey], false)} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md font-sans text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700 hover:text-amber-400' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:text-amber-600'}`}>
-                      {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Play to Reveal
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* Top Number Navigation */}
+      <div className="mb-8 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+          {activeEpisode.test.map((_, idx) => {
+            const iterQid = `test_${idx}`;
+            const isCompleted = rev[iterQid];
+            const isCurrent = currentIdx === idx;
+            
+            return (
+              <button
+                key={idx}
+                onClick={() => { stopSpeak(); setCurrentIdx(idx); }}
+                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                  isCurrent 
+                    ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm')
+                    : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                }`}
+              >
+                {isCompleted && !isCurrent ? <Check size={16} strokeWidth={3} className="text-emerald-500" /> : idx + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Single Test Card */}
+      <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-4">
+        <div className={`p-5 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-xs font-bold uppercase tracking-wider text-amber-500">Sentence {currentIdx + 1}</div>
+            <div className="flex items-center gap-2">
+              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Translate: ${item.english}`, notes[qId])} />
+              <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playAnswer(qId, item[config.primaryTextKey], rev[qId])} size={20} />
+            </div>
+          </div>
+          
+          <p className={`text-2xl font-bold leading-relaxed mb-8 ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>{item.english}</p>
+          
+          <div className="relative min-h-[120px] flex flex-col justify-center">
+            <div className={`transition-all ${!rev[qId] ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} pt-4 border-t border-dashed border-stone-200 dark:border-stone-700`}>
+              <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.fontClass || ''} ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{item[config.primaryTextKey]}</p>
+            </div>
+            
+            {!rev[qId] && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <button onClick={() => playAnswer(qId, item[config.primaryTextKey], false)} className={`flex items-center gap-2 px-8 py-4 rounded-full shadow-lg font-sans text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
+                  {playingId === qId ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />} Play to Reveal
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM NAVIGATION BAR */}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-md z-40 flex justify-center ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
+        <div className="w-full max-w-4xl flex items-center justify-between gap-2 md:gap-4">
+          <button 
+            onClick={handlePrev} 
+            disabled={currentIdx === 0}
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold transition-all ${currentIdx === 0 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'hover:bg-stone-800 text-stone-200' : 'hover:bg-stone-200 text-stone-800')}`}
+          >
+            <ChevronLeft size={20} /> <span className="hidden sm:inline">Prev</span>
+          </button>
+          
+          <div className="text-center shrink-0 px-2">
+            <span className={`block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5`}>Sentence</span>
+            <span className={`font-bold font-sans tracking-widest text-sm ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>
+              {currentIdx + 1} / {totalItems}
+            </span>
+          </div>
+
+          <button 
+            onClick={handleNext} 
+            disabled={currentIdx === totalItems - 1}
+            className={`flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-bold transition-all border ${currentIdx === totalItems - 1 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'bg-stone-800 border-stone-700 text-amber-400 hover:bg-stone-700' : 'bg-white border-stone-300 text-amber-600 hover:bg-stone-100')}`}
+          >
+            <span className="hidden sm:inline">Next</span> <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
 
 function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
+
   if (!activeEpisode?.sweep?.length) return null;
 
   const mst = progressState.sweepMastered || {};
   const rev = progressState.sweepRevealed || {};
   const notes = progressState.notes || {};
+
+  const totalItems = activeEpisode.sweep.length;
+  const item = activeEpisode.sweep[currentIdx];
+  const qId = `sweep_${currentIdx}`;
+  const textToRead = [`${item.word}. ${item[config.primaryTextKey]}`, item.english, item[config.primaryTextKey]];
 
   const playSweep = (id, text, isRev) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
@@ -745,48 +867,101 @@ function SweepTab({ isDarkMode, activeEpisode, progressState, updateFirebase, ha
     }, () => setPlayingId(null));
   };
 
+  const handleNext = () => { stopSpeak(); if (currentIdx < totalItems - 1) setCurrentIdx(prev => prev + 1); };
+  const handlePrev = () => { stopSpeak(); if (currentIdx > 0) setCurrentIdx(prev => prev - 1); };
+
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 md:px-8 font-sans">
+    <div className="max-w-4xl mx-auto py-12 px-4 md:px-8 pb-32 font-sans">
+      
+      {/* Header */}
       <header className={`mb-12 border-b-2 pb-8 text-center relative ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
         <div className={`inline-flex items-center justify-center p-4 rounded-full mb-6 shadow-md ${isDarkMode ? 'bg-stone-700 text-stone-100' : 'bg-stone-800 text-stone-100'}`}><Activity size={32} /></div>
         <h1 className={`text-3xl font-bold font-sans mb-3 ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>Diagnostic Sweep</h1>
         <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Fluency & Comprehension Check</p>
       </header>
 
-      <div className="space-y-6">
-        {activeEpisode.sweep.map((item, i) => {
-          const qId = `sweep_${i}`;
-          const textToRead = [`${item.word}. ${item[config.primaryTextKey]}`, item.english, item[config.primaryTextKey]];
-          
-          return (
-            <div key={qId} className={`p-6 rounded-2xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-bold uppercase tracking-wider text-stone-400">Sentence {String(i + 1).padStart(2, '0')}</div>
-                <div className="flex items-center gap-2">
-                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Sweep: ${item.word}`, notes[qId])} />
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playSweep(qId, textToRead, rev[qId])} size={20} />
-                </div>
-              </div>
-              
-              <div className="relative mt-4">
-                <div className={`transition-all duration-700 ${!rev[qId] ? 'blur-md opacity-40 select-none pointer-events-none' : 'blur-0 opacity-100'} space-y-2 pt-4 border-t border-stone-100 dark:border-stone-800`}>
-                  <p className="font-bold text-xs uppercase tracking-widest text-blue-500 mb-2">{item.word}</p>
-                  <p className={`${config.useLargeDrillFont ? 'text-[28px] md:text-3xl' : 'text-xl font-bold'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
-                  <p className={`text-lg font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{item.english}</p>
-                </div>
-
-                {!rev[qId] && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-6 py-2.5 rounded-full shadow-md text-sm font-bold border ${isDarkMode ? 'bg-stone-800 text-stone-200 border-stone-700 hover:bg-stone-700' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50'}`}>
-                      {playingId === qId ? <Loader2 size={18} className="animate-spin text-amber-500" /> : <Volume2 size={18} />} Listen to Sweep
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* Top Number Navigation */}
+      <div className="mb-8 flex justify-center">
+        <div className="mx-auto w-max max-w-full flex gap-2 overflow-x-auto px-2 pb-4 no-scrollbar mask-edges-right sm:mask-edges">
+          {activeEpisode.sweep.map((_, idx) => {
+            const iterQid = `sweep_${idx}`;
+            const isCompleted = rev[iterQid];
+            const isCurrent = currentIdx === idx;
+            
+            return (
+              <button
+                key={idx}
+                onClick={() => { stopSpeak(); setCurrentIdx(idx); }}
+                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
+                  isCurrent 
+                    ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-500 border-amber-400 text-stone-900 shadow-sm')
+                    : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')
+                }`}
+              >
+                {isCompleted && !isCurrent ? <Check size={16} strokeWidth={3} className="text-emerald-500" /> : idx + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Single Sweep Card */}
+      <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-4">
+        <div className={`p-5 md:p-8 rounded-3xl shadow-sm border ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-xs font-bold uppercase tracking-wider text-stone-400">Sentence {currentIdx + 1}</div>
+            <div className="flex items-center gap-2">
+              <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Sweep: ${item.word}`, notes[qId])} />
+              <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playSweep(qId, textToRead, rev[qId])} size={20} />
+            </div>
+          </div>
+          
+          <div className="relative min-h-[160px] flex flex-col justify-center">
+            <div className={`transition-all ${!rev[qId] ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} space-y-4 pt-4 border-t border-stone-100 dark:border-stone-800`}>
+              <p className="font-bold text-sm uppercase tracking-widest text-blue-500 mb-2">{item.word}</p>
+              <p className={`${config.useLargeDrillFont ? 'text-[32px] md:text-4xl' : 'text-2xl font-bold'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
+              <p className={`text-xl font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{item.english}</p>
+            </div>
+
+            {!rev[qId] && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <button onClick={() => playSweep(qId, textToRead, false)} className={`flex items-center gap-2 px-8 py-4 rounded-full shadow-lg text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-500 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
+                  {playingId === qId ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />} Listen to Sweep
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM NAVIGATION BAR */}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-md z-40 flex justify-center ${isDarkMode ? 'bg-stone-950/90 border-stone-900' : 'bg-stone-50/90 border-stone-200'}`}>
+        <div className="w-full max-w-4xl flex items-center justify-between gap-2 md:gap-4">
+          <button 
+            onClick={handlePrev} 
+            disabled={currentIdx === 0}
+            className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-bold transition-all ${currentIdx === 0 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'hover:bg-stone-800 text-stone-200' : 'hover:bg-stone-200 text-stone-800')}`}
+          >
+            <ChevronLeft size={20} /> <span className="hidden sm:inline">Prev</span>
+          </button>
+          
+          <div className="text-center shrink-0 px-2">
+            <span className={`block text-[10px] uppercase font-bold tracking-widest opacity-60 mb-0.5`}>Sentence</span>
+            <span className={`font-bold font-sans tracking-widest text-sm ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>
+              {currentIdx + 1} / {totalItems}
+            </span>
+          </div>
+
+          <button 
+            onClick={handleNext} 
+            disabled={currentIdx === totalItems - 1}
+            className={`flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-bold transition-all border ${currentIdx === totalItems - 1 ? 'opacity-30 cursor-not-allowed' : (isDarkMode ? 'bg-stone-800 border-stone-700 text-amber-400 hover:bg-stone-700' : 'bg-white border-stone-300 text-amber-600 hover:bg-stone-100')}`}
+          >
+            <span className="hidden sm:inline">Next</span> <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
