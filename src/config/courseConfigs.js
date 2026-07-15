@@ -19,10 +19,25 @@ export const courseConfigs = {
         transliterationKey: 'pinyin',
         secondaryScriptKey: 'simplified',
         
+        // Tab Friendly Labels
+        labels: {
+            traditional: 'Traditional',
+            simplified: 'Simplified',
+            pinyin: 'Pinyin',
+            english: 'English'
+        },
+        
         // Font & Design
         fontClass: 'moe-font',
         secondaryFontClass: 'simp-font',
         useLargeDrillFont: true,
+        textSizeMode: 'large', // Activates dense character scaling
+        webFontsCss: `
+            @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
+            @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
+            .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; }
+            .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }
+        `,
         
         // Tabs
         hasStories: true,
@@ -87,6 +102,10 @@ DRILL AND QUIZ DESIGN:
         primaryTextKey: 'hungarian',
         lexiconDoc: 'dictionary',
         
+        // Font & Design
+        textSizeMode: 'standard', // Activates alphabetic scaling
+        webFontsCss: '', // Uses system default sans-serif font
+        
         hasStories: false,
         hasReading: true,
         hasTestTab: true,
@@ -134,6 +153,11 @@ TASKS:
         name: 'Portuguese Master',
         primaryTextKey: 'portuguese',
         lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
         hasStories: false,
         hasReading: true,
         hasTestTab: false,
@@ -187,6 +211,11 @@ TASKS:
         name: 'Romanian Master',
         primaryTextKey: 'romanian',
         lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
         hasStories: false,
         hasReading: true,
         hasTestTab: false,
@@ -239,6 +268,11 @@ TASKS:
         name: 'Russian Master',
         primaryTextKey: 'russian',
         lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
         hasStories: false,
         hasReading: true,
         hasTestTab: false,
