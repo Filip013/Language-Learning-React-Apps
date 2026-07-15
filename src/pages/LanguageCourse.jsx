@@ -270,15 +270,15 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
           <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
             <div key={activeView} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
               
-              <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+              <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar ${activeVersion.fontClass} ${activeVersion.id !== 'english' && activeVersion.id !== config.transliterationKey ? (isDarkMode ? 'text-stone-100' : 'text-stone-800') : (isDarkMode ? 'text-stone-300' : 'text-stone-700')}`}>
+                {activeVersion.text.split('\n\n').map((paragraph, idx) => <p key={idx}>{paragraph}</p>)}
+              </div>
+
+              <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                 <h2 className={`text-base font-bold tracking-wide font-sans ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{activeVersion.title}</h2>
                 {activeVersion.id !== config.transliterationKey && (
                   <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === activeVersion.id} onClick={() => playAudio(activeVersion.id, activeVersion.text)} />
                 )}
-              </div>
-              
-              <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar ${activeVersion.fontClass} ${activeVersion.id !== 'english' && activeVersion.id !== config.transliterationKey ? (isDarkMode ? 'text-stone-100' : 'text-stone-800') : (isDarkMode ? 'text-stone-300' : 'text-stone-700')}`}>
-                {activeVersion.text.split('\n\n').map((paragraph, idx) => <p key={idx}>{paragraph}</p>)}
               </div>
 
             </div>
@@ -469,10 +469,6 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
             
             {activeView === 'defs' && (
               <>
-                <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-                  <h2 className="text-base font-bold tracking-wide">Definitions</h2>
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'defs'} onClick={() => playAudio('defs', reading.definitions.map(d=>d.word + ". " + d.text).join(' '))} />
-                </div>
                 <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar">
                   <ul className="space-y-3 text-lg leading-relaxed">
                     {reading.definitions.map((def, idx) => (
@@ -480,42 +476,39 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
                     ))}
                   </ul>
                 </div>
+                <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+                  <h2 className="text-base font-bold tracking-wide">Definitions</h2>
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'defs'} onClick={() => playAudio('defs', reading.definitions.map(d=>d.word + ". " + d.text).join(' '))} />
+                </div>
               </>
             )}
 
             {activeView === 'read' && (
               <>
-                <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-                  <h2 className="text-base font-bold tracking-wide">Target Text</h2>
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'read'} onClick={() => playAudio('read', targetText)} />
-                </div>
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar ${config.fontClass || ''} ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'}`}>
                   {targetText.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+                </div>
+                <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+                  <h2 className="text-base font-bold tracking-wide">Target Text</h2>
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'read'} onClick={() => playAudio('read', targetText)} />
                 </div>
               </>
             )}
 
             {activeView === 'eng' && (
               <>
-                <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-                  <h2 className="text-base font-bold tracking-wide">Translation</h2>
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'eng'} onClick={() => playAudio('eng', reading.english)} />
-                </div>
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar text-lg italic leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-650'}`}>
                   {reading.english.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+                </div>
+                <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+                  <h2 className="text-base font-bold tracking-wide">Translation</h2>
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'eng'} onClick={() => playAudio('eng', reading.english)} />
                 </div>
               </>
             )}
 
             {activeView === 'focus' && (
               <>
-                <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="text-amber-500" size={20} />
-                    <h2 className="text-base font-bold tracking-wide">Focus & Grammar</h2>
-                  </div>
-                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes['reading_focus']} onClick={() => handleOpenNote('reading_focus', 'Focus & Grammar Notes', notes['reading_focus'])} />
-                </div>
                 <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-6 no-scrollbar text-lg">
                   {reading.focus.map((item, idx) => (
                     <div key={idx}>
@@ -523,6 +516,13 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
                       <p className="mt-1 text-base">{item.explanation || item.text}</p>
                     </div>
                   ))}
+                </div>
+                <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="text-amber-500" size={20} />
+                    <h2 className="text-base font-bold tracking-wide">Focus & Grammar</h2>
+                  </div>
+                  <NoteButton isDarkMode={isDarkMode} hasNote={!!notes['reading_focus']} onClick={() => handleOpenNote('reading_focus', 'Focus & Grammar Notes', notes['reading_focus'])} />
                 </div>
               </>
             )}
@@ -739,17 +739,6 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
         <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={exId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
-            <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Example {currentExIdx + 1}</span>
-                {isListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
-              </div>
-              <div className="flex items-center gap-2">
-                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
-                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isListened)} size={20} />
-              </div>
-            </div>
-            
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative">
               <div className="shrink-0 text-center mb-4">
                 <h2 className={`${config.scriptStyles?.mainHeader || 'text-2xl md:text-3xl font-bold tracking-tight'} tracking-wide px-4 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
@@ -764,12 +753,12 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
                 <div className={`space-y-3 transition-all ${!isListened ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
                   <p className={`${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{targetText}</p>
                   <div className="space-y-1.5 mt-1">
-                    <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{currentExample.english || currentExample.translation}</p>
+                    <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{currentExample.english || currentExample.translation}</p>
                     {config.secondaryScriptKey && currentExample[config.secondaryScriptKey] && (
                       <p className={`${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${config.secondaryFontClass || config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{currentExample[config.secondaryScriptKey]}</p>
                     )}
                     {config.transliterationKey && currentExample[config.transliterationKey] && (
-                      <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>{currentExample[config.transliterationKey]}</p>
+                      <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{currentExample[config.transliterationKey]}</p>
                     )}
                   </div>
                 </div>
@@ -821,6 +810,17 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
                   </button>
                 </div>
               )}
+            </div>
+
+            <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Example {currentExIdx + 1}</span>
+                {isListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
+                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isListened)} size={20} />
+              </div>
             </div>
 
           </div>
@@ -964,7 +964,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
             scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
           }
           break;
-        case ' ':
+        case ' ': 
           e.preventDefault();
           if (isGraded) {
             playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer));
@@ -1067,23 +1067,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
         <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
-            <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Question {currentIdx + 1}</div>
-              <div className="flex items-center gap-2">
-                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
-                {isGraded ? (
-                  <div className="animate-in fade-in zoom-in duration-300">
-                    <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} size={20} />
-                  </div>
-                ) : (
-                  <button onClick={() => { if (isRevealed) updateFirebase({ revealed: revealedIds.filter(id => id !== qId) }); else updateFirebase({ revealed: [...revealedIds, qId] }); }} className={`p-2 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')}`}>
-                    <Eye size={18} className={isRevealed ? "opacity-60" : ""} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-           <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative justify-between">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative justify-between">
               <div className="space-y-4 shrink-0 mb-4">
                 <p className={`${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
                   {(() => {
@@ -1137,6 +1121,22 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Question {currentIdx + 1}</div>
+              <div className="flex items-center gap-2">
+                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
+                {isGraded ? (
+                  <div className="animate-in fade-in zoom-in duration-300">
+                    <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} size={20} />
+                  </div>
+                ) : (
+                  <button onClick={() => { if (isRevealed) updateFirebase({ revealed: revealedIds.filter(id => id !== qId) }); else updateFirebase({ revealed: [...revealedIds, qId] }); }} className={`p-2 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')}`}>
+                    <Eye size={18} className={isRevealed ? "opacity-60" : ""} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1353,14 +1353,6 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
         <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
-            <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Sentence {currentIdx + 1}</div>
-              <div className="flex items-center gap-2">
-                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Translate: ${item.english}`, notes[qId])} />
-                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playAnswer(qId, item[config.primaryTextKey], rev[qId])} size={20} />
-              </div>
-            </div>
-            
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
               <p className={`text-lg md:text-xl font-normal leading-relaxed mb-4 ${isDarkMode ? 'text-stone-355' : 'text-stone-600'}`}>{item.english}</p>
 
@@ -1375,6 +1367,14 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Sentence {currentIdx + 1}</div>
+              <div className="flex items-center gap-2">
+                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Translate: ${item.english}`, notes[qId])} />
+                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playAnswer(qId, item[config.primaryTextKey], rev[qId])} size={20} />
               </div>
             </div>
 
@@ -1581,14 +1581,6 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
         <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
-            <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
-              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Sentence {currentIdx + 1}</div>
-              <div className="flex items-center gap-2">
-                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Sweep: ${item.word}`, notes[qId])} />
-                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playSweep(qId, textToRead, rev[qId])} size={20} />
-              </div>
-            </div>
-            
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
               <div className="relative min-h-[140px] flex flex-col justify-start pt-2">
                 <div className={`transition-all ${!rev[qId] ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} space-y-3`}>
@@ -1604,6 +1596,14 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Sentence {currentIdx + 1}</div>
+              <div className="flex items-center gap-2">
+                <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Sweep: ${item.word}`, notes[qId])} />
+                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === qId} onClick={() => playSweep(qId, textToRead, rev[qId])} size={20} />
               </div>
             </div>
 
@@ -2160,12 +2160,6 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div className="shrink-0 p-3 border-b text-center">
-           <h2 className={`text-xl md:text-2xl font-bold ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
-             {activeStoryData?.currentTitle || 'Archive'}
-           </h2>
-        </div>
-
         <div {...swipeHandlers} ref={cardRef} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar">
           {currentEpisode ? (
             <article key={currentEpisode.id || currentEpIdx} className="h-full flex flex-col justify-start animate-in fade-in duration-300">
@@ -2179,6 +2173,12 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
           ) : (
             <div className="p-10 text-center font-sans opacity-50">No chapters inside this story book yet.</div>
           )}
+        </div>
+
+        <div className="shrink-0 p-3 border-t text-center">
+           <h2 className={`text-xl md:text-2xl font-bold ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
+             {activeStoryData?.currentTitle || 'Archive'}
+           </h2>
         </div>
 
         {episodes.length > 1 && (
