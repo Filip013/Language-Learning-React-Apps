@@ -98,13 +98,13 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   const [playingId, setPlayingId] = useState(null);
   const [activeView, setActiveView] = useState('');
   const [slideDirection, setSlideDirection] = useState('next');
+  const cardRef = useRef(null);
 
   const versions = useMemo(() => {
     if (!activeEpisode?.story) return [];
     
     const targetSizeClass = config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed';
 
-    // Check config labels object first; fallback to capitalizing the raw key string
     const getTabLabel = (key) => {
       return (config.labels && config.labels[key]) || (key.charAt(0).toUpperCase() + key.slice(1));
     };
@@ -153,6 +153,15 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 
   const currentIndex = versions.findIndex(v => v.id === activeView);
 
+  // Initialized early so hooks and render logic can safely reference it
+  const activeVersion = versions.find(v => v.id === activeView) || versions[0];
+
+  const playAudio = useCallback((id, text) => {
+    if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
+    setPlayingId(id);
+    handleSpeak(text, () => setPlayingId(null), () => setPlayingId(null));
+  }, [playingId, stopSpeak, handleSpeak]);
+
   const handleNext = useCallback(() => {
     if (currentIndex < versions.length - 1) {
       stopSpeak();
@@ -179,25 +188,51 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
-      if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev();
+      
+      const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: 100, behavior: 'smooth' });
+          }
+          break;
+        case 'ArrowUp':
+        case 'a':
+        case 'A':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
+          }
+          break;
+        case ' ':
+          e.preventDefault();
+          if (activeVersion && activeVersion.id !== config.transliterationKey) {
+            playAudio(activeVersion.id, activeVersion.text);
+          }
+          break;
+        default:
+          break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, handleNext, handlePrev]);
+  }, [isActive, handleNext, handlePrev, activeVersion, playingId, playAudio, config.transliterationKey]);
 
   if (!activeEpisode?.story || versions.length === 0) return null;
-
-  const activeVersion = versions.find(v => v.id === activeView) || versions[0];
-
-  const playAudio = (id, text) => {
-    if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
-    setPlayingId(id);
-    handleSpeak(text, () => setPlayingId(null), () => setPlayingId(null));
-  };
 
   return (
     <div className="flex flex-col h-full w-full max-w-6xl mx-auto px-4 py-3 relative font-sans">
@@ -232,7 +267,7 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
         {activeVersion && (
-          <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+          <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
             <div key={activeView} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
               
               <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
@@ -271,6 +306,7 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, progressState, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   const [slideDirection, setSlideDirection] = useState('next');
+  const cardRef = useRef(null);
 
   const reading = activeEpisode?.reading;
 
@@ -303,6 +339,16 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 
   const currentIndex = pages.findIndex(p => p.id === activeView);
 
+  // Declared early to avoid initialization scope conflicts with keyboard handlers
+  const targetText = reading ? reading[config.primaryTextKey] : '';
+  const notes = progressState?.notes || {};
+
+  const playAudio = useCallback((id, text) => {
+    if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
+    setPlayingId(id);
+    handleSpeak(text, () => setPlayingId(null), () => setPlayingId(null));
+  }, [playingId, stopSpeak, handleSpeak]);
+
   const handleNext = useCallback(() => {
     if (currentIndex < pages.length - 1) {
       stopSpeak();
@@ -329,26 +375,62 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
-      if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev();
+
+      const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: 100, behavior: 'smooth' });
+          }
+          break;
+        case 'ArrowUp':
+        case 'a':
+        case 'A':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
+          }
+          break;
+        case ' ':
+          e.preventDefault();
+          if (activeView === 'defs' && reading?.definitions) {
+            playAudio('defs', reading.definitions.map(d => d.word + ". " + d.text).join(' '));
+          } else if (activeView === 'read' && targetText) {
+            playAudio('read', targetText);
+          } else if (activeView === 'eng' && reading?.english) {
+            playAudio('eng', reading.english);
+          }
+          break;
+        case 'n':
+        case 'N':
+          if (activeView === 'focus') {
+            e.preventDefault();
+            handleOpenNote('reading_focus', 'Focus & Grammar Notes', notes['reading_focus']);
+          }
+          break;
+        default:
+          break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, handleNext, handlePrev]);
+  }, [isActive, handleNext, handlePrev, activeView, reading, targetText, playingId, notes, handleOpenNote, playAudio]);
 
   if (!reading || pages.length === 0) return null;
-
-  const targetText = reading[config.primaryTextKey];
-  const notes = progressState?.notes || {};
-
-  const playAudio = (id, text) => {
-    if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
-    setPlayingId(id);
-    handleSpeak(text, () => setPlayingId(null), () => setPlayingId(null));
-  };
 
   return (
     <div className="flex flex-col h-full w-full max-w-6xl mx-auto px-4 py-3 relative font-sans">
@@ -382,7 +464,7 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={activeView} className={`absolute inset-0 flex flex-col animate-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             {activeView === 'defs' && (
@@ -558,13 +640,25 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
       if (e.repeat) return; 
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || !currentExample) return;
       switch (e.key) {
-        case 'ArrowRight': handleNext(); break;
-        case 'ArrowLeft': handlePrev(); break;
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
         case 'ArrowDown':
+        case 's':
+        case 'S':
           e.preventDefault();
           if (currentWordIdx < totalWords - 1) { stopSpeak(); setSlideDirection('next'); setCurrentWordIdx(p => p + 1); }
           break;
         case 'ArrowUp':
+        case 'a':
+        case 'A':
           e.preventDefault();
           if (currentWordIdx > 0) { stopSpeak(); setSlideDirection('prev'); setCurrentWordIdx(p => p - 1); }
           break;
@@ -761,6 +855,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const [currentIdx, setCurrentIdx] = useState(0);
   const [slideDirection, setSlideDirection] = useState('next');
   const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
+  const cardRef = useRef(null);
 
   const scrollContainerRef = useRef(null);
 
@@ -839,10 +934,37 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || !q) return;
-      switch(e.key) {
-        case 'ArrowRight': handleNext(); break;
-        case 'ArrowLeft': handlePrev(); break;
-        case ' ': 
+
+      const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: 100, behavior: 'smooth' });
+          }
+          break;
+        case 'ArrowUp':
+        case 'a':
+        case 'A':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
+          }
+          break;
+        case ' ':
           e.preventDefault();
           if (isGraded) {
             playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer));
@@ -942,7 +1064,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
@@ -962,27 +1084,31 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
             </div>
 
            <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative justify-between">
-              <p className={`${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${config.fontClass || 'font-sans'} mb-4 shrink-0 ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
-                {(() => {
-                  const match = q.sentence?.match(/(_{2,}|\.{3,}|(?:_\s*){2,})/);
-                  if (!match) return q.sentence;
-                  const before = q.sentence.substring(0, match.index);
-                  const after = q.sentence.substring(match.index + match[0].length);
-                  return (
-                    <>{before}
-                      {userChoice ? (
-                        <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>{userChoice}</span>
-                      ) : (
-                        <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40 text-transparent' : 'border-amber-300/80 bg-amber-50/60 text-transparent'}`}>&nbsp;</span>
-                      )}
-                      {after}</>
-                  );
-                })()}
-              </p>
+              <div className="space-y-4 shrink-0 mb-4">
+                <p className={`${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>
+                  {(() => {
+                    const match = q.sentence?.match(/(_{2,}|\.{3,}|(?:_\s*){2,})/);
+                    if (!match) return q.sentence;
+                    const before = q.sentence.substring(0, match.index);
+                    const after = q.sentence.substring(match.index + match[0].length);
+                    return (
+                      <>{before}
+                        {userChoice ? (
+                          <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 transition-all ${isDarkMode ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : 'text-amber-700 border-amber-400 bg-amber-50'}`}>{userChoice}</span>
+                        ) : (
+                          <span className={`inline-block align-middle px-3 py-1 mx-1 min-w-[3.5em] text-center rounded-lg border-2 border-dashed transition-colors ${isDarkMode ? 'border-amber-700/50 bg-amber-950/40 text-transparent' : 'border-amber-300/80 bg-amber-50/60 text-transparent'}`}>&nbsp;</span>
+                        )}
+                        {after}</>
+                    );
+                  })()}
+                </p>
+                <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
+                  <p className={`font-sans text-lg md:text-[17px] ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p>
+                </div>
+              </div>
               
               <div className="flex-1 flex flex-col justify-end">
                 <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
-                  <div className="mb-4"><p className={`font-sans text-lg md:text-[17px] ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Hint: {q.englishHint}</p></div>
                   
                   {(() => {
                     const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
@@ -1051,6 +1177,7 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const [slideDirection, setSlideDirection] = useState('next');
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
+  const cardRef = useRef(null);
 
   const scrollContainerRef = useRef(null);
 
@@ -1112,9 +1239,36 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || !item) return;
-      switch(e.key) {
-        case 'ArrowRight': handleNext(); break;
-        case 'ArrowLeft': handlePrev(); break;
+
+      const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: 100, behavior: 'smooth' });
+          }
+          break;
+        case 'ArrowUp':
+        case 'a':
+        case 'A':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
+          }
+          break;
         case ' ':
           e.preventDefault();
           playAnswer(qId, item[config.primaryTextKey], rev[qId]);
@@ -1196,7 +1350,7 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/85' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
@@ -1250,6 +1404,7 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const [slideDirection, setSlideDirection] = useState('next');
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [autoNavigatedEpisodeId, setAutoNavigatedEpisodeId] = useState(null);
+  const cardRef = useRef(null);
 
   const scrollContainerRef = useRef(null);
 
@@ -1312,9 +1467,36 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || !item) return;
-      switch(e.key) {
-        case 'ArrowRight': handleNext(); break;
-        case 'ArrowLeft': handlePrev(); break;
+
+      const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: 100, behavior: 'smooth' });
+          }
+          break;
+        case 'ArrowUp':
+        case 'a':
+        case 'A':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
+          }
+          break;
         case ' ':
           e.preventDefault();
           playSweep(qId, textToRead, rev[qId]);
@@ -1396,7 +1578,7 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className={`shrink-0 flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
@@ -1845,6 +2027,7 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
   const [currentEpIdx, setCurrentEpIdx] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const scrollContainerRef = useRef(null);
+  const cardRef = useRef(null);
 
   // Derive active story data safely at top-level
   const activeStoryData = storyList ? (storyList.find(s => s.id === activeStoryId) || storyList[0]) : null;
@@ -1883,10 +2066,38 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
-      if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrev();
+
+      const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'w':
+        case 'W':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+        case 'q':
+        case 'Q':
+          handlePrev();
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: 120, behavior: 'smooth' });
+          }
+          break;
+        case 'ArrowUp':
+        case 'a':
+        case 'A':
+          if (scrollContainer) {
+            e.preventDefault();
+            scrollContainer.scrollBy({ top: -120, behavior: 'smooth' });
+          }
+          break;
+        default:
+          break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1955,7 +2166,7 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
            </h2>
         </div>
 
-        <div {...swipeHandlers} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar">
           {currentEpisode ? (
             <article key={currentEpisode.id || currentEpIdx} className="h-full flex flex-col justify-start animate-in fade-in duration-300">
               <h3 className={`text-lg font-bold mb-3 border-b pb-2 moe-font ${isDarkMode ? 'text-stone-100 border-stone-850' : 'text-stone-855 border-stone-200'}`}>
@@ -2527,7 +2738,7 @@ export default function LanguageCourse({ config }) {
     } catch (e) { console.error("Delete failed", e); }
   };
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { id: 'studio', label: 'Studio', icon: MessageSquare },
     ...(activeConfig.hasStories ? [{ id: 'episode', label: 'Audio', icon: Volume2 }] : []),
     ...(activeConfig.hasReading ? [{ id: 'reading', label: 'Reading', icon: BookOpen }] : []),
@@ -2537,28 +2748,40 @@ export default function LanguageCourse({ config }) {
     ...(activeConfig.hasSweepTab ? [{ id: 'sweep', label: 'Sweep', icon: Activity }] : []),
     { id: 'lexicon', label: 'Lexicon', icon: Search },
     ...(activeConfig.hasStories ? [{ id: 'story', label: 'Story', icon: Book }] : [])
-  ];
+  ], [activeConfig]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      
+      if (e.altKey && e.key >= '1' && e.key <= '9') {
+        const index = parseInt(e.key) - 1;
+        if (index < navItems.length) {
+          e.preventDefault();
+          handleTabSwitch(navItems[index].id);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [navItems]);
 
   const isLatestEpisode = episodesList.length > 0 && activeEpisodeId === episodesList[0].id;
   const isStudyTab = ['episode', 'reading', 'drill', 'quiz', 'test', 'sweep', 'story'].includes(activeTab);
 
   if (!user) return null;
   
-  // Base stylesheet containing structural overrides and default fallback webfonts
-  // Spec Rule: @import statements MUST precede all regular rules to be evaluated.
+  // Base stylesheet containing structural and layout overrides
   const baseStyles = `
-    @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
-    @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
-
     html, body { scrollbar-width: none; -ms-overflow-style: none; }
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
     .no-scrollbar::-webkit-scrollbar { display: none !important; }
     .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-    
-    .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; }
-    .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }
   `;
-  const dynamicStyles = `${baseStyles}\n${activeConfig.webFontsCss || ''}`;
+
+  // Assembly order: active configuration webfonts are placed first
+  // to ensure @import statements are evaluated correctly by the browser.
+  const dynamicStyles = `${activeConfig.webFontsCss || ''}\n${baseStyles}`;
 
   return (
     <div className={`flex flex-col transition-colors duration-300 font-sans ${isStudyTab ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]'} ${isDarkMode ? 'bg-stone-950 text-stone-100 selection:bg-stone-750' : 'bg-stone-50 text-stone-900 selection:bg-stone-200'}`} lang={activeConfig.id === 'mandarin' ? 'zh-Hant' : activeConfig.id.substring(0, 2)}>
