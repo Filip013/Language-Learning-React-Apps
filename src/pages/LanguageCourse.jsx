@@ -94,7 +94,7 @@ function UserNoteModal({ isDarkMode, isOpen, noteTitle, initialText, onClose, on
 
 // --- TAB COMPONENTS ---
 
-function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, onTabNext, onTabPrev }) {
+function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config }) {
   const [playingId, setPlayingId] = useState(null);
   const [activeView, setActiveView] = useState('');
   const [slideDirection, setSlideDirection] = useState('next');
@@ -167,20 +167,16 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
       stopSpeak();
       setSlideDirection('next');
       setActiveView(versions[currentIndex + 1].id);
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentIndex, versions, stopSpeak, onTabNext]);
+  }, [currentIndex, versions, stopSpeak]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
       stopSpeak();
       setSlideDirection('prev');
       setActiveView(versions[currentIndex - 1].id);
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentIndex, versions, stopSpeak, onTabPrev]);
+  }, [currentIndex, versions, stopSpeak]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: handleNext,
@@ -271,7 +267,7 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
         {activeVersion && (
-          <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+          <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
             <div key={activeView} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
               
               <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar ${activeVersion.fontClass} ${activeVersion.id !== 'english' && activeVersion.id !== config.transliterationKey ? (isDarkMode ? 'text-stone-100' : 'text-stone-800') : (isDarkMode ? 'text-stone-300' : 'text-stone-700')}`}>
@@ -307,7 +303,7 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   );
 }
 
-function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, progressState, handleOpenNote, onTabNext, onTabPrev }) {
+function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, progressState, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   const [slideDirection, setSlideDirection] = useState('next');
   const cardRef = useRef(null);
@@ -358,20 +354,16 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
       stopSpeak();
       setSlideDirection('next');
       setActiveView(pages[currentIndex + 1].id);
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentIndex, pages, stopSpeak, onTabNext]);
+  }, [currentIndex, pages, stopSpeak]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
       stopSpeak();
       setSlideDirection('prev');
       setActiveView(pages[currentIndex - 1].id);
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentIndex, pages, stopSpeak, onTabPrev]);
+  }, [currentIndex, pages, stopSpeak]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: handleNext,
@@ -472,7 +464,7 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={activeView} className={`absolute inset-0 flex flex-col animate-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             {activeView === 'defs' && (
@@ -553,7 +545,7 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   );
 }
 
-function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, isLatestEpisode, handleOpenNote, onTabNext, onTabPrev }) {
+function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, isLatestEpisode, handleOpenNote }) {
   const listenedIds = progressState.listenedDrills || [];
   const notes = progressState.notes || {};
   
@@ -628,10 +620,8 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     } else if (currentWordIdx < totalWords - 1) {
       setCurrentWordIdx(prev => prev + 1);
       setCurrentExIdx(0);
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentExIdx, currentWordIdx, totalExamples, totalWords, stopSpeak, onTabNext]);
+  }, [currentExIdx, currentWordIdx, totalExamples, totalWords, stopSpeak]);
 
   const handlePrev = useCallback(() => {
     stopSpeak();
@@ -642,10 +632,8 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     } else if (currentWordIdx > 0) {
       setCurrentWordIdx(prev => prev - 1);
       setCurrentExIdx(activeEpisode.drills[currentWordIdx - 1].examples.length - 1);
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentExIdx, currentWordIdx, activeEpisode, stopSpeak, onTabPrev]);
+  }, [currentExIdx, currentWordIdx, activeEpisode, stopSpeak]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -748,7 +736,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors relative ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={exId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative">
@@ -860,7 +848,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   );
 }
 
-function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote, onTabNext, onTabPrev }) {
+function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [shuffledData, setShuffledData] = useState([]);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [playingId, setPlayingId] = useState(null);
@@ -925,20 +913,16 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
     if (currentIdx < shuffledData.length - 1) {
       setSlideDirection('next');
       setCurrentIdx(prev => prev + 1); 
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentIdx, shuffledData.length, stopSpeak, onTabNext]);
+  }, [currentIdx, shuffledData.length, stopSpeak]);
 
   const handlePrev = useCallback(() => { 
     stopSpeak(); 
     if (currentIdx > 0) {
       setSlideDirection('prev');
       setCurrentIdx(prev => prev - 1); 
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentIdx, stopSpeak, onTabPrev]);
+  }, [currentIdx, stopSpeak]);
 
   const q = shuffledData[currentIdx];
   const qId = q ? `quiz_${q.id}` : '';
@@ -1080,7 +1064,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative justify-between">
@@ -1187,7 +1171,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   );
 }
 
-function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote, onTabNext, onTabPrev }) {
+function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [slideDirection, setSlideDirection] = useState('next');
@@ -1239,20 +1223,16 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
     if (currentIdx < totalItems - 1) {
       setSlideDirection('next');
       setCurrentIdx(prev => prev + 1); 
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentIdx, totalItems, stopSpeak, onTabNext]);
+  }, [currentIdx, totalItems, stopSpeak]);
 
   const handlePrev = useCallback(() => { 
     stopSpeak(); 
     if (currentIdx > 0) {
       setSlideDirection('prev');
       setCurrentIdx(prev => prev - 1); 
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentIdx, stopSpeak, onTabPrev]);
+  }, [currentIdx, stopSpeak]);
   
   const resetTest = () => { updateFirebase({ testMastered: {}, testRevealed: {} }); setShowConfirmReset(false); setCurrentIdx(0); };
 
@@ -1370,7 +1350,7 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/85' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
@@ -1418,7 +1398,7 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   );
 }
 
-function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote, onTabNext, onTabPrev }) {
+function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, handleOpenNote }) {
   const [playingId, setPlayingId] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [slideDirection, setSlideDirection] = useState('next');
@@ -1471,20 +1451,16 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     if (currentIdx < totalItems - 1) {
       setSlideDirection('next');
       setCurrentIdx(prev => prev + 1); 
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentIdx, totalItems, stopSpeak, onTabNext]);
+  }, [currentIdx, totalItems, stopSpeak]);
 
   const handlePrev = useCallback(() => { 
     stopSpeak(); 
     if (currentIdx > 0) {
       setSlideDirection('prev');
       setCurrentIdx(prev => prev - 1); 
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentIdx, stopSpeak, onTabPrev]);
+  }, [currentIdx, stopSpeak]);
   
   const resetSweep = () => { updateFirebase({ sweepMastered: {}, sweepRevealed: {} }); setShowConfirmReset(false); setCurrentIdx(0); };
 
@@ -1602,7 +1578,7 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-x flex flex-col w-full">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
@@ -2047,7 +2023,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
   );
 });
 
-function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, storyList, config, onTabNext, onTabPrev }) {
+function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, storyList, config }) {
   const [currentEpIdx, setCurrentEpIdx] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const scrollContainerRef = useRef(null);
@@ -2077,18 +2053,14 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
   const handleNext = useCallback(() => {
     if (currentEpIdx < episodes.length - 1) {
       setCurrentEpIdx(prev => prev + 1);
-    } else if (onTabNext) {
-      onTabNext();
     }
-  }, [currentEpIdx, episodes.length, onTabNext]);
+  }, [currentEpIdx, episodes.length]);
 
   const handlePrev = useCallback(() => {
     if (currentEpIdx > 0) {
       setCurrentEpIdx(prev => prev - 1);
-    } else if (onTabPrev) {
-      onTabPrev();
     }
-  }, [currentEpIdx, onTabPrev]);
+  }, [currentEpIdx]);
 
   // 4. Unconditional Keyboard listener Hook
   useEffect(() => {
@@ -2188,7 +2160,7 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar">
+        <div {...swipeHandlers} ref={cardRef} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar touch-pan-y">
           {currentEpisode ? (
             <article key={currentEpisode.id || currentEpIdx} className="h-full flex flex-col justify-start animate-in fade-in duration-300">
               <h3 className={`text-lg font-bold mb-3 border-b pb-2 moe-font ${isDarkMode ? 'text-stone-100 border-stone-850' : 'text-stone-855 border-stone-200'}`}>
@@ -2794,33 +2766,6 @@ export default function LanguageCourse({ config }) {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [navItems]);
 
-  const handleTabNext = useCallback(() => {
-    const idx = navItems.findIndex(item => item.id === activeTab);
-    if (idx !== -1 && idx < navItems.length - 1) {
-      handleTabSwitch(navItems[idx + 1].id);
-    }
-  }, [navItems, activeTab]);
-
-  const handleTabPrev = useCallback(() => {
-    const idx = navItems.findIndex(item => item.id === activeTab);
-    if (idx > 0) {
-      handleTabSwitch(navItems[idx - 1].id);
-    }
-  }, [navItems, activeTab]);
-
-  const studioSwipeHandlers = useSwipeable({
-    onSwipedLeft: handleTabNext,
-    preventScrollOnSwipe: true,
-    trackMouse: false
-  });
-
-  const lexiconSwipeHandlers = useSwipeable({
-    onSwipedLeft: handleTabNext,
-    onSwipedRight: handleTabPrev,
-    preventScrollOnSwipe: true,
-    trackMouse: false
-  });
-
   const isLatestEpisode = episodesList.length > 0 && activeEpisodeId === episodesList[0].id;
   const isStudyTab = ['episode', 'reading', 'drill', 'quiz', 'test', 'sweep', 'story'].includes(activeTab);
 
@@ -2855,7 +2800,7 @@ export default function LanguageCourse({ config }) {
       <main className={`flex-1 w-full ${isStudyTab ? 'min-h-0 flex flex-col justify-center items-center md:py-6' : ''}`}>
 
         {activeTab === 'studio' && (
-          <div {...studioSwipeHandlers} className="max-w-6xl mx-auto pt-3 md:pt-9 pb-12 px-4 md:px-8 animate-in fade-in duration-300">
+          <div className="max-w-6xl mx-auto pt-3 md:pt-9 pb-12 px-4 md:px-8 animate-in fade-in duration-300">
             <header className={`shrink-0 mb-3 pb-3 border-b flex flex-col sm:flex-row md:flex-col justify-between sm:items-center md:justify-center md:items-center gap-3 md:gap-4 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
               <div className="flex items-center gap-2 justify-center">
                 <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-stone-800 text-amber-400' : 'bg-stone-100 text-amber-600'}`}>
@@ -3010,16 +2955,16 @@ export default function LanguageCourse({ config }) {
           </div>
         )}
 
-        {activeConfig.hasStories && <div className={activeTab === 'episode' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isActive={activeTab === 'episode'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
-        {activeConfig.hasReading && <div className={activeTab === 'reading' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><ReadingTab isActive={activeTab === 'reading'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} progressState={progressState} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+        {activeConfig.hasStories && <div className={activeTab === 'episode' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isActive={activeTab === 'episode'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} /></div>}
+        {activeConfig.hasReading && <div className={activeTab === 'reading' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><ReadingTab isActive={activeTab === 'reading'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} progressState={progressState} handleOpenNote={handleOpenNote} /></div>}
 
-        <div className={activeTab === 'drill' ? 'flex-1 min-h-0 w-full' : 'hidden'}><DrillTab isActive={activeTab === 'drill'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} isLatestEpisode={isLatestEpisode} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
-        <div className={activeTab === 'quiz' ? 'flex-1 min-h-0 w-full' : 'hidden'}><QuizTab isActive={activeTab === 'quiz'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
-        {activeConfig.hasTestTab && <div className={activeTab === 'test' ? 'flex-1 min-h-0 w-full' : 'hidden'}><TestTab isActive={activeTab === 'test'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
-        {activeConfig.hasSweepTab && <div className={activeTab === 'sweep' ? 'flex-1 min-h-0 w-full' : 'hidden'}><SweepTab isActive={activeTab === 'sweep'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+        <div className={activeTab === 'drill' ? 'flex-1 min-h-0 w-full' : 'hidden'}><DrillTab isActive={activeTab === 'drill'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} isLatestEpisode={isLatestEpisode} handleOpenNote={handleOpenNote} /></div>
+        <div className={activeTab === 'quiz' ? 'flex-1 min-h-0 w-full' : 'hidden'}><QuizTab isActive={activeTab === 'quiz'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} /></div>
+        {activeConfig.hasTestTab && <div className={activeTab === 'test' ? 'flex-1 min-h-0 w-full' : 'hidden'}><TestTab isActive={activeTab === 'test'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} /></div>}
+        {activeConfig.hasSweepTab && <div className={activeTab === 'sweep' ? 'flex-1 min-h-0 w-full' : 'hidden'}><SweepTab isActive={activeTab === 'sweep'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} /></div>}
         
-        <div {...lexiconSwipeHandlers} className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={activeConfig} /></div>
-        {activeConfig.hasStories && <div className={activeTab === 'story' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><StoryTab isActive={activeTab === 'story'} isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}      </main>
+        <div className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={activeConfig} /></div>
+        {activeConfig.hasStories && <div className={activeTab === 'story' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><StoryTab isActive={activeTab === 'story'} isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={activeConfig} /></div>}      </main>
 
       <UserNoteModal 
         isDarkMode={isDarkMode}
