@@ -94,7 +94,7 @@ function UserNoteModal({ isDarkMode, isOpen, noteTitle, initialText, onClose, on
 
 // --- TAB COMPONENTS ---
 
-function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, onTabNext, onTabPrev }) {
+function EpisodeTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, onTabNext, onTabPrev }) {
   const [playingId, setPlayingId] = useState(null);
   const [activeView, setActiveView] = useState('');
   const [slideDirection, setSlideDirection] = useState('next');
@@ -146,10 +146,26 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   }, [activeEpisode, config]);
 
   useEffect(() => {
-    if (versions.length > 0 && !versions.some(v => v.id === activeView)) {
-      setActiveView(versions[0].id);
+    setActiveView('');
+  }, [activeEpisode?.id]);
+
+  useEffect(() => {
+    if (versions.length > 0 && !activeView) {
+      const unlistened = versions.find(v => !(progressState?.listenedEpisodes || []).includes(v.id));
+      setActiveView(unlistened ? unlistened.id : versions[0].id);
     }
-  }, [versions, activeView]);
+  }, [versions, activeView, progressState?.listenedEpisodes]);
+
+  useEffect(() => {
+    if (isActive && activeView && progressState && updateFirebase) {
+      const listened = progressState.listenedEpisodes || [];
+      if (!listened.includes(activeView)) {
+        updateFirebase({ listenedEpisodes: [...listened, activeView] });
+      }
+    }
+  }, [isActive, activeView, progressState, updateFirebase]);
+
+
 
   const currentIndex = versions.findIndex(v => v.id === activeView);
 
@@ -312,10 +328,11 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
   );
 }
 
-function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, progressState, handleOpenNote, onTabNext, onTabPrev }) {
+function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpeak, config, progressState, updateFirebase, handleOpenNote, onTabNext, onTabPrev }) {
   const [playingId, setPlayingId] = useState(null);
   const [slideDirection, setSlideDirection] = useState('next');
   const cardRef = useRef(null);
+  const [activeView, setActiveView] = useState('');
 
   const reading = activeEpisode?.reading;
 
@@ -336,15 +353,25 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
     return hasDefs ? 'defs' : pages[0].id;
   }, [pages]);
 
-  const [activeView, setActiveView] = useState(defaultView);
+  useEffect(() => {
+    setActiveView('');
+  }, [activeEpisode?.id]);
 
   useEffect(() => {
-    if (pages.length > 0) {
-      const hasDefs = pages.some(p => p.id === 'defs');
-      const targetDefault = hasDefs ? 'defs' : pages[0].id;
-      setActiveView(targetDefault);
+    if (pages.length > 0 && !activeView) {
+      const unlistened = pages.find(p => !(progressState?.listenedReading || []).includes(p.id));
+      setActiveView(unlistened ? unlistened.id : defaultView);
     }
-  }, [activeEpisode?.id, pages]);
+  }, [pages, activeView, progressState?.listenedReading, defaultView]);
+
+  useEffect(() => {
+    if (isActive && activeView && progressState && updateFirebase) {
+      const listened = progressState.listenedReading || [];
+      if (!listened.includes(activeView)) {
+        updateFirebase({ listenedReading: [...listened, activeView] });
+      }
+    }
+  }, [isActive, activeView, progressState, updateFirebase]);
 
   const currentIndex = pages.findIndex(p => p.id === activeView);
 
@@ -2287,6 +2314,7 @@ export default function LanguageCourse({ config }) {
   const [activeEpisodeId, setActiveEpisodeId] = useState(null);
   const [activeEpisode, setActiveEpisode] = useState(null);
   const [progressState, setProgressState] = useState({});
+  const [autoNavigatedTabEpisodeId, setAutoNavigatedTabEpisodeId] = useState(null);
   const [episodesList, setEpisodesList] = useState([]);
   
   const [topicInput, setTopicInput] = useState('');
@@ -2639,6 +2667,95 @@ export default function LanguageCourse({ config }) {
     setActiveTab(newTab);
     setTimeout(() => { window.scrollTo({ top: scrollPositions.current[newTab] || 0, behavior: 'instant' }); }, 0);
   };
+
+  useEffect(() => {
+    if (!activeEpisode || !progressState || autoNavigatedTabEpisodeId === activeEpisode.id) return;
+
+    // Subsequent progress indicators
+    const hasReadingProgress = (progressState.listenedReading || []).length > 0;
+    const hasDrillProgress = (progressState.listenedDrills || []).length > 0;
+    const hasQuizProgress = (progressState.gradedIds || []).length > 0;
+    const hasTestProgress = Object.keys(progressState.testRevealed || {}).length > 0;
+    const hasSweepProgress = Object.keys(progressState.sweepRevealed || {}).length > 0;
+
+    const hasSubsequentProgressForEpisode = hasReadingProgress || hasDrillProgress || hasQuizProgress || hasTestProgress || hasSweepProgress;
+    const hasSubsequentProgressForReading = hasDrillProgress || hasQuizProgress || hasTestProgress || hasSweepProgress;
+
+    // Episode versions
+    const getTabLabel = (key) => {
+      return (activeConfig.labels && activeConfig.labels[key]) || (key.charAt(0).toUpperCase() + key.slice(1));
+    };
+    const versions = [];
+    if (activeEpisode.story) {
+      if (activeEpisode.story[activeConfig.primaryTextKey]) {
+        versions.push({ id: activeConfig.primaryTextKey, label: getTabLabel(activeConfig.primaryTextKey) });
+      }
+      if (activeEpisode.story[activeConfig.transliterationKey]) {
+        versions.push({ id: activeConfig.transliterationKey, label: getTabLabel(activeConfig.transliterationKey) });
+      }
+      if (activeEpisode.story.english) {
+        versions.push({ id: 'english', label: getTabLabel('english') });
+      }
+    }
+    const isEpisodeCompleted = !activeConfig.hasStories || versions.length === 0 ||
+      versions.every(v => (progressState.listenedEpisodes || []).includes(v.id)) ||
+      hasSubsequentProgressForEpisode;
+
+    // Reading pages
+    const pages = [];
+    if (activeEpisode.reading) {
+      if (activeEpisode.reading.definitions && activeEpisode.reading.definitions.length > 0) pages.push({ id: 'defs' });
+      if (activeEpisode.reading.target) pages.push({ id: 'read' });
+      if (activeEpisode.reading.english) pages.push({ id: 'eng' });
+      if (activeEpisode.reading.focus && activeEpisode.reading.focus.length > 0) pages.push({ id: 'focus' });
+    }
+    const isReadingCompleted = !activeConfig.hasReading || pages.length === 0 ||
+      pages.every(p => (progressState.listenedReading || []).includes(p.id)) ||
+      hasSubsequentProgressForReading;
+
+    // Drill completed
+    const totalDrillItems = activeEpisode.drills ? activeEpisode.drills.reduce((acc, d) => acc + (d.examples?.length || 0), 0) : 0;
+    const isDrillCompleted = totalDrillItems === 0 || (progressState.listenedDrills || []).length >= totalDrillItems ||
+      hasQuizProgress || hasTestProgress || hasSweepProgress;
+
+    // Quiz completed
+    const totalQuizItems = activeEpisode.quiz?.length || 0;
+    const isQuizCompleted = totalQuizItems === 0 || (progressState.gradedIds || []).length >= totalQuizItems ||
+      hasTestProgress || hasSweepProgress;
+
+    // Test completed
+    const totalTestItems = activeEpisode.test?.length || 0;
+    const isTestCompleted = !activeConfig.hasTestTab || totalTestItems === 0 || 
+      Object.keys(progressState.testRevealed || {}).length >= totalTestItems ||
+      hasSweepProgress;
+
+    // Sweep completed
+    const totalSweepItems = activeEpisode.sweep?.length || 0;
+    const isSweepCompleted = !activeConfig.hasSweepTab || totalSweepItems === 0 || 
+      Object.keys(progressState.sweepRevealed || {}).length >= totalSweepItems;
+
+    // Find the first uncompleted tab in order of lesson progression
+    let initialTab = 'studio';
+    
+    if (activeConfig.hasStories && !isEpisodeCompleted) {
+      initialTab = 'episode';
+    } else if (activeConfig.hasReading && !isReadingCompleted) {
+      initialTab = 'reading';
+    } else if (totalDrillItems > 0 && !isDrillCompleted) {
+      initialTab = 'drill';
+    } else if (totalQuizItems > 0 && !isQuizCompleted) {
+      initialTab = 'quiz';
+    } else if (activeConfig.hasTestTab && totalTestItems > 0 && !isTestCompleted) {
+      initialTab = 'test';
+    } else if (activeConfig.hasSweepTab && totalSweepItems > 0 && !isSweepCompleted) {
+      initialTab = 'sweep';
+    } else {
+      initialTab = 'studio';
+    }
+
+    handleTabSwitch(initialTab);
+    setAutoNavigatedTabEpisodeId(activeEpisode.id);
+  }, [activeEpisode, progressState, autoNavigatedTabEpisodeId, activeConfig]);
 
   const processImportedJSON = async (textToParse) => {
     if (!globalLexicon) {
@@ -3050,8 +3167,8 @@ export default function LanguageCourse({ config }) {
           </div>
         )}
 
-        {activeConfig.hasStories && <div className={activeTab === 'episode' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isActive={activeTab === 'episode'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
-        {activeConfig.hasReading && <div className={activeTab === 'reading' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><ReadingTab isActive={activeTab === 'reading'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} progressState={progressState} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+        {activeConfig.hasStories && <div className={activeTab === 'episode' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isActive={activeTab === 'episode'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+        {activeConfig.hasReading && <div className={activeTab === 'reading' ? 'flex-1 min-h-0 w-full animate-in fade-in duration-300' : 'hidden'}><ReadingTab isActive={activeTab === 'reading'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} progressState={progressState} updateFirebase={updateFirebase} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
 
         <div className={activeTab === 'drill' ? 'flex-1 min-h-0 w-full' : 'hidden'}><DrillTab isActive={activeTab === 'drill'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} isLatestEpisode={isLatestEpisode} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
         <div className={activeTab === 'quiz' ? 'flex-1 min-h-0 w-full' : 'hidden'}><QuizTab isActive={activeTab === 'quiz'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
