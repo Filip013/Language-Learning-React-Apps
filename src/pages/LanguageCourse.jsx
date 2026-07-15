@@ -185,6 +185,11 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
     trackMouse: false
   });
 
+  const setRefs = useCallback((node) => {
+    cardRef.current = node;
+    swipeHandlers.ref(node);
+  }, [swipeHandlers]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
@@ -267,7 +272,7 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
         {activeVersion && (
-          <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
+          <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
             <div key={activeView} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
               
               <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar ${activeVersion.fontClass} ${activeVersion.id !== 'english' && activeVersion.id !== config.transliterationKey ? (isDarkMode ? 'text-stone-100' : 'text-stone-800') : (isDarkMode ? 'text-stone-300' : 'text-stone-700')}`}>
@@ -372,6 +377,11 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
     trackMouse: false
   });
 
+  const setRefs = useCallback((node) => {
+    cardRef.current = node;
+    swipeHandlers.ref(node);
+  }, [swipeHandlers]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isActive || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
@@ -464,7 +474,7 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
+        <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={activeView} className={`absolute inset-0 flex flex-col animate-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             {activeView === 'defs' && (
@@ -998,6 +1008,11 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
     trackMouse: false
   });
 
+  const setRefs = useCallback((node) => {
+    cardRef.current = node;
+    swipeHandlers.ref(node);
+  }, [swipeHandlers]);
+
   if (!shuffledData.length) return <div className="p-10 text-center font-sans opacity-50">No quiz generated yet.</div>;
   if (!q) return null;
 
@@ -1064,7 +1079,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
+        <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative justify-between">
@@ -1290,6 +1305,11 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
     trackMouse: false
   });
 
+  const setRefs = useCallback((node) => {
+    cardRef.current = node;
+    swipeHandlers.ref(node);
+  }, [swipeHandlers]);
+
   if (!activeEpisode?.test?.length) return null;
   if (!item) return null;
 
@@ -1350,7 +1370,7 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/85' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
+        <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
@@ -1518,6 +1538,11 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     trackMouse: false
   });
 
+  const setRefs = useCallback((node) => {
+    cardRef.current = node;
+    swipeHandlers.ref(node);
+  }, [swipeHandlers]);
+
   if (!activeEpisode?.sweep?.length) return null;
   if (!item) return null;
 
@@ -1578,7 +1603,7 @@ function SweepTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
+        <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
           <div key={qId} className={`absolute inset-0 flex flex-col animate-in fade-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
@@ -2112,6 +2137,11 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
     trackMouse: false
   });
 
+  const setRefs = useCallback((node) => {
+    cardRef.current = node;
+    swipeHandlers.ref(node);
+  }, [swipeHandlers]);
+
   // Early returns are placed safely AFTER all hooks are initiated
   if (!storyList) return <div className="p-20 text-center font-sans opacity-50">Loading archive...</div>;
   if (storyList.length === 0) return <div className="p-20 text-center font-sans opacity-50">No stories generated yet.</div>;
@@ -2160,7 +2190,7 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
       </header>
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
-        <div {...swipeHandlers} ref={cardRef} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar touch-pan-y">
+        <div {...swipeHandlers} ref={setRefs} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar touch-pan-y">
           {currentEpisode ? (
             <article key={currentEpisode.id || currentEpIdx} className="h-full flex flex-col justify-start animate-in fade-in duration-300">
               <h3 className={`text-lg font-bold mb-3 border-b pb-2 moe-font ${isDarkMode ? 'text-stone-100 border-stone-850' : 'text-stone-855 border-stone-200'}`}>
