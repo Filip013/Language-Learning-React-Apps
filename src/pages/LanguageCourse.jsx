@@ -2320,6 +2320,7 @@ export default function LanguageCourse({ config }) {
   const [topicInput, setTopicInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const [genError, setGenError] = useState('');
   const [deletingEpisodeId, setDeletingEpisodeId] = useState(null);
   const fileInputRef = useRef(null);
@@ -2498,19 +2499,43 @@ export default function LanguageCourse({ config }) {
     if (!topicInput.trim() || !user) return;
     setIsExporting(true);
     setGenError('');
+    
     try {
       const exportedText = await generatePromptString(false);
-      const blob = new Blob([exportedText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${activeConfig.name.replace(/\s+/g, '_')}_Prompt_${Date.now()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+
+      // 1. COPY TO CLIPBOARD (The Desktop Magic)
+      try {
+        await navigator.clipboard.writeText(exportedText);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500); // Change back after 2.5s
+      } catch (clipboardErr) {
+        console.warn("Could not copy to clipboard:", clipboardErr);
+      }
+
+      // 2. HANDLE FILE FOR MOBILE / BACKUP
+      const fileName = `${activeConfig.name.replace(/\s+/g, '_')}_Prompt_${Date.now()}.txt`;
+      const file = new File([exportedText], fileName, { type: 'text/plain' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Prompt Export',
+          files: [file]
+        });
+      } else {
+        // Desktop Fallback Download
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     } catch (err) {
-      setGenError("Failed to build prompt: " + err.message);
+      if (err.name !== 'AbortError') {
+        setGenError("Failed to build prompt: " + err.message);
+      }
     } finally {
       setIsExporting(false);
     }
@@ -3075,15 +3100,26 @@ export default function LanguageCourse({ config }) {
                   )}
 
                   <button 
-                      onClick={handleExportPrompt} 
-                      disabled={isGenerating || isExporting || !topicInput.trim()} 
-                      title="Download detailed prompt file for LLM Web App" 
-                      className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 disabled:opacity-50 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
-                      >
-                      {isExporting ? <Loader2 className="w-5 h-5 shrink-0 animate-spin" /> : <Download className="w-5 h-5 shrink-0" />}
-                      <span className="truncate hidden sm:inline">Export Prompt</span>
-                      <span className="truncate sm:hidden">Export</span>
-                  </button>
+                    onClick={handleExportPrompt} 
+                    disabled={isGenerating || isExporting || !topicInput.trim()} 
+                    title="Download detailed prompt file for LLM Web App" 
+                    className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all border shadow-sm active:scale-95 disabled:opacity-50 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'}`}
+                >
+                    {isExporting ? (
+                        <Loader2 className="w-5 h-5 shrink-0 animate-spin" />
+                    ) : isCopied ? (
+                        <Check className="w-5 h-5 shrink-0 text-emerald-500" />
+                    ) : (
+                        <Download className="w-5 h-5 shrink-0" />
+                    )}
+                    
+                    <span className="truncate hidden sm:inline">
+                        {isCopied ? "Copied!" : "Export Prompt"}
+                    </span>
+                    <span className="truncate sm:hidden">
+                        {isCopied ? "Copied!" : "Export"}
+                    </span>
+                </button>
 
                   <button 
                       onClick={handlePasteLesson} 
