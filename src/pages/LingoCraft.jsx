@@ -623,7 +623,7 @@ export default function LingoCraft() {
                                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                                        <h2 className={`truncate ${isCjk ? 'text-3xl font-normal' : 'text-2xl sm:text-3xl font-extrabold tracking-tight'} ${fontClass}`}>
+                                        <h2 className={`truncate ${isCjk ? 'text-4xl sm:text-5xl font-normal' : 'text-2xl sm:text-3xl font-extrabold tracking-tight'} ${fontClass}`}>
                                             {result.word}
                                         </h2>
                                         <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border shrink-0 ${isDarkMode ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
@@ -694,7 +694,7 @@ export default function LingoCraft() {
                                                 <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} space-y-4`}>
                                                     
                                                     <div>
-                                                        <p className={`leading-tight ${isCjk ? 'text-2xl sm:text-3xl font-normal tracking-wide' : 'text-xl sm:text-2xl font-bold'} ${fontClass} ${isDarkMode ? 'text-zinc-100' : 'text-stone-800'}`}>
+                                                        <p className={`leading-tight ${isCjk ? 'text-3xl sm:text-4xl font-normal tracking-wide' : 'text-xl sm:text-2xl font-bold'} ${fontClass} ${isDarkMode ? 'text-zinc-100' : 'text-stone-800'}`}>
                                                             {currentSentence.original}
                                                         </p>
                                                         {currentSentence.transcription && currentSentence.transcription !== currentSentence.original && (
