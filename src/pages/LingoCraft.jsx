@@ -4,7 +4,7 @@ import {
   Globe, Search, History, Database, 
   Loader2, Sparkles, AlertCircle, BookOpen, 
   Volume2, Pause, Trash2, ArrowLeft,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Eye
 } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { auth, db } from '../firebase';
@@ -270,6 +270,14 @@ export default function LingoCraft() {
         return [item.original, item.englishTranslation, item.original];
     };
 
+    const revealCurrentSentence = useCallback((index) => {
+        setRevealedSentences(prev => {
+            const next = new Set(prev);
+            next.add(index);
+            return next;
+        });
+    }, []);
+
     const toggleAudio = (item, index, langName) => {
         if (playState.index === index && playState.status === 'playing') {
             stopSpeak();
@@ -279,9 +287,6 @@ export default function LingoCraft() {
 
         stopSpeak();
         setPlayState({ index, status: 'loading' });
-        
-        // Immediately reveal
-        setRevealedSentences(prev => new Set(prev).add(index));
 
         const ttsText = getTTSText(item, langName);
 
@@ -289,6 +294,7 @@ export default function LingoCraft() {
             ttsText,
             () => {
                 setPlayState({ index: null, status: 'idle' });
+                revealCurrentSentence(index); // Text is revealed ONLY after audio completes successfully
             },
             () => {
                 setPlayState({ index: null, status: 'idle' });
@@ -339,7 +345,8 @@ export default function LingoCraft() {
                 return;
             }
 
-            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+            // Exclude active input, textarea, select, and button element interactions from capturing app navigation hotkeys
+            if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement?.tagName)) return;
 
             const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
 
@@ -370,6 +377,13 @@ export default function LingoCraft() {
                         scrollContainer.scrollBy({ top: -100, behavior: 'smooth' });
                     }
                     break;
+                case 'r':
+                case 'R':
+                    if (result) {
+                        e.preventDefault();
+                        revealCurrentSentence(currentIdx);
+                    }
+                    break;
                 case 's':
                 case 'S':
                     e.preventDefault();
@@ -388,7 +402,7 @@ export default function LingoCraft() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [activeTab, result, currentIdx, handleNext, handlePrev]);
+    }, [activeTab, result, currentIdx, handleNext, handlePrev, revealCurrentSentence]);
 
     const { isCjk, fontClass } = getFontStyles(result?.targetLanguage?.name);
     const isTargetEnglish = result?.targetLanguage?.name === 'English';
@@ -511,7 +525,7 @@ export default function LingoCraft() {
                 )}
             </nav>
 
-            {/* OVERLAID SEARCH POP-UP PANEL - Center Aligned on Desktop */}
+            {/* OVERLAID SEARCH POP-UP PANEL - Center Aligned on Desktop with strict Tab Navigation & high-contrast focus indicators */}
             {showSearchOverlay && (
                 <div className="fixed inset-0 z-[100] bg-zinc-950/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowSearchOverlay(false)}>
                     <div 
@@ -532,22 +546,25 @@ export default function LingoCraft() {
                                         }
                                     }}
                                     placeholder="Enter target word..."
-                                    className={`w-full pl-9 pr-4 py-2 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-medium ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-100 placeholder-zinc-500' : 'bg-white border-stone-200 text-stone-800 placeholder-stone-400'}`}
+                                    className={`w-full pl-9 pr-4 py-2 rounded-xl border text-sm transition-all font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-100 placeholder-zinc-500' : 'bg-white border-stone-200 text-stone-800 placeholder-stone-400'}`}
                                     autoFocus
+                                    tabIndex={1}
                                 />
                             </div>
                             <div className="flex gap-2">
                                 <select 
                                     value={selectedLanguage}
                                     onChange={(e) => handlePrefChange('language', e.target.value)}
-                                    className={`flex-1 px-3 py-2 rounded-xl border focus:outline-none text-xs font-semibold ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-200' : 'bg-white border-stone-200 text-stone-700'}`}
+                                    className={`flex-1 px-3 py-2 rounded-xl border text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-200' : 'bg-white border-stone-200 text-stone-700'}`}
+                                    tabIndex={2}
                                 >
                                     {LANGUAGES.map(l => <option key={l.code} value={l.name}>{l.flag} {l.name}</option>)}
                                 </select>
                                 <select 
                                     value={selectedLevel}
                                     onChange={(e) => handlePrefChange('level', e.target.value)}
-                                    className={`flex-1 px-3 py-2 rounded-xl border focus:outline-none text-xs font-semibold ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-200' : 'bg-white border-stone-200 text-stone-700'}`}
+                                    className={`flex-1 px-3 py-2 rounded-xl border text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-200' : 'bg-white border-stone-200 text-stone-700'}`}
+                                    tabIndex={3}
                                 >
                                     {LEVELS.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
                                 </select>
@@ -558,7 +575,8 @@ export default function LingoCraft() {
                                     setShowSearchOverlay(false);
                                 }}
                                 disabled={loading || !word.trim()}
-                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                tabIndex={4}
                             >
                                 <Sparkles className="w-4 h-4" />
                                 <span>Generate Context</span>
@@ -600,11 +618,11 @@ export default function LingoCraft() {
 
                     {showCardLayout && (
                         <>
-                            {/* 1. TOP CARD (Remains rigid and unscrollable) */}
-                            <div className={`shrink-0 p-4 mb-2 sm:mb-3 rounded-2xl border shadow-sm relative overflow-hidden flex flex-col sm:flex-row justify-between items-start gap-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-stone-200'}`}>
+                            {/* 1. TOP CARD (Rigid header metadata) */}
+                            <div className={`shrink-0 pt-2 pb-3 px-4 mb-1.5 sm:mb-2 rounded-2xl border shadow-sm relative overflow-hidden flex flex-col sm:flex-row justify-between items-start gap-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-stone-200'}`}>
                                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
                                         <h2 className={`truncate ${isCjk ? 'text-3xl font-normal' : 'text-2xl sm:text-3xl font-extrabold tracking-tight'} ${fontClass}`}>
                                             {result.word}
                                         </h2>
@@ -633,8 +651,8 @@ export default function LingoCraft() {
                                 </div>
                             </div>
 
-                            {/* 2. COMPACT NAVIGATION PAGINATOR BAR (Vertically placed between cards) */}
-                            <div className={`shrink-0 p-1 sm:p-1.5 mb-2 sm:mb-3 rounded-xl flex items-center justify-between gap-1 border shadow-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-stone-200'}`}>
+                            {/* 2. COMPACT NAVIGATION PAGINATOR BAR */}
+                            <div className={`shrink-0 p-1 sm:p-1.5 mb-1.5 sm:mb-2 rounded-xl flex items-center justify-between gap-1 border shadow-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-stone-200'}`}>
                                 <button 
                                     onClick={handlePrev} 
                                     disabled={currentIdx === 0} 
@@ -669,8 +687,8 @@ export default function LingoCraft() {
                                 <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
                                     <div key={currentIdx} className={`absolute inset-0 flex flex-col animate-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
                                         
-                                        {/* This container dynamically takes full space and handles overflow scrolling */}
-                                        <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-8 no-scrollbar flex flex-col justify-start pt-6">
+                                        {/* Container handling internal content overflow and scrolling */}
+                                        <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-8 no-scrollbar flex flex-col justify-start pt-3">
                                             
                                             <div className="relative min-h-[140px] flex flex-col justify-start">
                                                 <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} space-y-4`}>
@@ -706,12 +724,18 @@ export default function LingoCraft() {
                                                 </div>
 
                                                 {!isRevealed && (
-                                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                                    <div className="absolute inset-0 flex flex-col sm:flex-row items-center justify-center gap-3 z-10 p-4">
                                                         <button 
                                                             onClick={() => toggleAudio(currentSentence, currentIdx, result.targetLanguage.name)} 
-                                                            className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'}`}
+                                                            className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'}`}
                                                         >
                                                             {isLoadingAudio ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />} Play to Reveal
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => revealCurrentSentence(currentIdx)} 
+                                                            className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-zinc-800 text-zinc-200 border-zinc-700 hover:bg-zinc-700' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'}`}
+                                                        >
+                                                            <Eye size={18} /> Reveal Text (R)
                                                         </button>
                                                     </div>
                                                 )}
@@ -719,22 +743,35 @@ export default function LingoCraft() {
 
                                         </div>
 
-                                        {/* COMPACT BOTTOM BAR */}
-                                        <div className={`shrink-0 flex items-center justify-between py-2 px-3 border-t ${isDarkMode ? 'border-zinc-800 bg-zinc-950/30' : 'border-stone-105 bg-stone-50/50'}`}>
+                                        {/* COMPACT BOTTOM CONTROLLER BAR */}
+                                        <div className={`shrink-0 flex items-center justify-between py-1.5 px-3 border-t ${isDarkMode ? 'border-zinc-800 bg-zinc-950/30' : 'border-stone-105 bg-stone-50/50'}`}>
                                             <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
                                                 Context 0{currentIdx + 1}
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button
+                                                    onClick={() => revealCurrentSentence(currentIdx)}
+                                                    disabled={isRevealed}
+                                                    title="Reveal text without audio (R)"
+                                                    className={`p-1 rounded-full border transition-all active:scale-95 shadow-sm ${
+                                                        isRevealed 
+                                                            ? 'opacity-30 cursor-not-allowed border-transparent text-zinc-500' 
+                                                            : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700' : 'bg-white border-stone-200 text-stone-600 hover:text-stone-800 hover:bg-stone-50'
+                                                    }`}
+                                                >
+                                                    <Eye size={20} />
+                                                </button>
+                                                <button
                                                     onClick={() => toggleAudio(currentSentence, currentIdx, result.targetLanguage.name)}
                                                     disabled={isLoadingAudio}
-                                                    className={`p-1.5 rounded-full border transition-all active:scale-95 shadow-sm ${
+                                                    title={isPlaying ? 'Pause Audio' : 'Play Audio (Space)'}
+                                                    className={`p-1 rounded-full border transition-all active:scale-95 shadow-sm ${
                                                         isPlaying 
                                                             ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500 shadow-emerald-500/10' 
                                                             : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:text-blue-300 hover:bg-zinc-700' : 'bg-white border-stone-200 text-blue-600 hover:text-blue-700 hover:bg-stone-50'
                                                     }`}
                                                 >
-                                                    {isLoadingAudio ? <Loader2 size={16} className="animate-spin text-amber-500" /> : isPlaying ? <Pause size={16} /> : <Volume2 size={16} />}
+                                                    {isLoadingAudio ? <Loader2 size={20} className="animate-spin text-amber-500" /> : isPlaying ? <Pause size={20} /> : <Volume2 size={20} />}
                                                 </button>
                                             </div>
                                         </div>
