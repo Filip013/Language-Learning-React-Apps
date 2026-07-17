@@ -13,10 +13,40 @@ import { courseConfigs } from './config/courseConfigs';
 
 function App() {
   useEffect(() => {
-    if (localStorage.getItem('lingocraft_theme') === 'dark' || 
-       (!localStorage.getItem('lingocraft_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const applyTheme = () => {
+      const localTheme = localStorage.getItem('lingocraft_theme');
+      const isDark = localTheme ? localTheme === 'dark' : mediaQuery.matches;
+      if (isDark) {
         document.documentElement.classList.add('dark');
-    }
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+
+    const handleSystemChange = () => {
+      localStorage.removeItem('lingocraft_theme');
+      applyTheme();
+      window.dispatchEvent(new Event('theme-changed'));
+    };
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'lingocraft_theme') {
+        applyTheme();
+        window.dispatchEvent(new Event('theme-changed'));
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   return (

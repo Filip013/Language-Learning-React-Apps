@@ -2608,10 +2608,8 @@ export default function LanguageCourse({ config }) {
       setIsDarkMode(localTheme === 'dark' || (!localTheme && systemDark));
     };
     checkTheme();
-    window.addEventListener('storage', checkTheme);
     window.addEventListener('theme-changed', checkTheme);
     return () => {
-      window.removeEventListener('storage', checkTheme);
       window.removeEventListener('theme-changed', checkTheme);
     };
   }, []);

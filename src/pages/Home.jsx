@@ -85,30 +85,14 @@ export default function Home() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        // 1. On Load: Check if they have a manual preference, otherwise use system
-        const localTheme = localStorage.getItem('lingocraft_theme');
-        const isDark = localTheme ? localTheme === 'dark' : mediaQuery.matches;
-        
-        setIsDarkMode(isDark);
-        if (isDark) document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-
-        // 2. The OS System Theme just changed (e.g., sunset or sunrise)
-        const handleSystemChange = (e) => {
-            // Clear their manual override so we resume tracking the system
-            localStorage.removeItem('lingocraft_theme'); 
-            
-            // Update the UI to match the new system theme
-            setIsDarkMode(e.matches);
-            if (e.matches) document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
+        const checkTheme = () => {
+            const localTheme = localStorage.getItem('lingocraft_theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setIsDarkMode(localTheme === 'dark' || (!localTheme && systemDark));
         };
-
-        // Listen for OS changes
-        mediaQuery.addEventListener('change', handleSystemChange);
-        return () => mediaQuery.removeEventListener('change', handleSystemChange);
+        checkTheme();
+        window.addEventListener('theme-changed', checkTheme);
+        return () => window.removeEventListener('theme-changed', checkTheme);
     }, []);
 
     const toggleTheme = () => {
