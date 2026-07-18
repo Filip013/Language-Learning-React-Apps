@@ -6,6 +6,7 @@ import firebase, { auth, db } from '../firebase';
 const CANVAS_UID = "08417378469304972096";
 
 const APPS_TO_MIGRATE = [
+    { id: 'greek-master', name: 'Modern Greek', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'hungarian-master', name: 'Hungarian', collections: ['episodes', 'progress'], docs: ['database/dictionary'] },
     { id: 'mandarin-master', name: 'Mandarin', collections: ['episodes', 'progress', 'stories'], docs: ['database/lexicon', 'settings/prefs'] },
     { id: 'portuguese-master', name: 'Portuguese', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
