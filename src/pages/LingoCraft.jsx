@@ -429,8 +429,22 @@ export default function LingoCraft() {
             <style dangerouslySetInnerHTML={{__html: `
               @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
               @import url('https://db.onlinewebfonts.com/c/947e00387f802f409bd2f3e74b9c0730?family=HGSKyokashotai');
+              @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
+
+              /* Custom web font served from the home TV box server */
+              @font-face {
+                font-family: 'KyoKaSho';
+                src: url('http://filip013.duckdns.org:8081/KyoKaSho.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+              }
+
               .font-zh { font-family: 'DFKai-SB', sans-serif !important; }
-              .font-ja { font-family: 'HGSKyokashotai', sans-serif !important; }
+              
+              /* Japanese font priority: KyoKaSho (TV Box) -> HGSKyokashotai -> STKaiti -> sans-serif */
+              .font-ja { font-family: 'KyoKaSho', 'HGSKyokashotai', 'STKaiti', sans-serif !important; }
+
               html, body { scrollbar-width: none; -ms-overflow-style: none; }
               html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
               .no-scrollbar::-webkit-scrollbar { display: none !important; }
