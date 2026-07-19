@@ -434,7 +434,7 @@ export default function LingoCraft() {
               /* Custom web font served from the home TV box server */
               @font-face {
                 font-family: 'KyoKaSho';
-                src: url('http://filip013.duckdns.org/KyoKaSho.woff2') format('woff2');
+                src: url('https://filip013.duckdns.org/KyoKaSho.woff2') format('woff2');
                 font-weight: normal;
                 font-style: normal;
                 font-display: swap;
