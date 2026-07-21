@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 
 import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
@@ -10,6 +10,33 @@ import CharacterDrill from './pages/CharacterDrill'; // <-- Added import
 // The new Config Engine
 import LanguageCourse from './pages/LanguageCourse';
 import { courseConfigs } from './config/courseConfigs';
+
+function RoutePersister() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (location.pathname === '/' || location.pathname === '') {
+        const lastRoute = localStorage.getItem('lingocraft_last_route');
+        if (lastRoute && lastRoute !== '/') {
+          navigate(lastRoute, { replace: true });
+          return;
+        }
+      }
+    }
+
+    if (location.pathname !== '/' && location.pathname !== '') {
+      localStorage.setItem('lingocraft_last_route', location.pathname + location.search);
+    } else {
+      localStorage.removeItem('lingocraft_last_route');
+    }
+  }, [location, navigate]);
+
+  return null;
+}
 
 function App() {
   useEffect(() => {
@@ -51,6 +78,7 @@ function App() {
 
   return (
     <Router basename={import.meta.env.BASE_URL}>
+      <RoutePersister />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/lingocraft" element={<LingoCraft />} />
