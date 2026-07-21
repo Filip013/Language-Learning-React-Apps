@@ -76,10 +76,8 @@ function App() {
     };
   }, []);
 
-  const routerBasename = import.meta.env.BASE_URL === './' ? '' : import.meta.env.BASE_URL;
-
   return (
-    <Router basename={routerBasename}>
+    <Router basename={import.meta.env.BASE_URL}>
       <RoutePersister />
       <Routes>
         <Route path="/" element={<Home />} />
