@@ -17,19 +17,30 @@ function RoutePersister() {
   const isInitialMount = useRef(true);
 
   useEffect(() => {
+    const sanitizePath = (path) => {
+      if (!path) return '/';
+      const clean = path.replace(/^\/Language-Learning-React-Apps/, '');
+      return clean === '' ? '/' : clean;
+    };
+
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      if (location.pathname === '/' || location.pathname === '') {
+      const cleanCurrent = sanitizePath(location.pathname);
+      if (cleanCurrent === '/') {
         const lastRoute = localStorage.getItem('lingocraft_last_route');
-        if (lastRoute && lastRoute !== '/') {
-          navigate(lastRoute, { replace: true });
-          return;
+        if (lastRoute) {
+          const cleanLast = sanitizePath(lastRoute);
+          if (cleanLast !== '/') {
+            navigate(cleanLast, { replace: true });
+            return;
+          }
         }
       }
     }
 
-    if (location.pathname !== '/' && location.pathname !== '') {
-      localStorage.setItem('lingocraft_last_route', location.pathname + location.search);
+    const cleanPath = sanitizePath(location.pathname);
+    if (cleanPath !== '/') {
+      localStorage.setItem('lingocraft_last_route', cleanPath + location.search);
     } else {
       localStorage.removeItem('lingocraft_last_route');
     }
