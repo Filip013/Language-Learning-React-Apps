@@ -34,7 +34,7 @@ export default function CharacterDrill() {
   // Developer Testing Settings
   const [showSettings, setShowSettings] = useState(false);
   const [selectedKeyType, setSelectedKeyType] = useState('free'); // 'free' | 'paid'
-  const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite'); 
+  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash-lite'); 
   
   // Data State
   const [lexiconChars, setLexiconChars] = useState([]);
@@ -523,8 +523,8 @@ export default function CharacterDrill() {
                       onChange={(e) => setSelectedModel(e.target.value)}
                       className={`px-3 py-1.5 rounded-lg border font-medium outline-none ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white border-stone-300 text-stone-700'}`}
                   >
-                      <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                      <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                      <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+                      <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
                       <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
                   </select>
               </div>
