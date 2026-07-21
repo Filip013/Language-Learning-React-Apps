@@ -32,6 +32,7 @@ export default defineConfig({
         background_color: '#fafaf9',
         display: 'standalone',
         start_url: base,
+        scope: base,
         launch_handler: {
           client_mode: 'focus-existing'
         },
