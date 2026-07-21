@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "io.github.filip013.twa",
-        "sha256_cert_fingerprints": ["4A:69:DA:0F:9F:1B:C1:45:A4:39:7C:14:58:F7:A9:76:9B:7A:96:A0:B7:6B:3E:8C:67:8F:1E:86:F2:8D:8E:6D"]
+        "package_name": "app.vercel.lingo_hub_nine.twa",
+        "sha256_cert_fingerprints": ["38:EF:DA:AB:03:5C:D5:0F:12:A7:1D:31:6A:33:A8:9F:EC:22:84:E2:7E:2B:FC:3C:3E:CB:0E:28:8A:5F:63:61"]
       }
     }]
