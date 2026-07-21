@@ -21,6 +21,9 @@ export default defineConfig({
         background_color: '#fafaf9',
         display: 'standalone',
         start_url: '/Language-Learning-React-Apps/',
+        launch_handler: {
+          client_mode: 'focus-existing'
+        },
         "icons": [
           {
             "src": "/icon-192.png",
