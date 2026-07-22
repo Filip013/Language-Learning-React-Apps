@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 
 import Home from './pages/Home';
 import LingoCraft from './pages/LingoCraft';
@@ -10,44 +10,6 @@ import CharacterDrill from './pages/CharacterDrill'; // <-- Added import
 // The new Config Engine
 import LanguageCourse from './pages/LanguageCourse';
 import { courseConfigs } from './config/courseConfigs';
-
-function RoutePersister() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isInitialMount = useRef(true);
-
-  useEffect(() => {
-    const sanitizePath = (path) => {
-      if (!path) return '/';
-      const clean = path.replace(/^\/Language-Learning-React-Apps/, '');
-      return clean === '' ? '/' : clean;
-    };
-
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      const cleanCurrent = sanitizePath(location.pathname);
-      if (cleanCurrent === '/') {
-        const lastRoute = localStorage.getItem('lingocraft_last_route');
-        if (lastRoute) {
-          const cleanLast = sanitizePath(lastRoute);
-          if (cleanLast !== '/') {
-            navigate(cleanLast, { replace: true });
-            return;
-          }
-        }
-      }
-    }
-
-    const cleanPath = sanitizePath(location.pathname);
-    if (cleanPath !== '/') {
-      localStorage.setItem('lingocraft_last_route', cleanPath + location.search);
-    } else {
-      localStorage.removeItem('lingocraft_last_route');
-    }
-  }, [location, navigate]);
-
-  return null;
-}
 
 function App() {
   useEffect(() => {
@@ -89,7 +51,6 @@ function App() {
 
   return (
     <Router basename={import.meta.env.BASE_URL}>
-      <RoutePersister />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/lingocraft" element={<LingoCraft />} />
