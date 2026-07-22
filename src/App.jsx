@@ -18,11 +18,14 @@ function App() {
     const applyTheme = () => {
       const localTheme = localStorage.getItem('lingocraft_theme');
       const isDark = localTheme ? localTheme === 'dark' : mediaQuery.matches;
+      const themeColor = isDark ? '#09090b' : '#fafaf9';
       if (isDark) {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
       }
+      const meta = document.getElementById('theme-color-meta');
+      if (meta) meta.setAttribute('content', themeColor);
     };
 
     applyTheme();
