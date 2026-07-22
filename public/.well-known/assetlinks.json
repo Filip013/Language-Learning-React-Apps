@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.lingo_hub_nine.twa",
-        "sha256_cert_fingerprints": ["38:EF:DA:AB:03:5C:D5:0F:12:A7:1D:31:6A:33:A8:9F:EC:22:84:E2:7E:2B:FC:3C:3E:CB:0E:28:8A:5F:63:61"]
+        "sha256_cert_fingerprints": ["75:AC:19:C5:95:B6:FD:56:11:69:C5:0C:27:21:46:CB:28:0A:33:FB:AB:68:F1:BD:3D:A4:DB:35:1A:67:60:4C"]
       }
     }]
