@@ -374,5 +374,84 @@ TASKS:
     { "greek": "...", "english": "...", "pos": "n" }
   ]
 }`
+    },
+
+    japanese: {
+        id: 'japanese',
+        dbAppId: 'japanese-master',
+        name: 'Japanese Master',
+        primaryTextKey: 'japanese',
+        transliterationKey: 'romaji',
+        lexiconDoc: 'lexicon',
+        
+        labels: {
+            japanese: 'Japanese',
+            romaji: 'Rōmaji',
+            english: 'English'
+        },
+        
+        // Font & Design
+        fontClass: 'font-ja',
+        useLargeDrillFont: true,
+        textSizeMode: 'large', // Activates dense character scaling
+        webFontsCss: `
+            @import url('https://db.onlinewebfonts.com/c/947e00387f802f409bd2f3e74b9c0730?family=HGSKyokashotai');
+            @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
+            @font-face {
+                font-family: 'KyoKaSho';
+                src: url('https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+            }
+            .font-ja { font-family: 'KyoKaSho', 'HGSKyokashotai', 'STKaiti', sans-serif !important; }
+        `,
+        
+        hasStories: false,
+        hasReading: true,
+        hasTestTab: false,
+        hasSweepTab: false,
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Japanese, use standard Japanese (Hyōjungo) pronunciation.",
+        promptSystemInstruction: `You are an expert Japanese curriculum designer. Generate a highly structured lesson.
+        
+CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+
+TASKS:
+1. 'reading': A passage in Japanese (Kanji/Kana), Rōmaji transliteration, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
+3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in Japanese (Kanji/Kana), Rōmaji, and English.
+4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+
+        promptOutputFormat: `{
+  "title": "Lesson Title",
+  "tutorIntroduction": "Short engaging intro",
+  "reading": {
+    "definitions": [{ "word": "word", "text": "Japanese definition using known words" }],
+    "japanese": "Text broken into paragraphs separated by \\n\\n",
+    "romaji": "Rōmaji transliteration broken into paragraphs separated by \\n\\n",
+    "english": "English translation",
+    "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
+  },
+  "drills": [
+    {
+      "word": "word",
+      "romaji": "romaji",
+      "translation": "translation",
+      "examples": [{ "japanese": "...", "romaji": "...", "english": "..." }]
+    }
+  ],
+  "quiz": [
+    {
+      "sentence": "Sentence with _____",
+      "englishHint": "English hint",
+      "answer": "answer",
+      "distractors": ["wrong1", "wrong2", "wrong3"]
+    }
+  ],
+  "newLemmas": [
+    { "japanese": "...", "romaji": "...", "english": "...", "pos": "n" }
+  ]
+}`
     }
 };

@@ -342,10 +342,16 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
     const targetText = reading[config.primaryTextKey];
     if (Array.isArray(reading.definitions) && reading.definitions.length > 0) list.push({ id: 'defs', label: 'Definitions' });
     if (targetText) list.push({ id: 'read', label: 'Reading' });
+    if (config.transliterationKey && reading[config.transliterationKey]) {
+      list.push({ 
+        id: 'transliteration', 
+        label: (config.labels && config.labels[config.transliterationKey]) || (config.transliterationKey.charAt(0).toUpperCase() + config.transliterationKey.slice(1)) 
+      });
+    }
     if (reading.english) list.push({ id: 'eng', label: 'Translation' });
     if (Array.isArray(reading.focus) && reading.focus.length > 0) list.push({ id: 'focus', label: 'Focus & Grammar' });
     return list;
-  }, [reading, config.primaryTextKey]);
+  }, [reading, config.primaryTextKey, config.transliterationKey, config.labels]);
 
   const defaultView = useMemo(() => {
     if (pages.length === 0) return 'read';
@@ -456,6 +462,8 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
             playAudio('defs', reading.definitions.map(d => d.word + ". " + d.text).join(' '));
           } else if (activeView === 'read' && targetText) {
             playAudio('read', targetText);
+          } else if (activeView === 'transliteration' && reading?.[config.transliterationKey]) {
+            playAudio('transliteration', reading[config.transliterationKey]);
           } else if (activeView === 'eng' && reading?.english) {
             playAudio('eng', reading.english);
           }
@@ -514,10 +522,13 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
             
             {activeView === 'defs' && (
               <>
-                <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar">
-                  <ul className="space-y-3 text-lg leading-relaxed">
+                <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar ${config.fontClass || ''}`}>
+                  <ul className={`space-y-3 ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'}`}>
                     {reading.definitions.map((def, idx) => (
-                      <li key={idx}><span className={`${config.scriptStyles?.vocabTerm || 'text-lg md:text-xl font-semibold'} ${config.fontClass || ''} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{def.word}</span>: {def.text}</li>
+                      <li key={idx}>
+                        <span className={`${config.scriptStyles?.vocabTerm || 'text-lg md:text-xl font-semibold'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{def.word}</span>
+                        <span className={isDarkMode ? 'text-stone-300' : 'text-stone-700'}>: {def.text}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -536,6 +547,18 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
                 <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                   <h2 className="text-base font-bold tracking-wide">Target Text</h2>
                   <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'read'} onClick={() => playAudio('read', targetText)} />
+                </div>
+              </>
+            )}
+
+            {activeView === 'transliteration' && config.transliterationKey && reading[config.transliterationKey] && (
+              <>
+                <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar font-sans text-lg md:text-xl leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-700'}`}>
+                  {reading[config.transliterationKey].split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+                </div>
+                <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
+                  <h2 className="text-base font-bold tracking-wide">{(config.labels && config.labels[config.transliterationKey]) || 'Transliteration'}</h2>
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'transliteration'} onClick={() => playAudio('transliteration', reading[config.transliterationKey])} />
                 </div>
               </>
             )}
@@ -758,7 +781,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
           {activeEpisode.drills.map((drill, idx) => {
             const isCurrentWord = idx === currentWordIdx;
             const isCompleted = isWordCompleted(idx);
-            const wordFontClass = config.useLargeDrillFont ? 'moe-font text-sm md:text-base pt-0.5' : `${config.fontClass || 'font-sans'} text-xs md:text-sm`;
+            const wordFontClass = config.useLargeDrillFont ? `${config.fontClass || 'moe-font'} text-sm md:text-base pt-0.5` : `${config.fontClass || 'font-sans'} text-xs md:text-sm`;
             
             let cardClasses = `flex-1 px-2 sm:px-3.5 py-1.5 rounded-lg font-bold transition-all text-center whitespace-nowrap ${wordFontClass} `;
             
@@ -2248,10 +2271,10 @@ function StoryTab({ isActive, isDarkMode, activeStoryId, setActiveStoryId, story
         <div {...swipeHandlers} ref={setRefs} className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar touch-pan-y">
           {currentEpisode ? (
             <article key={currentEpisode.id || currentEpIdx} className="h-full flex flex-col justify-start animate-in fade-in duration-300">
-              <h3 className={`text-lg font-bold mb-3 border-b pb-2 moe-font ${isDarkMode ? 'text-stone-100 border-stone-850' : 'text-stone-855 border-stone-200'}`}>
+              <h3 className={`text-lg font-bold mb-3 border-b pb-2 ${config.fontClass || 'moe-font'} ${isDarkMode ? 'text-stone-100 border-stone-850' : 'text-stone-855 border-stone-200'}`}>
                 {currentEpisode.title}
               </h3>
-              <div className={`${config.scriptStyles?.bodyText || 'text-[28px] md:text-3xl leading-snug'} space-y-4 moe-font ${isDarkMode ? 'text-stone-300' : 'text-stone-800'}`}>
+              <div className={`${config.scriptStyles?.bodyText || 'text-[28px] md:text-3xl leading-snug'} space-y-4 ${config.fontClass || 'moe-font'} ${isDarkMode ? 'text-stone-300' : 'text-stone-800'}`}>
                 {currentEpisode.text.split('\n\n').map((p, idx) => <p key={idx}>{p}</p>)}
               </div>
             </article>
