@@ -117,20 +117,21 @@ DRILL AND QUIZ DESIGN:
 CRITICAL RULES:
 1. PRESENT EXACTLY 3 NEW BASE WORDS to teach, PLUS any additional words the user explicitly requests.
 2. The Definitions, Quiz, and Test MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
-3. For the Quiz and Test (15 questions each): EXACTLY 2 questions must target each of the 3 new target words. The remaining questions should test other vocabulary and grammar from the Known list to review weak points identified in the context.
+3. The 'focus' section MUST contain exactly 3 items for the new base words, PLUS 1 to 3 items for reviewing grammar/vocabulary weaknesses.
+4. DO NOT group words or topics together in the Drills. Every single item listed in 'reading.focus' must have its own dedicated drill entry.
 
 TASKS:
 1. 'reading.definitions': Hungarian definitions for ONLY the 3 new target words, using Known Vocabulary.
-2. 'reading.hungarian': multiple paragraphs separated by \\n\\n with some dialog.
+2. 'reading.hungarian': multiple paragraphs separated by \n\n with some dialog.
 3. 'reading.english': English translation.
-4. 'reading.focus': Explain grammar rules, nuances, and how the 3 new words are used.
-5. 'drills': Exactly 5 items. Each needs exactly 5 example sentences in HU/EN.
-6. 'quiz': Exactly 15 grammar/vocab questions. Use '_____' (5 underscores) for the blank.
-7. 'test': Exactly 15 active translation sentences (English to Hungarian).
+4. 'reading.focus': Explain the 3 new target words, plus 1 to 3 grammar rules or reviewed structures. Treat every single explanation as a separate item.
+5. 'drills': Create exactly 1 drill entry for EVERY individual item in 'reading.focus'. Each entry MUST contain exactly 5 example sentences in HU/EN.
+6. 'quiz': Create exactly 2 questions for every item in 'reading.focus', plus 5 general questions to probe for weak areas. Use '_____' (5 underscores) for the blank.
+7. 'test': Create exactly 2 active translation sentences (English to Hungarian) for every item in 'reading.focus', plus 5 general sentences to probe for weak areas.
 8. 'sweep': Exactly 15 sentences targeting words that have not recently been encountered.
-9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.`,
+9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.
 
-        promptOutputFormat: `{
+promptOutputFormat: {
   "title": "Lesson Title",
   "tutorIntroduction": "Short engaging intro",
   "reading": {
