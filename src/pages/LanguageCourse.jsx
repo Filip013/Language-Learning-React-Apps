@@ -2511,11 +2511,10 @@ export default function LanguageCourse({ config }) {
 
     const storyContextBlock = activeConfig.hasStories && currentStoryText ? `\nCURRENT STORY SO FAR:\n${currentStoryText}\n` : '';
     const pastContextBlock = pastContext ? `\nRECENT CONTEXT & PERFORMANCE (Last 10 lessons):\n${pastContext}\n` : '';
+    const jsonFormatString = JSON.stringify(activeConfig.promptOutputFormat, null, 2);
     const outputInstruction = isForAPI 
-        ? `OUTPUT FORMAT (Provide response strictly as raw JSON, without any markdown formatting or backticks. Do NOT wrap in \`\`\`json):\n${activeConfig.promptOutputFormat}`
-        : `OUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${activeConfig.promptOutputFormat}`;
-
-    return `SYSTEM INSTRUCTION:\n${activeConfig.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\n${outputInstruction}`;
+        ? `OUTPUT FORMAT (Provide response strictly as raw JSON, without any markdown formatting or backticks. Do NOT wrap in \`\`\`json):\n${jsonFormatString}`
+        : `OUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${jsonFormatString}`;
   };
 
   const handleExportPrompt = async () => {
