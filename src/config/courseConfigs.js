@@ -129,7 +129,7 @@ TASKS:
 6. 'quiz': Create exactly 2 questions for every item in 'reading.focus', plus 5 general questions to probe for weak areas. Use '_____' (5 underscores) for the blank.
 7. 'test': Create exactly 2 active translation sentences (English to Hungarian) for every item in 'reading.focus', plus 5 general sentences to probe for weak areas.
 8. 'sweep': Exactly 15 sentences targeting words that have not recently been encountered.
-9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.
+9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.`,
 
 promptOutputFormat: {
   "title": "Lesson Title",
@@ -145,7 +145,7 @@ promptOutputFormat: {
   "test": [{ "hungarian": "...", "english": "..." }],
   "sweep": [{ "word": "target", "hungarian": "...", "english": "..." }],
   "newLemmas": [{ "word": "word", "meaning": "meaning", "pos": "v/n/adj" }]
-}`
+}
     },
 
     portuguese: {
