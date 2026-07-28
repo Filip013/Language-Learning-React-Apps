@@ -2515,6 +2515,7 @@ export default function LanguageCourse({ config }) {
     const outputInstruction = isForAPI 
         ? `OUTPUT FORMAT (Provide response strictly as raw JSON, without any markdown formatting or backticks. Do NOT wrap in \`\`\`json):\n${jsonFormatString}`
         : `OUTPUT FORMAT (Provide response as JSON inside a \`\`\`json codeblock):\n${jsonFormatString}`;
+    return `SYSTEM INSTRUCTION:\n${activeConfig.promptSystemInstruction}\n\nKNOWN VOCABULARY:\n[${flatLexicon}]\n${storyContextBlock}${pastContextBlock}\nUSER REQUEST:\n${topicInput}\n\n---\n\n${outputInstruction}`;
   };
 
   const handleExportPrompt = async () => {
