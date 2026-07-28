@@ -62,37 +62,37 @@ DRILL AND QUIZ DESIGN:
 - Note which words were recently drilled. Select DIFFERENT older words from the KNOWN VOCABULARY to review in this episode's drills and quiz.
 - The quiz should be exactly 15 questions, testing a mix of newly introduced words and older vocabulary.`,
 
-        promptOutputFormat: `{
-  "title": "Title of the chapter/episode.",
-  "storyTitle": "The overarching name of the entire Book/Season.",
-  "storyStatus": "MUST be one of: 'continue', 'finale', or 'new_story'.",
-  "tutorIntroduction": "Short engaging intro",
-  "story": {
-    "traditional": "...",
-    "simplified": "...",
-    "pinyin": "...",
-    "english": "..."
-  },
-  "drills": [
-    {
-      "word": "word",
-      "pinyin": "pinyin",
-      "notes": ["note 1", "note 2"],
-      "examples": [
-        { "traditional": "...", "simplified": "...", "pinyin": "...", "english": "..." }
-      ]
-    }
-  ],
-  "quiz": [
-    {
-      "sentence": "Use ___ for blank",
-      "answer": "answer",
-      "distractors": ["wrong1", "wrong2", "wrong3"],
-      "englishHint": "hint"
-    }
-  ],
-  "newLemmas": ["漢字1", "漢字2"]
-}`
+        promptOutputFormat: {
+          title: "Title of the chapter/episode.",
+          storyTitle: "The overarching name of the entire Book/Season.",
+          storyStatus: "MUST be one of: 'continue', 'finale', or 'new_story'.",
+          tutorIntroduction: "Short engaging intro",
+          story: {
+            traditional: "...",
+            simplified: "...",
+            pinyin: "...",
+            english: "..."
+          },
+          drills: [
+            {
+              word: "word",
+              pinyin: "pinyin",
+              notes: ["note 1", "note 2"],
+              examples: [
+                { traditional: "...", simplified: "...", pinyin: "...", english: "..." }
+              ]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Use ___ for blank",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"],
+              englishHint: "hint"
+            }
+          ],
+          newLemmas: ["漢字1", "漢字2"]
+        }
     },
 
     hungarian: {
@@ -131,21 +131,21 @@ TASKS:
 8. 'sweep': Exactly 15 sentences targeting words that have not recently been encountered.
 9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.`,
 
-promptOutputFormat: {
-  "title": "Lesson Title",
-  "tutorIntroduction": "Short engaging intro",
-  "reading": {
-    "definitions": [{ "word": "word", "text": "Hungarian definition using known words" }],
-    "hungarian": "Text with paragraphs separated by \\n\\n",
-    "english": "English translation",
-    "focus": [{ "word": "grammar topic", "explanation": "Explanation" }]
-  },
-  "drills": [{ "word": "pattern", "translation": "meaning", "examples": [{ "hungarian": "...", "english": "..." }] }],
-  "quiz": [{ "sentence": "Sentence with _____", "englishHint": "English trans", "answer": "answer", "distractors": ["ans1","ans2","ans3"] }],
-  "test": [{ "hungarian": "...", "english": "..." }],
-  "sweep": [{ "word": "target", "hungarian": "...", "english": "..." }],
-  "newLemmas": [{ "word": "word", "meaning": "meaning", "pos": "v/n/adj" }]
-}
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Hungarian definition using known words" }],
+            hungarian: "Text with paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "grammar topic", explanation: "Explanation" }]
+          },
+          drills: [{ word: "pattern", translation: "meaning", examples: [{ hungarian: "...", english: "..." }] }],
+          quiz: [{ sentence: "Sentence with _____", englishHint: "English trans", answer: "answer", distractors: ["ans1", "ans2", "ans3"] }],
+          test: [{ hungarian: "...", english: "..." }],
+          sweep: [{ word: "target", hungarian: "...", english: "..." }],
+          newLemmas: [{ word: "word", meaning: "meaning", pos: "v/n/adj" }]
+        }
     },
 
     portuguese: {
@@ -176,34 +176,34 @@ TASKS:
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
-        promptOutputFormat: `{
-  "title": "Lesson Title",
-  "tutorIntroduction": "Short engaging intro",
-  "reading": {
-    "definitions": [{ "word": "word", "text": "Portuguese definition using known words" }],
-    "portuguese": "Text broken into paragraphs separated by \\n\\n",
-    "english": "English translation",
-    "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
-  },
-  "drills": [
-    {
-      "word": "word",
-      "translation": "translation",
-      "examples": [{ "portuguese": "...", "english": "..." }]
-    }
-  ],
-  "quiz": [
-    {
-      "sentence": "Sentence with _____",
-      "englishHint": "English hint",
-      "answer": "answer",
-      "distractors": ["wrong1", "wrong2", "wrong3"]
-    }
-  ],
-  "newLemmas": [
-    { "portuguese": "...", "english": "...", "pos": "n" }
-  ]
-}`
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Portuguese definition using known words" }],
+            portuguese: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ portuguese: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { portuguese: "...", english: "...", pos: "n" }
+          ]
+        }
     },
 
     romanian: {
@@ -233,34 +233,34 @@ TASKS:
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
-        promptOutputFormat: `{
-  "title": "Lesson Title",
-  "tutorIntroduction": "Short engaging intro",
-  "reading": {
-    "definitions": [{ "word": "word", "text": "Romanian definition using known words" }],
-    "romanian": "Text broken into paragraphs separated by \\n\\n",
-    "english": "English translation",
-    "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
-  },
-  "drills": [
-    {
-      "word": "word",
-      "translation": "translation",
-      "examples": [{ "romanian": "...", "english": "..." }]
-    }
-  ],
-  "quiz": [
-    {
-      "sentence": "Sentence with _____",
-      "englishHint": "English hint",
-      "answer": "answer",
-      "distractors": ["wrong1", "wrong2", "wrong3"]
-    }
-  ],
-  "newLemmas": [
-    { "romanian": "...", "english": "...", "pos": "n" }
-  ]
-}`
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Romanian definition using known words" }],
+            romanian: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ romanian: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { romanian: "...", english: "...", pos: "n" }
+          ]
+        }
     },
 
     russian: {
@@ -290,34 +290,34 @@ TASKS:
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
-        promptOutputFormat: `{
-  "title": "Lesson Title",
-  "tutorIntroduction": "Short engaging intro",
-  "reading": {
-    "definitions": [{ "word": "word", "text": "Russian definition using known words" }],
-    "russian": "Text broken into paragraphs separated by \\n\\n",
-    "english": "English translation",
-    "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
-  },
-  "drills": [
-    {
-      "word": "word",
-      "translation": "translation",
-      "examples": [{ "russian": "...", "english": "..." }]
-    }
-  ],
-  "quiz": [
-    {
-      "sentence": "Sentence with _____",
-      "englishHint": "English hint",
-      "answer": "answer",
-      "distractors": ["wrong1", "wrong2", "wrong3"]
-    }
-  ],
-  "newLemmas": [
-    { "russian": "...", "english": "...", "pos": "n" }
-  ]
-}`
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Russian definition using known words" }],
+            russian: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ russian: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { russian: "...", english: "...", pos: "n" }
+          ]
+        }
     },
 
     greek: {
@@ -347,34 +347,34 @@ TASKS:
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
-        promptOutputFormat: `{
-  "title": "Lesson Title",
-  "tutorIntroduction": "Short engaging intro",
-  "reading": {
-    "definitions": [{ "word": "word", "text": "Modern Greek definition using known words" }],
-    "greek": "Text broken into paragraphs separated by \\n\\n",
-    "english": "English translation",
-    "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
-  },
-  "drills": [
-    {
-      "word": "word",
-      "translation": "translation",
-      "examples": [{ "greek": "...", "english": "..." }]
-    }
-  ],
-  "quiz": [
-    {
-      "sentence": "Sentence with _____",
-      "englishHint": "English hint",
-      "answer": "answer",
-      "distractors": ["wrong1", "wrong2", "wrong3"]
-    }
-  ],
-  "newLemmas": [
-    { "greek": "...", "english": "...", "pos": "n" }
-  ]
-}`
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Modern Greek definition using known words" }],
+            greek: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ greek: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { greek: "...", english: "...", pos: "n" }
+          ]
+        }
     },
 
     japanese: {
@@ -424,35 +424,35 @@ TASKS:
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
-        promptOutputFormat: `{
-  "title": "Lesson Title",
-  "tutorIntroduction": "Short engaging intro",
-  "reading": {
-    "definitions": [{ "word": "word", "text": "Japanese definition using known words" }],
-    "japanese": "Text broken into paragraphs separated by \\n\\n",
-    "romaji": "Rōmaji transliteration broken into paragraphs separated by \\n\\n",
-    "english": "English translation",
-    "focus": [{ "word": "word", "explanation": "Grammar/nuance note" }]
-  },
-  "drills": [
-    {
-      "word": "word",
-      "romaji": "romaji",
-      "translation": "translation",
-      "examples": [{ "japanese": "...", "romaji": "...", "english": "..." }]
-    }
-  ],
-  "quiz": [
-    {
-      "sentence": "Sentence with _____",
-      "englishHint": "English hint",
-      "answer": "answer",
-      "distractors": ["wrong1", "wrong2", "wrong3"]
-    }
-  ],
-  "newLemmas": [
-    { "japanese": "...", "romaji": "...", "english": "...", "pos": "n" }
-  ]
-}`
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Japanese definition using known words" }],
+            japanese: "Text broken into paragraphs separated by \\n\\n",
+            romaji: "Rōmaji transliteration broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              romaji: "romaji",
+              translation: "translation",
+              examples: [{ japanese: "...", romaji: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { japanese: "...", romaji: "...", english: "...", pos: "n" }
+          ]
+        }
     }
 };
