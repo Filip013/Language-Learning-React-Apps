@@ -58,6 +58,8 @@ const getSystemInstruction = (langName) => {
         rules.push("3. IMPORTANT: You MUST use Traditional Chinese characters (繁體中文) exclusively, and provide Pinyin following standard Taiwanese Guoyu (國語) pronunciation and spelling in the 'transcription' field.");
     } else if (langName?.includes('Serbian')) {
         rules.push("3. IMPORTANT: You MUST use Serbian Cyrillic exclusively.");
+    } else if (langName === 'Latin') {
+        rules.push("3. IMPORTANT: You MUST mark all long vowels with macrons (ā, ē, ī, ō, ū) throughout all Latin sentences and words.");
     }
 
     const ruleNum = rules.length + 1;
@@ -294,7 +296,8 @@ export default function LingoCraft() {
 
     const getTTSText = (item, langName) => {
         if (langName === 'English') return [item.original];
-        return [item.original, item.englishTranslation, item.original];
+        const targetScript = (langName?.includes('Greek') && item.transcription) ? item.transcription : item.original;
+        return [targetScript, item.englishTranslation, targetScript];
     };
 
     const revealCurrentSentence = useCallback((index) => {
