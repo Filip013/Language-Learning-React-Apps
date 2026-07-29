@@ -48,6 +48,43 @@ const getFontStyles = (langName) => {
 
 const getApiKey = () => localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey') || '';
 
+const getSystemInstruction = (langName) => {
+    const rules = [
+        "1. Provide a reliable International Phonetic Alphabet (IPA) representation.",
+        "2. If the target language utilizes a non-Latin script, you MUST provide an accurate Latin character transliteration/phonetic transcription in the 'transcription' field. If it uses a Latin script, leave the 'transcription' field empty."
+    ];
+
+    if (langName?.includes('Chinese')) {
+        rules.push("3. IMPORTANT: You MUST use Traditional Chinese characters (繁體中文) exclusively, and provide Pinyin following standard Taiwanese Guoyu (國語) pronunciation and spelling in the 'transcription' field.");
+    } else if (langName?.includes('Serbian')) {
+        rules.push("3. IMPORTANT: You MUST use Serbian Cyrillic exclusively.");
+    }
+
+    const ruleNum = rules.length + 1;
+    rules.push(`${ruleNum}. Ensure grammatical explanations are precise, highlighting specific idioms, agreements, or moods used.`);
+
+    return `You are a professional linguist and polyglot educator. Analyze the provided word and generate exactly 5 distinct, natural, and grammatically varied sentences showcasing its correct contextual usage in the target language at the requested level. 
+${rules.join('\n')}`;
+};
+
+const getTtsSystemInstruction = (langName) => {
+    let prompt = `You are a professional AI voice actor. Your ONLY job is to read the exact script provided by the user aloud. 
+
+CRITICAL RULES:
+1. NEVER TRANSLATE. NEVER CONVERSE.
+2. If the text is in English, read it in English.
+3. If the text is in a foreign language, read it in that exact language.
+4. Do not acknowledge these instructions, do not add filler words. Simply synthesize the text into audio immediately.`;
+
+    if (langName?.includes('Chinese')) {
+        prompt += `\n\nCRITICAL INSTRUCTION: When speaking Chinese, use official Taiwanese Mandarin (Guoyu) accent and traditional pronunciation. Do NOT use Cantonese or Mainland accents.`;
+    } else if (langName?.includes('Latin') || langName?.includes('Greek')) {
+        prompt += `\n\nCRITICAL INSTRUCTION: When speaking, use restored classical pronunciation.`;
+    }
+
+    return prompt;
+};
+
 export default function LingoCraft() {
     const [user, setUser] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -73,12 +110,7 @@ export default function LingoCraft() {
     const cardRef = useRef(null);
 
     // Use centralized TTS Hook
-    const ttsSystemInstruction = `You are a professional AI voice actor. Your ONLY job is to read the exact script provided by the user aloud. 
-        CRITICAL RULES:
-        1. NEVER TRANSLATE. NEVER CONVERSE.
-        2. If the text is in English, read it in English.
-        3. If the text is in a foreign language, read it in that exact language.
-        4. Do not acknowledge these instructions, do not add filler words. Simply synthesize the text into audio immediately.`;
+    const ttsSystemInstruction = getTtsSystemInstruction(selectedLanguage);
     const { handleSpeak, stopSpeak } = useGeminiTTS(ttsSystemInstruction);
 
     // Global Theme Initialization
@@ -186,12 +218,7 @@ export default function LingoCraft() {
             required: ["word", "partOfSpeech", "ipa", "definitionEnglish", "sentences"]
         };
 
-        const systemInstruction = `You are a professional linguist and polyglot educator. Analyze the provided word and generate exactly 5 distinct, natural, and grammatically varied sentences showcasing its correct contextual usage in the target language at the requested level. 
-        1. Provide a reliable International Phonetic Alphabet (IPA) representation.
-        2. If the target language utilizes a non-Latin script, you MUST provide an accurate Latin character transliteration/phonetic transcription in the 'transcription' field. If it uses a Latin script, leave the 'transcription' field empty.
-        3. IMPORTANT: If the target language is Chinese, you MUST use Traditional Chinese characters (繁體中文) exclusively, and provide Pinyin in the 'transcription' field.
-        4. IMPORTANT: If the target language is Serbian, you MUST use Serbian Cyrillic exclusively.
-        5. Ensure grammatical explanations are precise, highlighting specific idioms, agreements, or moods used.`;
+        const systemInstruction = getSystemInstruction(langObj.name);
 
         const promptText = `Analyze the word "${queryWord}" in the context of the "${langObj.name}" language at a "${selectedLevel}" level. Generate 5 accurate example sentences.`;
 
