@@ -126,19 +126,12 @@ export default function Home() {
     }, [user]);
 
     const handleLogin = async () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
         try {
-            const res = await auth.signInWithPopup(provider);
-            if (res?.user) setUser(res.user);
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await auth.signInWithPopup(provider);
         } catch (err) {
-            console.warn("Webview popup blocked, opening System Browser for Google Auth:", err);
-            const authUrl = `https://gen-lang-client-0142372615.firebaseapp.com/__/auth/handler?apiKey=AIzaSyC4FcjFosdCMxWnPAeMe_ObZPDShnHZy2E&appName=%5BDEFAULT%5D&authType=signInViaPopup&redirect_uri=${encodeURIComponent(window.location.origin)}`;
-            try {
-                const { openUrl } = await import('@tauri-apps/plugin-opener');
-                await openUrl(authUrl);
-            } catch (_) {
-                window.open(authUrl, '_blank');
-            }
+            console.error("Google Sign-In error:", err);
+            alert(`Sign in failed: ${err.message || err}`);
         }
     };
 
