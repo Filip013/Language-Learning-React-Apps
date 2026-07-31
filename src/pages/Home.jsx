@@ -129,11 +129,17 @@ export default function Home() {
                 const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://lingo-hub-nine.vercel.app";
                 const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
                 
-                // Open the browser
-                await openUrl(authProxyUrl);
+                // Start the local server to listen for the token (do this BEFORE opening the URL)
+                const tokenPromise = invoke('start_auth_server');
+                
+                // Open the browser (DO NOT await this, as xdg-open can block on Linux)
+                openUrl(authProxyUrl).catch(err => {
+                    console.error("Failed to open System Browser", err);
+                    alert("Failed to open System Browser: " + err.message);
+                });
                 
                 // Wait for the local server to receive the token
-                const token = await invoke('start_auth_server');
+                const token = await tokenPromise;
                 
                 if (token) {
                     const credential = firebase.auth.GoogleAuthProvider.credential(token);
