@@ -20,11 +20,12 @@ const DesktopAuth = () => {
                     
                     setStatus("Authenticating... Redirecting back to Desktop App...");
                     
-                    // Get the underlying Google Firebase ID token
-                    const idToken = await res.user.getIdToken();
+                    // Get the underlying Google OAuth ID token (NOT the Firebase ID token)
+                    const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(res);
+                    const googleIdToken = credential.idToken;
                     
                     // Redirect back to the Tauri app's local server
-                    window.location.href = `http://127.0.0.1:51730/?token=${idToken}`;
+                    window.location.href = `http://127.0.0.1:51730/?token=${googleIdToken}`;
                 } else {
                     setStatus("Invalid Request Source");
                 }
