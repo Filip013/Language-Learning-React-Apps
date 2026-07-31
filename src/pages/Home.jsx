@@ -107,6 +107,12 @@ export default function Home() {
     };
 
     useEffect(() => {
+        auth.getRedirectResult().then(res => {
+            if (res && res.user) setUser(res.user);
+        }).catch(err => {
+            console.error("Redirect auth error:", err);
+            alert(`Auth Redirect Error: ${err.message}`);
+        });
         const unsub = auth.onAuthStateChanged(setUser);
         return () => unsub();
     }, []);
@@ -119,7 +125,22 @@ export default function Home() {
         return () => unsub();
     }, [user]);
 
-    const handleLogin = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    const handleLogin = async () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        try {
+            const res = await auth.signInWithPopup(provider);
+            if (res?.user) setUser(res.user);
+        } catch (err) {
+            console.warn("Webview popup blocked, opening System Browser for Google Auth:", err);
+            const authUrl = `https://gen-lang-client-0142372615.firebaseapp.com/__/auth/handler?apiKey=AIzaSyC4FcjFosdCMxWnPAeMe_ObZPDShnHZy2E&appName=%5BDEFAULT%5D&authType=signInViaPopup&redirect_uri=${encodeURIComponent(window.location.origin)}`;
+            try {
+                const { openUrl } = await import('@tauri-apps/plugin-opener');
+                await openUrl(authUrl);
+            } catch (_) {
+                window.open(authUrl, '_blank');
+            }
+        }
+    };
 
     const handleCourseClick = async (e, course) => {
         e.preventDefault();
