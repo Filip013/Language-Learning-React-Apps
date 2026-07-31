@@ -125,13 +125,47 @@ export default function Home() {
         return () => unsub();
     }, [user]);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.__TAURI__) {
+            import('@tauri-apps/plugin-deep-link').then(({ onOpenUrl }) => {
+                onOpenUrl(async (urls) => {
+                    for (const url of urls) {
+                        if (url.includes('lingohub://auth')) {
+                            try {
+                                const token = new URL(url).searchParams.get('token');
+                                if (token) {
+                                    const credential = firebase.auth.GoogleAuthProvider.credential(token);
+                                    await auth.signInWithCredential(credential);
+                                }
+                            } catch (err) {
+                                alert("Deep Link Sign-In Error: " + err.message);
+                            }
+                        }
+                    }
+                }).catch(console.error);
+            });
+        }
+    }, []);
+
     const handleLogin = async () => {
-        try {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            await auth.signInWithPopup(provider);
-        } catch (err) {
-            console.error("Google Sign-In error:", err);
-            alert(`Sign in failed: ${err.message || err}`);
+        if (typeof window !== 'undefined' && window.__TAURI__) {
+            try {
+                const { openUrl } = await import('@tauri-apps/plugin-opener');
+                // We use Vercel for the auth proxy because Tauri blocks popups directly
+                const authProxyUrl = "https://language-learning-react-apps.vercel.app/desktop-auth?source=tauri";
+                await openUrl(authProxyUrl);
+            } catch (err) {
+                console.error("Failed to open System Browser", err);
+                alert("Failed to open System Browser: " + err.message);
+            }
+        } else {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+            } catch (err) {
+                console.error("Google Sign-In error:", err);
+                alert(`Sign in failed: ${err.message || err}`);
+            }
         }
     };
 

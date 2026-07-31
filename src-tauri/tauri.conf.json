@@ -23,6 +23,10 @@
     ],
     "security": {
       "csp": null
+    },
+    "macOSPrivateApi": true,
+    "deepLink": {
+      "schemes": ["lingohub"]
     }
   },
   "bundle": {

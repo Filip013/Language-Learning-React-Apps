@@ -7,6 +7,8 @@ import MigrationTool from './pages/MigrationTool';
 import BatchUpdater from './pages/BatchUpdater';
 import CharacterDrill from './pages/CharacterDrill'; // <-- Added import
 
+import DesktopAuth from './pages/DesktopAuth';
+
 // The new Config Engine
 import LanguageCourse from './pages/LanguageCourse';
 import { courseConfigs } from './config/courseConfigs';
@@ -56,6 +58,7 @@ function App() {
     <Router basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/desktop-auth" element={<DesktopAuth />} />
         <Route path="/lingocraft" element={<LingoCraft />} />
         
         {/* NEW REFACTORED ARCHITECTURE */}
