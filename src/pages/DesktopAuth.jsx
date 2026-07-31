@@ -13,7 +13,7 @@ const DesktopAuth = () => {
                 // Determine if we are being called from Tauri
                 if (urlParams.get('source') === 'tauri') {
                     setStatus("Opening Google Sign In...");
-                    const provider = new firebase.auth.GoogleAuthProvider();
+                    const provider = new auth.GoogleAuthProvider();
                     
                     // We must use signInWithPopup because we are in a real browser now
                     const res = await auth.signInWithPopup(provider);
