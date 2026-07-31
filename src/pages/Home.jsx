@@ -67,6 +67,8 @@ const ApiKeyManager = ({ title, description, storageKey, user }) => {
 
 export default function Home() {
     const [user, setUser] = useState(null);
+    const [showTokenInput, setShowTokenInput] = useState(false);
+    const [manualToken, setManualToken] = useState('');
     const [activePanel, setActivePanel] = useState(null); // null | 'tools' | 'settings'
     const [recentActivity, setRecentActivity] = useState({});
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -124,30 +126,14 @@ export default function Home() {
 
     const handleLogin = async () => {
         if (isTauri()) {
+            setShowTokenInput(true);
             try {
                 const { openUrl } = await import('@tauri-apps/plugin-opener');
                 const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://lingo-hub-nine.vercel.app";
                 const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
-                
-                // Start the local server to listen for the token (do this BEFORE opening the URL)
-                const tokenPromise = invoke('start_auth_server');
-                
-                // Open the browser (DO NOT await this, as xdg-open can block on Linux)
-                openUrl(authProxyUrl).catch(err => {
-                    console.error("Failed to open System Browser", err);
-                    alert("Failed to open System Browser: " + err.message);
-                });
-                
-                // Wait for the local server to receive the token
-                const token = await tokenPromise;
-                
-                if (token) {
-                    const credential = firebase.auth.GoogleAuthProvider.credential(token);
-                    await auth.signInWithCredential(credential);
-                }
+                openUrl(authProxyUrl).catch(console.error);
             } catch (err) {
                 console.error("Desktop Auth Error:", err);
-                alert("Desktop Auth Error: " + err);
             }
         } else {
             try {
@@ -157,6 +143,19 @@ export default function Home() {
                 console.error("Google Sign-In error:", err);
                 alert(`Sign in failed: ${err.message || err}`);
             }
+        }
+    };
+
+    const handleManualTokenSubmit = async () => {
+        if (!manualToken.trim()) return;
+        try {
+            const credential = firebase.auth.GoogleAuthProvider.credential(manualToken.trim());
+            await auth.signInWithCredential(credential);
+            setShowTokenInput(false);
+            setManualToken('');
+        } catch (err) {
+            console.error("Manual Token Auth Error:", err);
+            alert("Invalid Token. Please make sure you copied the entire token string.");
         }
     };
 
@@ -195,7 +194,42 @@ export default function Home() {
                 <div className="flex justify-center mb-4 sm:mb-6"><div className="bg-stone-100 dark:bg-zinc-800 p-3 sm:p-4 rounded-2xl sm:rounded-3xl"><Globe size={32} className="text-stone-800 dark:text-zinc-100 sm:w-[40px] sm:h-[40px]" /></div></div>
                 <h1 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 text-stone-800 dark:text-zinc-100 tracking-tight">Cloud Hub</h1>
                 <p className="text-stone-500 dark:text-zinc-400 text-xs sm:text-sm mb-6 sm:mb-8 font-medium">Access your language databases.</p>
-                <button onClick={handleLogin} className="w-full bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold py-3.5 rounded-xl sm:rounded-2xl active:scale-95 transition-transform text-sm sm:text-base">Sign in to sync</button>
+                {!showTokenInput ? (
+                    <button 
+                        onClick={handleLogin}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2"
+                    >
+                        <Database size={20} />
+                        Sign in to sync
+                    </button>
+                ) : (
+                    <div className="space-y-3 bg-stone-100 dark:bg-zinc-800 p-4 rounded-2xl border border-stone-200 dark:border-zinc-700">
+                        <p className="text-sm text-stone-600 dark:text-zinc-300">
+                            Your browser should have opened to Google Sign-In. Once you log in, click "Copy Token" and paste it here:
+                        </p>
+                        <input 
+                            type="text" 
+                            value={manualToken}
+                            onChange={(e) => setManualToken(e.target.value)}
+                            placeholder="Paste token here..."
+                            className="w-full bg-white dark:bg-zinc-900 border border-stone-300 dark:border-zinc-600 rounded-xl px-4 py-2 text-sm text-stone-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setShowTokenInput(false)}
+                                className="flex-1 bg-stone-200 hover:bg-stone-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-stone-700 dark:text-zinc-300 font-bold py-2 rounded-xl transition-colors text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleManualTokenSubmit}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-colors text-sm"
+                            >
+                                Verify Token
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
