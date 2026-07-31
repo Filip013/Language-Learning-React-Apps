@@ -24,8 +24,10 @@
     "security": {
       "csp": null
     },
-    "macOSPrivateApi": true,
-    "deepLink": {
+    "macOSPrivateApi": true
+  },
+  "plugins": {
+    "deep-link": {
       "schemes": ["lingohub"]
     }
   },
