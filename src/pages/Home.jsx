@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench, Gamepad2, History, XCircle, Trash2, DownloadCloud } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
+import { isTauri } from '@tauri-apps/api/core';
 
 const ALL_COURSES = [
     { id: "greek", name: "Modern Greek", url: "/greek", color: "hover:border-cyan-500", flag: "🇬🇷" },
@@ -119,7 +120,49 @@ export default function Home() {
         return () => unsub();
     }, [user]);
 
-    const handleLogin = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    useEffect(() => {
+        if (isTauri()) {
+            import('@tauri-apps/plugin-deep-link').then(({ onOpenUrl }) => {
+                onOpenUrl(async (urls) => {
+                    for (const url of urls) {
+                        if (url.includes('lingohub://auth')) {
+                            try {
+                                const token = new URL(url).searchParams.get('token');
+                                if (token) {
+                                    const credential = firebase.auth.GoogleAuthProvider.credential(token);
+                                    await auth.signInWithCredential(credential);
+                                }
+                            } catch (err) {
+                                alert("Deep Link Sign-In Error: " + err.message);
+                            }
+                        }
+                    }
+                }).catch(console.error);
+            });
+        }
+    }, []);
+
+    const handleLogin = async () => {
+        if (isTauri()) {
+            try {
+                const { openUrl } = await import('@tauri-apps/plugin-opener');
+                const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://lingo-hub-nine.vercel.app";
+                const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
+                await openUrl(authProxyUrl);
+            } catch (err) {
+                console.error("Failed to open System Browser", err);
+                alert("Failed to open System Browser: " + err.message);
+            }
+        } else {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+            } catch (err) {
+                console.error("Google Sign-In error:", err);
+                alert(`Sign in failed: ${err.message || err}`);
+            }
+        }
+    };
 
     const handleCourseClick = async (e, course) => {
         e.preventDefault();
