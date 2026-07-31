@@ -85,4 +85,109 @@ class FirebaseService {
   ) async {
     await _historyDoc(uid).set({'items': items.map((i) => i.toMap()).toList()});
   }
+
+  // ─── Course Streams & Persistence ─────────────────────────────────────────
+
+  static Stream<QuerySnapshot> courseEpisodesStream(
+    String dbAppId,
+    String uid,
+  ) =>
+      _db
+          .collection('artifacts')
+          .doc(dbAppId)
+          .collection('users')
+          .doc(uid)
+          .collection('episodes')
+          .orderBy('timestamp', descending: true)
+          .limit(20)
+          .snapshots();
+
+  static Stream<DocumentSnapshot> courseProgressStream(
+    String dbAppId,
+    String uid,
+    String episodeId,
+  ) =>
+      _db
+          .collection('artifacts')
+          .doc(dbAppId)
+          .collection('users')
+          .doc(uid)
+          .collection('progress')
+          .doc(episodeId)
+          .snapshots();
+
+  static Future<void> saveCourseUserNote(
+    String dbAppId,
+    String uid,
+    String episodeId,
+    String noteId,
+    String title,
+    String content,
+  ) async {
+    final ref = _db
+        .collection('artifacts')
+        .doc(dbAppId)
+        .collection('users')
+        .doc(uid)
+        .collection('progress')
+        .doc(episodeId);
+
+    final noteData = {
+      'id': noteId,
+      'title': title,
+      'content': content,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+
+    await ref.set({
+      'notes': {noteId: noteData},
+    }, SetOptions(merge: true));
+  }
+
+  static Future<void> saveNewEpisodeDoc(
+    String dbAppId,
+    String uid,
+    String episodeId,
+    Map<String, dynamic> episodeDoc,
+  ) async {
+    await _db
+        .collection('artifacts')
+        .doc(dbAppId)
+        .collection('users')
+        .doc(uid)
+        .collection('episodes')
+        .doc(episodeId)
+        .set(episodeDoc, SetOptions(merge: true));
+  }
+
+  static Future<void> updateCourseProgress(
+    String dbAppId,
+    String uid,
+    String episodeId,
+    Map<String, dynamic> progressData,
+  ) async {
+    await _db
+        .collection('artifacts')
+        .doc(dbAppId)
+        .collection('users')
+        .doc(uid)
+        .collection('progress')
+        .doc(episodeId)
+        .set(progressData, SetOptions(merge: true));
+  }
+
+  static Future<void> deleteEpisodeDoc(
+    String dbAppId,
+    String uid,
+    String episodeId,
+  ) async {
+    await _db
+        .collection('artifacts')
+        .doc(dbAppId)
+        .collection('users')
+        .doc(uid)
+        .collection('episodes')
+        .doc(episodeId)
+        .delete();
+  }
 }

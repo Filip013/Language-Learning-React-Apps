@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:lingocraft_flutter/constants/languages.dart';
-import 'package:lingocraft_flutter/models/lingocraft_result.dart';
 import 'package:lingocraft_flutter/providers/lingocraft_provider.dart';
 import 'package:lingocraft_flutter/screens/settings_screen.dart';
 import 'package:lingocraft_flutter/widgets/history_list.dart';
@@ -19,13 +18,18 @@ class LingoCraftScreen extends StatefulWidget {
 
 class _LingoCraftScreenState extends State<LingoCraftScreen> {
   final _wordController = TextEditingController();
-  final _focusNode = FocusNode();
   bool _showSearchOverlay = false;
 
   @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_onGlobalKeyEvent);
+  }
+
+  @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onGlobalKeyEvent);
     _wordController.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -38,40 +42,51 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
     prov.generate(word);
   }
 
-  void _handleKeyEvent(KeyEvent event, LingoCraftProvider prov) {
-    if (event is! KeyDownEvent) return;
+  bool _onGlobalKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+    final prov = context.read<LingoCraftProvider>();
     final key = event.logicalKey;
 
     if (key == LogicalKeyboardKey.escape) {
       if (_showSearchOverlay) {
         setState(() => _showSearchOverlay = false);
-        return;
+        return true;
       }
     }
 
     if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
-      return;
+      return false;
     }
 
     if (key == LogicalKeyboardKey.arrowRight ||
         key == LogicalKeyboardKey.keyW ||
         key == LogicalKeyboardKey.keyD) {
-      prov.goNext();
+      if (prov.result != null) {
+        prov.goNext();
+        return true;
+      }
     } else if (key == LogicalKeyboardKey.arrowLeft ||
         key == LogicalKeyboardKey.keyQ ||
         key == LogicalKeyboardKey.keyA) {
-      prov.goPrev();
+      if (prov.result != null) {
+        prov.goPrev();
+        return true;
+      }
     } else if (key == LogicalKeyboardKey.keyR) {
       if (prov.result != null) {
         prov.revealSentence(prov.currentIdx);
+        return true;
       }
     } else if (key == LogicalKeyboardKey.space) {
       if (prov.result != null) {
         prov.toggleAudio(prov.currentIdx);
+        return true;
       }
     } else if (key == LogicalKeyboardKey.keyS) {
       setState(() => _showSearchOverlay = !_showSearchOverlay);
+      return true;
     }
+    return false;
   }
 
   @override
@@ -89,11 +104,7 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      body: KeyboardListener(
-        focusNode: _focusNode,
-        autofocus: true,
-        onKeyEvent: (event) => _handleKeyEvent(event, prov),
-        child: Stack(
+      body: Stack(
           children: [
             Column(
               children: [
@@ -298,7 +309,6 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
               ),
           ],
         ),
-      ),
     );
   }
 }
@@ -920,17 +930,14 @@ class _CardLayout extends StatelessWidget {
                         children: [
                           Text(
                             result.word,
-                            style: isCjk
-                                ? TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w400,
-                                    color: textPrimary,
-                                  )
-                                : GoogleFonts.inter(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w800,
-                                    color: textPrimary,
-                                  ),
+                            style: getTargetLanguageTextStyle(
+                              result.targetLanguage.name,
+                              fontSize: isCjk ? 36 : 26,
+                              fontWeight: isCjk
+                                  ? FontWeight.w400
+                                  : FontWeight.w800,
+                              color: textPrimary,
+                            ),
                           ),
                           _Chip(
                             label: result.partOfSpeech,

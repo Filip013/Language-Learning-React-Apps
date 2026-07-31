@@ -6,6 +6,7 @@ import 'package:lingocraft_flutter/constants/languages.dart';
 import 'package:lingocraft_flutter/constants/prompt_builders.dart';
 import 'package:lingocraft_flutter/models/lingocraft_result.dart';
 import 'package:lingocraft_flutter/services/firebase_service.dart';
+import 'package:lingocraft_flutter/services/font_service.dart';
 import 'package:lingocraft_flutter/services/gemini_service.dart';
 import 'package:lingocraft_flutter/services/storage_service.dart';
 import 'package:lingocraft_flutter/services/tts_service.dart';
@@ -66,6 +67,7 @@ class LingoCraftProvider extends ChangeNotifier {
 
   LingoCraftProvider() {
     _initTheme();
+    FontService.preloadCustomFonts(onFontLoaded: notifyListeners);
     _authSub = FirebaseService.userStream.listen(_onAuthChanged);
   }
 
@@ -207,7 +209,7 @@ class LingoCraftProvider extends ChangeNotifier {
   }
 
   Future<void> generate(String word) async {
-    if (word.trim().isEmpty || _user == null) return;
+    if (word.trim().isEmpty) return;
     final apiKey = await StorageService.getApiKey();
     if (apiKey == null || apiKey.isEmpty) {
       _error = 'No Gemini API Key found. Please add it in Settings.';
@@ -246,9 +248,9 @@ class LingoCraftProvider extends ChangeNotifier {
         await FirebaseService.saveHistory(_user!.uid, _history);
       }
       _activeTab = 'main';
-    } catch (e) {
-      _error =
-          'Unable to generate contexts. Please check your connection or try again.';
+    } catch (e, stack) {
+      debugPrint('LingoCraft generate error: $e\n$stack');
+      _error = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _loading = false;
       notifyListeners();

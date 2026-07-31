@@ -1,32 +1,10 @@
 // lib/constants/languages.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lingocraft_flutter/models/language.dart';
 
-class Language {
-  final String name;
-  final String code;
-  final String flag;
+export 'package:lingocraft_flutter/models/language.dart';
 
-  const Language({required this.name, required this.code, required this.flag});
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Language &&
-          runtimeType == other.runtimeType &&
-          name == other.name;
-
-  @override
-  int get hashCode => name.hashCode;
-
-  factory Language.fromMap(Map<String, dynamic> m) => Language(
-    name: m['name'] as String? ?? '',
-    code: m['code'] as String? ?? '',
-    flag: m['flag'] as String? ?? '',
-  );
-
-  Map<String, dynamic> toMap() => {'name': name, 'code': code, 'flag': flag};
-}
 
 final List<Language> kLanguages = const [
   Language(name: 'English', code: 'en-US', flag: '🇬BW'),
@@ -65,27 +43,46 @@ TextStyle getTargetLanguageTextStyle(
   FontWeight fontWeight = FontWeight.w700,
   Color? color,
   double height = 1.4,
+  bool isSimplified = false,
+  String? scriptKey,
 }) {
-  if (langName.contains('Chinese')) {
+  final lower = langName.toLowerCase();
+  final isChinese = lower.contains('chinese') ||
+      lower.contains('mandarin') ||
+      lower.contains('cantonese');
+
+  if (isChinese) {
+    final useSimplified = isSimplified || scriptKey == 'simplified';
+    final fontFamily = useSimplified ? 'STKaiti' : 'DFKai-SB';
+    final fontFallback = useSimplified
+        ? const ['DFKai-SB', 'sans-serif']
+        : const ['STKaiti', 'sans-serif'];
+
+    // Chinese characters are dense and rendered bigger; never bold (w400)
+    final scaledSize = fontSize < 24 ? fontSize * 1.4 : fontSize * 1.2;
+
     return TextStyle(
-      fontFamily: 'DFKai-SB',
-      fontFamilyFallback: const ['sans-serif'],
-      fontSize: fontSize,
-      fontWeight: fontWeight,
+      fontFamily: fontFamily,
+      fontFamilyFallback: fontFallback,
+      fontSize: scaledSize,
+      fontWeight: FontWeight.w400, // NEVER BOLD for Chinese fonts
       color: color,
       height: height,
     );
   }
-  if (langName.contains('Japanese')) {
+
+  if (lower.contains('japanese')) {
+    final scaledSize = fontSize < 24 ? fontSize * 1.35 : fontSize * 1.15;
     return TextStyle(
       fontFamily: 'KyoKaSho',
       fontFamilyFallback: const ['HGSKyokashotai', 'STKaiti', 'sans-serif'],
-      fontSize: fontSize,
-      fontWeight: fontWeight,
+      fontSize: scaledSize,
+      fontWeight: FontWeight.w400, // NEVER BOLD for CJK fonts
       color: color,
       height: height,
     );
   }
+
   return GoogleFonts.inter(
     fontSize: fontSize,
     fontWeight: fontWeight,

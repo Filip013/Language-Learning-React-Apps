@@ -1,30 +1,6 @@
 // lib/models/lingocraft_result.dart
+import 'package:lingocraft_flutter/models/language.dart';
 
-class Language {
-  final String name;
-  final String code;
-  final String flag;
-
-  const Language({required this.name, required this.code, required this.flag});
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Language &&
-          runtimeType == other.runtimeType &&
-          name == other.name;
-
-  @override
-  int get hashCode => name.hashCode;
-
-  factory Language.fromMap(Map<String, dynamic> m) => Language(
-    name: m['name'] as String? ?? '',
-    code: m['code'] as String? ?? '',
-    flag: m['flag'] as String? ?? '',
-  );
-
-  Map<String, dynamic> toMap() => {'name': name, 'code': code, 'flag': flag};
-}
 
 class LingoCraftSentence {
   final String original;
@@ -78,24 +54,45 @@ class LingoCraftResult {
     required this.timestamp,
   });
 
-  factory LingoCraftResult.fromMap(Map<String, dynamic> m) => LingoCraftResult(
-    id: m['id'] as String? ?? '',
-    word: m['word'] as String? ?? '',
-    partOfSpeech: m['partOfSpeech'] as String? ?? '',
-    ipa: m['ipa'] as String? ?? '',
-    definitionEnglish: m['definitionEnglish'] as String? ?? '',
-    sentences: (m['sentences'] as List<dynamic>? ?? [])
-        .map(
-          (s) =>
-              LingoCraftSentence.fromMap(Map<String, dynamic>.from(s as Map)),
-        )
-        .toList(),
-    targetLanguage: Language.fromMap(
-      Map<String, dynamic>.from(m['targetLanguage'] as Map),
-    ),
-    level: m['level'] as String? ?? '',
-    timestamp: m['timestamp'] as int? ?? 0,
-  );
+  factory LingoCraftResult.fromMap(Map<String, dynamic> m) {
+    final rawLang = m['targetLanguage'];
+    final Language targetLang;
+    if (rawLang is Language) {
+      targetLang = rawLang;
+    } else if (rawLang is Map) {
+      targetLang = Language.fromMap(Map<String, dynamic>.from(rawLang));
+    } else {
+      targetLang = const Language(name: '', code: '', flag: '');
+    }
+
+    final rawTs = m['timestamp'];
+    final int ts;
+    if (rawTs is int) {
+      ts = rawTs;
+    } else if (rawTs is num) {
+      ts = rawTs.toInt();
+    } else {
+      ts = int.tryParse(rawTs?.toString() ?? '') ?? 0;
+    }
+
+    return LingoCraftResult(
+      id: m['id']?.toString() ?? '',
+      word: m['word']?.toString() ?? '',
+      partOfSpeech: m['partOfSpeech']?.toString() ?? '',
+      ipa: m['ipa']?.toString() ?? '',
+      definitionEnglish: m['definitionEnglish']?.toString() ?? '',
+      sentences: (m['sentences'] as List<dynamic>? ?? [])
+          .map(
+            (s) => LingoCraftSentence.fromMap(
+              s is Map ? Map<String, dynamic>.from(s) : {},
+            ),
+          )
+          .toList(),
+      targetLanguage: targetLang,
+      level: m['level']?.toString() ?? '',
+      timestamp: ts,
+    );
+  }
 
   Map<String, dynamic> toMap() => {
     'id': id,

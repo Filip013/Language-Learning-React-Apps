@@ -26,6 +26,33 @@
     @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
 
     @font-face {
+      font-family: 'DFKai-SB';
+      src: url('https://db.onlinewebfonts.com/t/fe4f9dac99fb6b607c03981e6ce16869.woff2') format('woff2'),
+           url('https://db.onlinewebfonts.com/t/fe4f9dac99fb6b607c03981e6ce16869.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'HGSKyokashotai';
+      src: url('https://db.onlinewebfonts.com/t/947e00387f802f409bd2f3e74b9c0730.woff2') format('woff2'),
+           url('https://db.onlinewebfonts.com/t/947e00387f802f409bd2f3e74b9c0730.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'STKaiti';
+      src: url('https://db.onlinewebfonts.com/t/1ee9941f1b8c128110ca4307dda59917.woff2') format('woff2'),
+           url('https://db.onlinewebfonts.com/t/1ee9941f1b8c128110ca4307dda59917.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
       font-family: 'KyoKaSho';
       src: url('https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2') format('woff2');
       font-weight: normal;
@@ -33,6 +60,12 @@
       font-display: swap;
     }
   </style>
+
+  <!-- Preload fonts into browser DOM memory for CanvasKit -->
+  <div style="font-family: 'DFKai-SB'; opacity: 0.01; position: absolute; pointer-events: none; z-index: -9999;">Preload</div>
+  <div style="font-family: 'KyoKaSho'; opacity: 0.01; position: absolute; pointer-events: none; z-index: -9999;">Preload</div>
+  <div style="font-family: 'HGSKyokashotai'; opacity: 0.01; position: absolute; pointer-events: none; z-index: -9999;">Preload</div>
+  <div style="font-family: 'STKaiti'; opacity: 0.01; position: absolute; pointer-events: none; z-index: -9999;">Preload</div>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

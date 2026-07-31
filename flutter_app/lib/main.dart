@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:lingocraft_flutter/providers/app_provider.dart';
+import 'package:lingocraft_flutter/providers/course_provider.dart';
 import 'package:lingocraft_flutter/providers/lingocraft_provider.dart';
 import 'package:lingocraft_flutter/screens/home_screen.dart';
 
@@ -38,6 +39,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => LingoCraftProvider()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()),
       ],
       child: const LanguageApp(),
     ),

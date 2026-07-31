@@ -85,16 +85,14 @@ class HistoryList extends StatelessWidget {
                                 children: [
                                   Text(
                                     item.word,
-                                    style: isCjk
-                                        ? TextStyle(
-                                            fontSize: 22,
-                                            color: textPrimary,
-                                          )
-                                        : GoogleFonts.inter(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800,
-                                            color: textPrimary,
-                                          ),
+                                    style: getTargetLanguageTextStyle(
+                                      item.targetLanguage.name,
+                                      fontSize: isCjk ? 22 : 16,
+                                      fontWeight: isCjk
+                                          ? FontWeight.w400
+                                          : FontWeight.w800,
+                                      color: textPrimary,
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
