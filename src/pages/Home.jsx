@@ -139,46 +139,19 @@ export default function Home() {
                 const token = await tokenPromise;
                 
                 if (token) {
-                    // Bypass the Firebase Web SDK hang by calling the Google Identity REST API directly
-                    const apiKey = firebase.app().options.apiKey;
-                    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            postBody: `id_token=${token.trim()}&providerId=google.com`,
-                            requestUri: "http://localhost",
-                            returnIdpCredential: true,
-                            returnSecureToken: true
-                        })
-                    });
+                    alert("Token received from Rust! Authenticating natively...");
                     
-                    const data = await res.json();
+                    const credential = auth.GoogleAuthProvider.credential(token.trim());
                     
-                    if (!res.ok) {
-                        throw new Error(data.error?.message || JSON.stringify(data));
-                    }
+                    // Because we wrapped firebase.js with the v9 Modular Auth API initialized
+                    // with browserLocalPersistence, this will execute instantaneously and perfectly
+                    // serialize the user session to IndexedDB WITHOUT loading the hanging iframe!
+                    await auth.signInWithCredential(credential);
                     
-                    // Manually construct the exact session state object that Firebase Auth expects
-                    const userObj = {
-                        uid: data.localId,
-                        email: data.email,
-                        displayName: data.displayName,
-                        photoURL: data.photoUrl,
-                        apiKey: apiKey,
-                        appName: "[DEFAULT]",
-                        domain: firebase.app().options.authDomain,
-                        stsTokenManager: {
-                            refreshToken: data.refreshToken,
-                            accessToken: data.idToken,
-                            expirationTime: Date.now() + (Number(data.expiresIn) * 1000)
-                        }
-                    };
-                    
-                    // Inject it directly into the native browser storage, completely bypassing the broken iframe initialization!
-                    localStorage.setItem(`firebase:authUser:${apiKey}:[DEFAULT]`, JSON.stringify(userObj));
-                    
-                    // Reload the page. Firebase Auth will read localStorage on boot and instantly log you in.
+                    alert("Authentication successful! Reloading...");
                     window.location.reload();
+                } else {
+                    alert("Token was null from Rust server!");
                 }
             } catch (err) {
                 console.error("Desktop Auth Error:", err);

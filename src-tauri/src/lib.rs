@@ -8,19 +8,28 @@ async fn start_auth_server() -> Result<String, String> {
         for stream in listener.incoming() {
             match stream {
                 Ok(mut stream) => {
-                    let mut buffer = [0; 1024];
+                    // Set a read timeout to prevent blocking on browser pre-connections
+                    let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(2)));
+                    
+                    let mut buffer = [0; 4096];
                     if let Ok(size) = stream.read(&mut buffer) {
-                        let request = String::from_utf8_lossy(&buffer[..size]);
-                        if let Some(token) = request.lines().next().and_then(|line| {
-                            if line.starts_with("GET /?token=") {
-                                line.strip_prefix("GET /?token=").and_then(|s| s.split_whitespace().next())
+                        if size > 0 {
+                            let request = String::from_utf8_lossy(&buffer[..size]);
+                            if let Some(token) = request.lines().next().and_then(|line| {
+                                if line.starts_with("GET /?token=") {
+                                    line.strip_prefix("GET /?token=").and_then(|s| s.split_whitespace().next())
+                                } else {
+                                    None
+                                }
+                            }) {
+                                let response = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;color:white;text-align:center;}</style></head><body><div><h2>🎉 Authentication Successful!</h2><p>You can close this tab and return to LingoHub.</p></div><script>setTimeout(()=>window.close(), 2000);</script></body></html>";
+                                let _ = stream.write_all(response.as_bytes());
+                                return Ok(token.to_string());
                             } else {
-                                None
+                                // If it's a request for favicon or anything else, just close the connection nicely
+                                let response = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
+                                let _ = stream.write_all(response.as_bytes());
                             }
-                        }) {
-                            let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;color:white;text-align:center;}</style></head><body><div><h2>🎉 Authentication Successful!</h2><p>You can close this tab and return to LingoHub.</p></div><script>setTimeout(()=>window.close(), 2000);</script></body></html>";
-                            let _ = stream.write_all(response.as_bytes());
-                            return Ok(token.to_string());
                         }
                     }
                 }
