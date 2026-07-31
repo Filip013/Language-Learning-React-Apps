@@ -159,7 +159,7 @@ export default function Home() {
             }
         } else {
             try {
-                const provider = new firebase.auth.GoogleAuthProvider();
+                const provider = new auth.GoogleAuthProvider();
                 await auth.signInWithPopup(provider);
             } catch (err) {
                 console.error("Google Sign-In error:", err);
