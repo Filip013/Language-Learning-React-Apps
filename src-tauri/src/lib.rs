@@ -4,9 +4,7 @@ async fn start_auth_server() -> Result<String, String> {
         use std::io::{Read, Write};
         let listener = std::net::TcpListener::bind("127.0.0.1:51730").map_err(|e| e.to_string())?;
         
-        // Wait up to 5 minutes for the user to log in
-        listener.set_read_timeout(Some(std::time::Duration::from_secs(300))).ok();
-        
+        // Wait for connection
         for stream in listener.incoming() {
             match stream {
                 Ok(mut stream) => {
