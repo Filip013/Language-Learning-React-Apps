@@ -151,8 +151,8 @@ export default function Home() {
         if (typeof window !== 'undefined' && window.__TAURI__) {
             try {
                 const { openUrl } = await import('@tauri-apps/plugin-opener');
-                // We use Vercel for the auth proxy because Tauri blocks popups directly
-                const authProxyUrl = "https://language-learning-react-apps.vercel.app/desktop-auth?source=tauri";
+                const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://language-learning-react-apps.vercel.app";
+                const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
                 await openUrl(authProxyUrl);
             } catch (err) {
                 console.error("Failed to open System Browser", err);
