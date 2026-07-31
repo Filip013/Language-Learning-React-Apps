@@ -23,8 +23,8 @@ const DesktopAuth = () => {
                     // Get the underlying Google Firebase ID token
                     const idToken = await res.user.getIdToken();
                     
-                    // Redirect back to the Tauri app using our custom scheme
-                    window.location.href = `lingohub://auth?token=${idToken}`;
+                    // Redirect back to the Tauri app's local server
+                    window.location.href = `http://127.0.0.1:51730/?token=${idToken}`;
                 } else {
                     setStatus("Invalid Request Source");
                 }

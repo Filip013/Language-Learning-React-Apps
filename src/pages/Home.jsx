@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench, Gamepad2, History, XCircle, Trash2, DownloadCloud } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
-import { isTauri } from '@tauri-apps/api/core';
+import { isTauri, invoke } from '@tauri-apps/api/core';
 
 const ALL_COURSES = [
     { id: "greek", name: "Modern Greek", url: "/greek", color: "hover:border-cyan-500", flag: "🇬🇷" },
@@ -120,27 +120,7 @@ export default function Home() {
         return () => unsub();
     }, [user]);
 
-    useEffect(() => {
-        if (isTauri()) {
-            import('@tauri-apps/plugin-deep-link').then(({ onOpenUrl }) => {
-                onOpenUrl(async (urls) => {
-                    for (const url of urls) {
-                        if (url.includes('lingohub://auth')) {
-                            try {
-                                const token = new URL(url).searchParams.get('token');
-                                if (token) {
-                                    const credential = firebase.auth.GoogleAuthProvider.credential(token);
-                                    await auth.signInWithCredential(credential);
-                                }
-                            } catch (err) {
-                                alert("Deep Link Sign-In Error: " + err.message);
-                            }
-                        }
-                    }
-                }).catch(console.error);
-            });
-        }
-    }, []);
+
 
     const handleLogin = async () => {
         if (isTauri()) {
@@ -148,10 +128,20 @@ export default function Home() {
                 const { openUrl } = await import('@tauri-apps/plugin-opener');
                 const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://lingo-hub-nine.vercel.app";
                 const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
+                
+                // Open the browser
                 await openUrl(authProxyUrl);
+                
+                // Wait for the local server to receive the token
+                const token = await invoke('start_auth_server');
+                
+                if (token) {
+                    const credential = firebase.auth.GoogleAuthProvider.credential(token);
+                    await auth.signInWithCredential(credential);
+                }
             } catch (err) {
-                console.error("Failed to open System Browser", err);
-                alert("Failed to open System Browser: " + err.message);
+                console.error("Desktop Auth Error:", err);
+                alert("Desktop Auth Error: " + err);
             }
         } else {
             try {
