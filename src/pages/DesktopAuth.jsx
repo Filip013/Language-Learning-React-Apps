@@ -18,11 +18,8 @@ const DesktopAuth = () => {
                     // We must use signInWithPopup because we are in a real browser now
                     const res = await auth.signInWithPopup(provider);
                     
-                    setStatus("Authenticating... Redirecting back to Desktop App...");
-                    
-                    // Get the underlying Google OAuth ID token (NOT the Firebase ID token)
-                    const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(res);
-                    const googleIdToken = credential.idToken;
+                    // Get the underlying Google OAuth ID token from the credential object
+                    const googleIdToken = res.credential.idToken;
                     
                     // Redirect back to the Tauri app's local server
                     window.location.href = `http://127.0.0.1:51730/?token=${googleIdToken}`;
