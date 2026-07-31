@@ -108,12 +108,6 @@ export default function Home() {
     };
 
     useEffect(() => {
-        auth.getRedirectResult().then(res => {
-            if (res && res.user) setUser(res.user);
-        }).catch(err => {
-            console.error("Redirect auth error:", err);
-            alert(`Auth Redirect Error: ${err.message}`);
-        });
         const unsub = auth.onAuthStateChanged(setUser);
         return () => unsub();
     }, []);
@@ -152,7 +146,7 @@ export default function Home() {
         if (isTauri()) {
             try {
                 const { openUrl } = await import('@tauri-apps/plugin-opener');
-                const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://language-learning-react-apps.vercel.app";
+                const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://lingo-hub-nine.vercel.app";
                 const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
                 await openUrl(authProxyUrl);
             } catch (err) {
