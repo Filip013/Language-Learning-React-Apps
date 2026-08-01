@@ -1,7 +1,6 @@
 // lib/providers/course_provider.dart
 import 'dart:async';
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lingocraft_flutter/constants/course_configs.dart';
 import 'package:lingocraft_flutter/models/course_models.dart';
@@ -13,8 +12,8 @@ import 'package:lingocraft_flutter/services/storage_service.dart';
 import 'package:lingocraft_flutter/services/tts_service.dart';
 
 class CourseProvider extends ChangeNotifier {
-  User? _user;
-  User? get user => _user;
+  AppUser? _user;
+  AppUser? get user => _user;
 
   CourseConfig _selectedConfig = kCourseConfigs['mandarin']!;
   CourseConfig get selectedConfig => _selectedConfig;
@@ -92,7 +91,7 @@ class CourseProvider extends ChangeNotifier {
     _authSub = FirebaseService.userStream.listen(_onAuthChanged);
   }
 
-  void _onAuthChanged(User? user) {
+  void _onAuthChanged(AppUser? user) {
     _user = user;
     _subscribeToCourseData();
     notifyListeners();
@@ -164,7 +163,7 @@ class CourseProvider extends ChangeNotifier {
       currentEpisode!.id,
     ).listen((snap) {
       if (snap.exists) {
-        final data = snap.data() as Map<String, dynamic>?;
+        final data = snap.data();
         
         final rawNotes = data?['notes'] as Map<String, dynamic>? ?? {};
         final Map<String, UserNote> loadedNotes = {};

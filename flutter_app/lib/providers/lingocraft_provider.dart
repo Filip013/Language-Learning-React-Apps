@@ -1,6 +1,5 @@
 // lib/providers/lingocraft_provider.dart
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lingocraft_flutter/constants/languages.dart';
 import 'package:lingocraft_flutter/constants/prompt_builders.dart';
@@ -20,8 +19,8 @@ class PlayState {
 }
 
 class LingoCraftProvider extends ChangeNotifier {
-  User? _user;
-  User? get user => _user;
+  AppUser? _user;
+  AppUser? get user => _user;
 
   Language _selectedLanguage = kLanguages.first;
   String _selectedLevel = 'Intermediate';
@@ -77,7 +76,7 @@ class LingoCraftProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onAuthChanged(User? user) {
+  void _onAuthChanged(AppUser? user) {
     _user = user;
     _prefsSub?.cancel();
     _historySub?.cancel();
@@ -109,7 +108,7 @@ class LingoCraftProvider extends ChangeNotifier {
   void _subscribeToHistory(String uid) {
     _historySub = FirebaseService.historyStream(uid).listen((snap) {
       if (snap.exists) {
-        final data = snap.data() as Map<String, dynamic>?;
+        final data = snap.data();
         final items = data?['items'] as List<dynamic>? ?? [];
         _history = items
             .map(

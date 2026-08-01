@@ -8,6 +8,7 @@ import 'package:lingocraft_flutter/providers/app_provider.dart';
 import 'package:lingocraft_flutter/providers/course_provider.dart';
 import 'package:lingocraft_flutter/providers/lingocraft_provider.dart';
 import 'package:lingocraft_flutter/screens/home_screen.dart';
+import 'package:firedart/firedart.dart' as firedart;
 
 const kFirebaseOptions = FirebaseOptions(
   apiKey: "AIzaSyC4FcjFosdCMxWnPAeMe_ObZPDShnHZy2E",
@@ -23,12 +24,31 @@ void main() async {
   try {
     if (kIsWeb) {
       await Firebase.initializeApp(options: kFirebaseOptions);
-    } else {
+    } else if (defaultTargetPlatform != TargetPlatform.linux) {
       try {
         await Firebase.initializeApp(options: kFirebaseOptions);
       } catch (_) {
         await Firebase.initializeApp();
       }
+    } else {
+      if (!firedart.FirebaseAuth.initialized) {
+        firedart.FirebaseAuth.initialize(
+          kFirebaseOptions.apiKey,
+          firedart.VolatileStore(),
+        );
+      }
+      if (!firedart.Firestore.initialized) {
+        firedart.Firestore.initialize(kFirebaseOptions.projectId);
+      }
+      if (!firedart.FirebaseAuth.instance.isSignedIn) {
+        try {
+          await firedart.FirebaseAuth.instance.signInAnonymously();
+          debugPrint('[Firebase] Signed in anonymously on Linux desktop.');
+        } catch (err) {
+          debugPrint('[Firebase] Anonymous sign-in note: $err');
+        }
+      }
+      debugPrint('[Firebase] Successfully initialized firedart for Linux desktop.');
     }
   } catch (e) {
     debugPrint('Firebase init note: $e');

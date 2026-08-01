@@ -1,6 +1,5 @@
 // lib/providers/app_provider.dart
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lingocraft_flutter/constants/course_configs.dart';
 import 'package:lingocraft_flutter/models/course_models.dart';
@@ -8,13 +7,13 @@ import 'package:lingocraft_flutter/services/firebase_service.dart';
 import 'package:lingocraft_flutter/services/storage_service.dart';
 
 class AppProvider extends ChangeNotifier {
-  User? _user;
+  AppUser? _user;
   bool _isDarkMode = false;
   String? _apiKey;
   CourseConfig? _activeCourse;
   Map<String, int> _recentAccess = {};
 
-  User? get user => _user;
+  AppUser? get user => _user;
   bool get isDarkMode => _isDarkMode;
   String? get apiKey => _apiKey;
   CourseConfig? get activeCourse => _activeCourse;

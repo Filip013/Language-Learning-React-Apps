@@ -9,7 +9,6 @@ import 'package:lingocraft_flutter/constants/languages.dart';
 import 'package:lingocraft_flutter/models/course_models.dart';
 import 'package:lingocraft_flutter/providers/app_provider.dart';
 import 'package:lingocraft_flutter/providers/course_provider.dart';
-import 'package:lingocraft_flutter/widgets/sentence_card.dart';
 import 'package:lingocraft_flutter/widgets/user_note_modal.dart';
 
 class LanguageCourseScreen extends StatefulWidget {

@@ -187,7 +187,7 @@ class HomeScreen extends StatelessWidget {
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 280,
-                  mainAxisExtent: 76,
+                  mainAxisExtent: 84,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
@@ -237,6 +237,7 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -247,6 +248,8 @@ class HomeScreen extends StatelessWidget {
                                     fontWeight: FontWeight.w700,
                                     color: textPrimary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   'Context Generator',
@@ -254,6 +257,8 @@ class HomeScreen extends StatelessWidget {
                                     fontSize: 11,
                                     color: textMuted,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -301,7 +306,7 @@ class HomeScreen extends StatelessWidget {
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 280,
-                  mainAxisExtent: 76,
+                  mainAxisExtent: 84,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),

@@ -757,7 +757,7 @@ class _MainTab extends StatelessWidget {
     if (prov.loading) {
       return Column(
         children: [
-          if (errorWidget != null) errorWidget,
+          ?errorWidget,
           const Expanded(child: _LoadingView()),
         ],
       );
@@ -766,7 +766,7 @@ class _MainTab extends StatelessWidget {
     if (prov.result == null) {
       return Column(
         children: [
-          if (errorWidget != null) errorWidget,
+          ?errorWidget,
           Expanded(
             child: _EmptyState(
               dark: dark,
@@ -782,7 +782,7 @@ class _MainTab extends StatelessWidget {
 
     return Column(
       children: [
-        if (errorWidget != null) errorWidget,
+        ?errorWidget,
         Expanded(
           child: _CardLayout(
             dark: dark,

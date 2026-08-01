@@ -1,10 +1,10 @@
 // lib/screens/course_screen.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:lingocraft_flutter/models/course_config.dart';
 import 'package:lingocraft_flutter/providers/app_provider.dart';
+import 'package:lingocraft_flutter/services/firebase_service.dart';
 
 class CourseScreen extends StatefulWidget {
   final CourseConfig config;
@@ -143,16 +143,8 @@ class _VocabularyTab extends StatelessWidget {
       );
     }
 
-    final docRef = FirebaseFirestore.instance
-        .collection('artifacts')
-        .doc(cfg.dbAppId)
-        .collection('users')
-        .doc(uid)
-        .collection('data')
-        .doc('vocab');
-
-    return StreamBuilder<DocumentSnapshot>(
-      stream: docRef.snapshots(),
+    return StreamBuilder<AppDocumentSnapshot>(
+      stream: FirebaseService.vocabStream(cfg.dbAppId, uid!),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -160,7 +152,7 @@ class _VocabularyTab extends StatelessWidget {
           );
         }
 
-        final data = snap.data?.data() as Map<String, dynamic>?;
+        final data = snap.data?.data();
         final items = (data?['items'] as List<dynamic>? ?? []);
 
         if (items.isEmpty) {
