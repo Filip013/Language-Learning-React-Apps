@@ -6,6 +6,11 @@ const base = process.env.VITE_BASE || '/';
 
 export default defineConfig({
   base,
+  server: {
+    watch: {
+      ignored: ['**/src-tauri/**']
+    }
+  },
   plugins: [
     react(),
     VitePWA({

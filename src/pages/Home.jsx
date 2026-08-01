@@ -139,8 +139,6 @@ export default function Home() {
                 const token = await tokenPromise;
                 
                 if (token) {
-                    alert("Token received from Rust! Authenticating natively...");
-                    
                     const credential = auth.GoogleAuthProvider.credential(token.trim());
                     
                     // Because we wrapped firebase.js with the v9 Modular Auth API initialized
@@ -148,10 +146,9 @@ export default function Home() {
                     // serialize the user session to IndexedDB WITHOUT loading the hanging iframe!
                     await auth.signInWithCredential(credential);
                     
-                    alert("Authentication successful! Reloading...");
                     window.location.reload();
                 } else {
-                    alert("Token was null from Rust server!");
+                    console.error("Token was null from Rust server!");
                 }
             } catch (err) {
                 console.error("Desktop Auth Error:", err);
