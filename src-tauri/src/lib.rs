@@ -22,7 +22,7 @@ async fn start_auth_server() -> Result<String, String> {
                                     None
                                 }
                             }) {
-                                let response = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;color:white;text-align:center;}</style></head><body><div><h2>🎉 Authentication Successful!</h2><p>You can close this tab and return to LingoHub.</p></div><script>setTimeout(()=>window.close(), 2000);</script></body></html>";
+                                let response = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;color:white;text-align:center;}</style></head><body><div><h2>🎉 Authentication Successful!</h2><p>You can close this tab and return to LingoHub.</p></div><script>setTimeout(()=>window.close(), 2000);</script></body></html>";
                                 let _ = stream.write_all(response.as_bytes());
                                 return Ok(token.to_string());
                             } else {
@@ -44,6 +44,7 @@ async fn start_auth_server() -> Result<String, String> {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
+    .plugin(tauri_plugin_window_state::Builder::default().build())
     .invoke_handler(tauri::generate_handler![start_auth_server])
     .setup(|app| {
       if cfg!(debug_assertions) {

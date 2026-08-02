@@ -3,7 +3,7 @@
 // the cross-origin iframe initialization and uses AsyncStorage instead!
 // We will mock AsyncStorage using native localStorage.
 if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
-    console.log("Spoofing React Native environment for Firebase Auth...");
+    // console.log("Spoofing React Native environment for Firebase Auth...");
     
     // Spoof React Native
     Object.defineProperty(navigator, 'product', { value: 'ReactNative', configurable: true });
