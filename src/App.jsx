@@ -69,6 +69,7 @@ function App() {
         <Route path="/russian" element={<LanguageCourse config={courseConfigs.russian} />} />
         <Route path="/greek" element={<LanguageCourse config={courseConfigs.greek} />} />
         <Route path="/japanese" element={<LanguageCourse config={courseConfigs.japanese} />} />
+        <Route path="/latin" element={<LanguageCourse config={courseConfigs.latin} />} />
         
         {/* SERVICE APPS & GAMES */}
         <Route path="/migrate" element={<MigrationTool />} />

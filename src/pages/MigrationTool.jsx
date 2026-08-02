@@ -9,6 +9,7 @@ const APPS_TO_MIGRATE = [
     { id: 'greek-master', name: 'Modern Greek', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'hungarian-master', name: 'Hungarian', collections: ['episodes', 'progress'], docs: ['database/dictionary'] },
     { id: 'japanese-master', name: 'Japanese', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
+    { id: 'latin-master', name: 'Latin', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'mandarin-master', name: 'Mandarin', collections: ['episodes', 'progress', 'stories'], docs: ['database/lexicon', 'settings/prefs'] },
     { id: 'portuguese-master', name: 'Portuguese', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'romanian-master', name: 'Romanian', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },

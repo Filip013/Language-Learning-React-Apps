@@ -454,5 +454,62 @@ TASKS:
             { japanese: "...", romaji: "...", english: "...", pos: "n" }
           ]
         }
+    },
+
+    latin: {
+        id: 'latin',
+        dbAppId: 'latin-master',
+        name: 'Latin Master',
+        primaryTextKey: 'latin',
+        lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
+        hasStories: false,
+        hasReading: true,
+        hasTestTab: false,
+        hasSweepTab: false,
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Latin, use Classical Latin pronunciation.",
+        promptSystemInstruction: `You are an expert Classical Latin curriculum designer. Generate a highly structured lesson. Use macrons consistently.
+        
+CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+
+TASKS:
+1. 'reading': A passage in Classical Latin, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
+3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in LA/EN.
+4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Latin definition using known words" }],
+            latin: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ latin: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { latin: "...", english: "...", pos: "n" }
+          ]
+        }
     }
 };
