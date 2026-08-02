@@ -31,12 +31,12 @@ export const courseConfigs = {
         fontClass: 'moe-font',
         secondaryFontClass: 'simp-font',
         useLargeDrillFont: true,
-        textSizeMode: 'large', // Activates dense character scaling
+        textSizeMode: 'large',
         webFontsCss: `
             @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
             @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
-            .moe-font { font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif; }
-            .simp-font { font-family: 'STKaiti', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif; }
+            .moe-font { font-family: 'DFKai-SB', serif; }
+            .simp-font { font-family: 'STKaiti', sans-serif; }
         `,
         
         // Tabs
@@ -45,7 +45,6 @@ export const courseConfigs = {
         hasTestTab: false,
         hasSweepTab: false,
 
-        // Add strict rules for Taiwanese Mandarin
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Mandarin Chinese, use a strict Taiwanese Mandarin (Guoyu) accent and traditional pronunciation.",
         promptSystemInstruction: `You are an expert curriculum designer and storyteller for a Mandarin Chinese learning app. Your task is to write stories that should be 30+ episodes long.
         
@@ -70,7 +69,6 @@ DRILL AND QUIZ DESIGN:
           story: {
             traditional: "...",
             simplified: "...",
-            pinyin: "...",
             english: "..."
           },
           drills: [
@@ -394,7 +392,7 @@ TASKS:
         // Font & Design
         fontClass: 'font-ja',
         useLargeDrillFont: true,
-        textSizeMode: 'large', // Activates dense character scaling
+        textSizeMode: 'large',
         webFontsCss: `
             @import url('https://db.onlinewebfonts.com/c/947e00387f802f409bd2f3e74b9c0730?family=HGSKyokashotai');
             @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
@@ -418,7 +416,7 @@ TASKS:
 CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
 
 TASKS:
-1. 'reading': A passage in Japanese (Kanji/Kana), Rōmaji transliteration, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
+1. 'reading': A passage in Japanese (Kanji/Kana), English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in Japanese (Kanji/Kana), Rōmaji, and English.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
@@ -430,7 +428,6 @@ TASKS:
           reading: {
             definitions: [{ word: "word", text: "Japanese definition using known words" }],
             japanese: "Text broken into paragraphs separated by \\n\\n",
-            romaji: "Rōmaji transliteration broken into paragraphs separated by \\n\\n",
             english: "English translation",
             focus: [{ word: "word", explanation: "Grammar/nuance note" }]
           },
@@ -462,6 +459,7 @@ TASKS:
         name: 'Latin Master',
         primaryTextKey: 'latin',
         lexiconDoc: 'lexicon',
+        disableDrillBlur: true,
         
         // Font & Design
         textSizeMode: 'standard',

@@ -133,15 +133,7 @@ function EpisodeTab({ isActive, isDarkMode, activeEpisode, progressState, update
       });
     }
 
-    if (config.transliterationKey) {
-      list.push({ 
-        id: config.transliterationKey, 
-        title: getTabLabel(config.transliterationKey), 
-        fontClass: 'font-sans text-lg md:text-xl leading-relaxed', 
-        text: activeEpisode.story[config.transliterationKey] 
-      });
-    }
-
+    // Removed full-passage transliteration (pinyin/romaji) from EpisodeTab
     return list.filter(v => v.text);
   }, [activeEpisode, config]);
 
@@ -342,16 +334,13 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
     const targetText = reading[config.primaryTextKey];
     if (Array.isArray(reading.definitions) && reading.definitions.length > 0) list.push({ id: 'defs', label: 'Definitions' });
     if (targetText) list.push({ id: 'read', label: 'Reading' });
-    if (config.transliterationKey && reading[config.transliterationKey]) {
-      list.push({ 
-        id: 'transliteration', 
-        label: (config.labels && config.labels[config.transliterationKey]) || (config.transliterationKey.charAt(0).toUpperCase() + config.transliterationKey.slice(1)) 
-      });
-    }
+    
+    // Removed full-passage transliteration (romaji/pinyin) from ReadingTab
+
     if (reading.english) list.push({ id: 'eng', label: 'Translation' });
     if (Array.isArray(reading.focus) && reading.focus.length > 0) list.push({ id: 'focus', label: 'Focus & Grammar' });
     return list;
-  }, [reading, config.primaryTextKey, config.transliterationKey, config.labels]);
+  }, [reading, config.primaryTextKey, config.labels]);
 
   const defaultView = useMemo(() => {
     if (pages.length === 0) return 'read';
@@ -668,7 +657,11 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const currentExample = currentSection?.examples?.[currentExIdx];
 
   const exId = `drill_${currentWordIdx}_${currentExIdx}`;
-  const isListened = !isLatestEpisode || listenedIds.includes(exId);
+  
+  // Separate actual audio listening progress from reveal state
+  const isActuallyListened = !isLatestEpisode || listenedIds.includes(exId);
+  const isRevealed = config.disableDrillBlur || isActuallyListened;
+
   const targetText = currentExample ? currentExample[config.primaryTextKey] : '';
   const hasNotes = currentSection?.notes && currentSection.notes.length > 0;
 
@@ -736,7 +729,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
           break;
         case ' ':
           e.preventDefault();
-          playDrill(currentExample, exId, isListened);
+          playDrill(currentExample, exId, isActuallyListened);
           break;
         case 'l': case 'L':
           if (hasNotes) setShowLexicalNote(p => !p);
@@ -749,7 +742,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, currentExample, exId, isListened, currentWordIdx, totalWords, hasNotes, targetText, notes, handleNext, handlePrev, playDrill, stopSpeak, handleOpenNote]);
+  }, [isActive, currentExample, exId, isActuallyListened, currentWordIdx, totalWords, hasNotes, targetText, notes, handleNext, handlePrev, playDrill, stopSpeak, handleOpenNote]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: handleNext,
@@ -759,7 +752,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   });
 
   const isWordCompleted = (wordIdx) => {
-    if (!isLatestEpisode) return true;
+    if (!isLatestEpisode || config.disableDrillBlur) return true;
     const section = activeEpisode.drills[wordIdx];
     return section.examples?.every((_, idx) => listenedIds.includes(`drill_${wordIdx}_${idx}`));
   };
@@ -822,7 +815,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
               </div>
 
               <div className="flex-1 flex flex-col justify-start relative min-h-[120px] pt-4">
-                <div className={`space-y-3 transition-all ${!isListened ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
+                <div className={`space-y-3 transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
                   <p className={`${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{targetText}</p>
                   <div className="space-y-1.5 mt-1">
                     <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{currentExample.english || currentExample.translation}</p>
@@ -834,9 +827,10 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
                     )}
                   </div>
                 </div>
-                {!isListened && (
+
+                {!isRevealed && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <button onClick={() => playDrill(currentExample, exId, isListened)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full shadow-lg font-sans text-sm font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-50 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
+                    <button onClick={() => playDrill(currentExample, exId, isActuallyListened)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full shadow-lg font-sans text-sm font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-amber-600 text-stone-900 border-amber-500 hover:bg-amber-500' : 'bg-amber-50 text-stone-900 border-amber-400 hover:bg-amber-400'}`}>
                       {playingId === exId ? <Loader2 size={16} className="animate-spin" /> : <Volume2 size={16} />} Play to Reveal
                     </button>
                   </div>
@@ -887,11 +881,11 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
             <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Example {currentExIdx + 1}</span>
-                {isListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
+                {isActuallyListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
               </div>
               <div className="flex items-center gap-2">
                 <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
-                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isListened)} size={20} />
+                <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isActuallyListened)} size={20} />
               </div>
             </div>
 
@@ -2349,6 +2343,9 @@ export default function LanguageCourse({ config }) {
   const fileInputRef = useRef(null);
   const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
 
+  const [selectionState, setSelectionState] = useState({ text: '', x: 0, y: 0, showIcon: false, showPanel: false });
+  const [aiTranslation, setAiTranslation] = useState({ translation: '', transliteration: '', isLoading: false, error: '' });
+
   const [noteModal, setNoteModal] = useState({ isOpen: false, id: null, title: '', initialText: '' });
 
   // 1. Identify script text requirements dynamically
@@ -2736,9 +2733,6 @@ export default function LanguageCourse({ config }) {
       if (activeEpisode.story[activeConfig.primaryTextKey]) {
         versions.push({ id: activeConfig.primaryTextKey, label: getTabLabel(activeConfig.primaryTextKey) });
       }
-      if (activeEpisode.story[activeConfig.transliterationKey]) {
-        versions.push({ id: activeConfig.transliterationKey, label: getTabLabel(activeConfig.transliterationKey) });
-      }
       if (activeEpisode.story.english) {
         versions.push({ id: 'english', label: getTabLabel('english') });
       }
@@ -3024,6 +3018,91 @@ export default function LanguageCourse({ config }) {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [navItems, activeTab, handleTabNext, handleTabPrev]);
 
+  useEffect(() => {
+    const handleSelection = () => {
+      if (document.activeElement?.closest('#ai-translate-panel')) return;
+
+      const selection = window.getSelection();
+      if (!selection) return;
+
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+      const text = selection.toString().trim();
+
+      if (text.length > 0 && selection.rangeCount > 0) {
+        try {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+
+          if (rect.width > 0 && rect.height > 0) {
+            setSelectionState(prev => {
+              if (prev.showPanel) return prev;
+              return {
+                text,
+                x: rect.left + (rect.width / 2),
+                y: rect.top,
+                showIcon: true,
+                showPanel: false
+              };
+            });
+          }
+        } catch (err) {}
+      } else {
+        setSelectionState(prev => (prev.showPanel ? prev : { ...prev, showIcon: false }));
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelection);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelection);
+    };
+  }, []);
+
+  const handleAITranslate = async () => {
+    setSelectionState(prev => ({ ...prev, showIcon: false, showPanel: true }));
+    setAiTranslation({ translation: '', transliteration: '', isLoading: true, error: '' });
+
+    const apiKey = localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey');
+    if (!apiKey) {
+      setAiTranslation(prev => ({ ...prev, isLoading: false, error: 'No API Key found in settings.' }));
+      return;
+    }
+
+    try {
+      const hasTransliteration = Boolean(activeConfig.transliterationKey);
+      const translitLabel = hasTransliteration 
+        ? ((activeConfig.labels && activeConfig.labels[activeConfig.transliterationKey]) || activeConfig.transliterationKey)
+        : null;
+
+      const prompt = hasTransliteration
+        ? `Translate the following text to English. Also provide its ${translitLabel} transliteration. Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "transliteration": "..."}`
+        : `Translate the following text to English. Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "..."}`;
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" }
+          })
+      });
+
+      if (!res.ok) throw new Error("Translation failed.");
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const parsed = JSON.parse(rawText);
+
+      setAiTranslation({
+        translation: parsed.translation || '',
+        transliteration: hasTransliteration ? (parsed.transliteration || '') : '',
+        isLoading: false,
+        error: ''
+      });
+    } catch (err) {
+      setAiTranslation({ translation: '', transliteration: '', isLoading: false, error: 'Could not generate translation.' });
+    }
+  };
+
   const isLatestEpisode = episodesList.length > 0 && activeEpisodeId === episodesList[0].id;
   const isStudyTab = ['episode', 'reading', 'drill', 'quiz', 'test', 'sweep', 'story'].includes(activeTab);
 
@@ -3037,8 +3116,6 @@ export default function LanguageCourse({ config }) {
     .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
   `;
 
-  // Assembly order: active configuration webfonts are placed first
-  // to ensure @import statements are evaluated correctly by the browser.
   const dynamicStyles = `${activeConfig.webFontsCss || ''}\n${baseStyles}`;
 
   return (
@@ -3243,6 +3320,94 @@ export default function LanguageCourse({ config }) {
         onClose={() => setNoteModal({ isOpen: false, id: null, title: '', initialText: '' })}
         onSave={handleSaveNote}
       />
+    {/* 1. Floating Icon Action Button */}
+      {selectionState.showIcon && !selectionState.showPanel && (
+        <button
+          style={{ 
+            position: 'fixed', 
+            top: Math.max(20, selectionState.y - 10) + 'px', 
+            left: selectionState.x + 'px', 
+            transform: 'translate(-50%, -100%)', 
+            zIndex: 9999 
+          }}
+          onMouseDown={(e) => e.preventDefault()} // Prevents clearing text selection on click!
+          onTouchStart={(e) => e.preventDefault()} // Prevents clearing text selection on mobile tap!
+          onClick={handleAITranslate}
+          className={`p-2 rounded-full shadow-lg border flex items-center justify-center cursor-pointer animate-in zoom-in duration-200 ${
+            isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900' : 'bg-amber-500 border-amber-400 text-white'
+          }`}
+        >
+          <Sparkles size={18} />
+        </button>
+      )}
+
+      {/* 2. Google-Translate-Style Panel */}
+      {selectionState.showPanel && (
+        <div id="ai-translate-panel" className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md z-[1000] p-4 animate-in slide-in-from-bottom-4 duration-300">
+          <div className={`w-full p-5 rounded-3xl shadow-2xl border ${isDarkMode ? 'bg-stone-900 border-stone-750' : 'bg-white border-stone-200'}`}>
+            
+            {/* Header */}
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-stone-200 dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} className="text-amber-500" />
+                <span className={`text-sm font-bold ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`}>AI Translate</span>
+              </div>
+              <button 
+                onClick={() => setSelectionState(prev => ({ ...prev, showPanel: false }))} 
+                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            {/* Content Area */}
+            <div className="space-y-6">
+              
+              {/* Original Selected Text */}
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Target</p>
+                  <p className={`text-xl font-bold ${activeConfig.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{selectionState.text}</p>
+                </div>
+                {/* Reusing your existing PlayButton and handleSpeak */}
+                <div className="shrink-0">
+                  <PlayButton isDarkMode={isDarkMode} onClick={() => handleSpeak(selectionState.text)} size={20} />
+                </div>
+              </div>
+
+              {aiTranslation.isLoading ? (
+                <div className="flex items-center gap-2 py-2">
+                  <Loader2 className="animate-spin text-amber-500" size={20} />
+                  <span className={`text-sm font-medium ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Translating...</span>
+                </div>
+              ) : aiTranslation.error ? (
+                <p className="text-red-500 text-sm font-medium py-2">{aiTranslation.error}</p>
+              ) : (
+                <>
+                  {/* Transliteration (only shown if the course config explicitly supports it) */}
+                  {activeConfig.transliterationKey && aiTranslation.transliteration && (
+                    <div>
+                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>
+                        {(activeConfig.labels && activeConfig.labels[activeConfig.transliterationKey]) || 'Transliteration'}
+                      </p>
+                      <p className={`text-lg font-medium ${isDarkMode ? 'text-stone-300' : 'text-stone-700'}`}>{aiTranslation.transliteration}</p>
+                    </div>
+                  )}
+                  
+                  {/* English Translation */}
+                  <div>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>English</p>
+                    <p className={`text-xl ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{aiTranslation.translation}</p>
+                  </div>
+                </>
+              )}
+            </div>
+            
+          </div>
+        </div>
+      )}
+      {/* -------------------------------------- */}
+
     </div>
   );
 }
