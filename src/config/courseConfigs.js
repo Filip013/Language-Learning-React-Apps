@@ -161,7 +161,6 @@ TASKS:
         hasReading: true,
         hasTestTab: false,
         hasSweepTab: false,
-        // Add strict rules for European Portuguese
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Portuguese, use a strict European Portuguese (pt-PT) accent and phonology.",
         promptSystemInstruction: `You are an expert European Portuguese curriculum designer. Generate a highly structured lesson.
         
@@ -375,6 +374,81 @@ TASKS:
         }
     },
 
+    ancient_greek: {
+        id: 'ancient_greek',
+        dbAppId: 'ancient-greek-master',
+        name: 'Ancient Greek Master',
+        primaryTextKey: 'greek',
+        transliterationKey: 'transliteration',
+        lexiconDoc: 'lexicon',
+        ttsUseTransliteration: true, // Audio engine reads transliteration for Erasmian pronunciation
+        
+        labels: {
+            greek: 'Ancient Greek',
+            transliteration: 'Transliteration',
+            english: 'English'
+        },
+
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+
+        hasStories: false,
+        hasReading: true,
+        hasTestTab: false,
+        hasSweepTab: false,
+
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: Read the provided Latinized transliteration of Ancient Greek using Classical Erasmian pronunciation. Maintain proper vowel lengths, diphthongs, and pitch accents.",
+        promptSystemInstruction: `You are an expert Classical Ancient Greek curriculum designer. Generate a highly structured lesson in Polytonic Ancient Greek with Latinized Transliteration.
+
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE TARGET WORDS to teach, PLUS any additional words the user explicitly requests.
+2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. DO NOT generate target-language definitions in the reading section.
+4. Always write Ancient Greek using full polytonic diacritics (accents and breathing marks).
+5. Always provide accurate Latinized transliteration for all Ancient Greek passages, drills, quiz questions, and new words.
+
+TASKS:
+1. 'reading.greek': A passage in Polytonic Ancient Greek, multiple paragraphs separated by \\n\\n.
+2. 'reading.transliteration': Latinized transliteration of the passage.
+3. 'reading.english': English translation.
+4. 'reading.focus': EXACTLY 5 items explaining the 5 new target words, plus grammar nuance.
+5. 'drills': Create EXACTLY 5 drill objects (one for each item in 'reading.focus'). Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English.
+6. 'quiz': Create EXACTLY 15 questions testing the reading and past context. Provide both the Ancient Greek sentence and its transliteration. Use '_____' (5 underscores) for the blank.
+7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj').`,
+
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            greek: "Text in polytonic Ancient Greek with paragraphs separated by \\n\\n",
+            transliteration: "Latinized transliteration",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar or nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              transliteration: "transliteration",
+              translation: "meaning",
+              examples: [{ greek: "...", transliteration: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              transliteration: "Transliterated sentence with _____ for blank",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { greek: "...", transliteration: "...", english: "...", pos: "n" }
+          ]
+        }
+    },
+
     japanese: {
         id: 'japanese',
         dbAppId: 'japanese-master',
@@ -459,7 +533,6 @@ TASKS:
         name: 'Latin Master',
         primaryTextKey: 'latin',
         lexiconDoc: 'lexicon',
-        // disableDrillBlur: true, // Temporarily disable.
         
         // Font & Design
         textSizeMode: 'standard',

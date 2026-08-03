@@ -450,7 +450,11 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
           if (activeView === 'defs' && reading?.definitions) {
             playAudio('defs', reading.definitions.map(d => d.word + ". " + d.text).join(' '));
           } else if (activeView === 'read' && targetText) {
-            playAudio('read', targetText);
+            // Check if TTS should speak transliteration instead of primary text
+            const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && reading[config.transliterationKey])
+              ? reading[config.transliterationKey]
+              : targetText;
+            playAudio('read', textToSpeak);
           } else if (activeView === 'transliteration' && reading?.[config.transliterationKey]) {
             playAudio('transliteration', reading[config.transliterationKey]);
           } else if (activeView === 'eng' && reading?.english) {
@@ -535,7 +539,16 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
                 </div>
                 <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                   <h2 className="text-base font-bold tracking-wide">Target Text</h2>
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'read'} onClick={() => playAudio('read', targetText)} />
+                  <PlayButton 
+                    isDarkMode={isDarkMode} 
+                    isPlaying={playingId === 'read'} 
+                    onClick={() => {
+                      const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && reading[config.transliterationKey])
+                        ? reading[config.transliterationKey]
+                        : targetText;
+                      playAudio('read', textToSpeak);
+                    }} 
+                  />
                 </div>
               </>
             )}
@@ -671,9 +684,17 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
   const playDrill = useCallback((ex, id, listened) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(id);
-    const text = ex[config.primaryTextKey]; 
-    handleSpeak([text, ex.english, text], () => { setPlayingId(null); if (!listened) updateFirebase({ listenedDrills: [...listenedIds, id] }); }, () => setPlayingId(null));
-  }, [playingId, listenedIds, config.primaryTextKey, handleSpeak, stopSpeak, updateFirebase]);
+    
+    // Choose transliteration text if TTS flag is enabled
+    const targetText = (config.ttsUseTransliteration && config.transliterationKey && ex[config.transliterationKey])
+      ? ex[config.transliterationKey]
+      : ex[config.primaryTextKey];
+
+    handleSpeak([targetText, ex.english, targetText], () => { 
+      setPlayingId(null); 
+      if (!listened) updateFirebase({ listenedDrills: [...listenedIds, id] }); 
+    }, () => setPlayingId(null));
+  }, [playingId, listenedIds, config.primaryTextKey, config.transliterationKey, config.ttsUseTransliteration, handleSpeak, stopSpeak, updateFirebase]);
 
   const toggleReveal = useCallback(() => {
     if (isManuallyRevealed) {
@@ -984,7 +1005,15 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
       setShuffledData(activeEpisode.quiz.map((q, i) => {
         const answer = q.answer || q.correct;
         const opts = q.options ? q.options : shuffleArray(Array.from(new Set([...(q.distractors||[]), answer])));
-        return { ...q, id: i, sentence: q.sentence || q.text, answer: answer, englishHint: q.englishHint || q.translation, options: opts };
+        return { 
+          ...q, 
+          id: i, 
+          sentence: q.sentence || q.text, 
+          transliteration: q.transliteration || '',
+          answer: answer, 
+          englishHint: q.englishHint || q.translation, 
+          options: opts 
+        };
       }));
     }
   }, [activeEpisode?.quiz]);
@@ -994,11 +1023,18 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
     updateFirebase({ selections: { ...userSelections, [qId]: choice } });
   }, [gradedIds, userSelections, updateFirebase]);
 
-  const playAnswer = useCallback((id, text) => {
+  const playAnswer = useCallback((id, question) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(id);
-    handleSpeak(text, () => setPlayingId(null), () => setPlayingId(null));
-  }, [playingId, stopSpeak, handleSpeak]);
+    
+    // Choose transliterated sentence if ttsUseTransliteration is set
+    const sentenceToUse = (config.ttsUseTransliteration && question.transliteration)
+      ? question.transliteration
+      : question.sentence;
+
+    const fullText = sentenceToUse.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, question.answer);
+    handleSpeak(fullText, () => setPlayingId(null), () => setPlayingId(null));
+  }, [playingId, stopSpeak, handleSpeak, config.ttsUseTransliteration]);
 
   const handleNext = useCallback(() => { 
     stopSpeak(); 
@@ -1063,10 +1099,10 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
         case ' ': 
           e.preventDefault();
           if (isGraded) {
-            playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer));
+            playAnswer(`quiz-audio-${qId}`, q);
           } else if (userChoice) {
             updateFirebase({ gradedIds: [...gradedIds, qId] });
-            playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer));
+            playAnswer(`quiz-audio-${qId}`, q);
           }
           break;
         case 'r': case 'R':
@@ -1212,7 +1248,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
                   
                   <div className="flex justify-between items-center font-sans min-h-[44px]">
                     {!isGraded ? (
-                     <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer)); } }} className={`w-full sm:w-auto px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-50 text-stone-900 hover:bg-amber-400' || 'bg-amber-50 text-stone-900 hover:bg-amber-400')}`}>
+                     <button disabled={!userChoice} onClick={() => { if(userChoice) { updateFirebase({ gradedIds: [...gradedIds, qId] }); playAnswer(`quiz-audio-${qId}`, q); } }} className={`w-full sm:w-auto px-5 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors ${!userChoice ? (isDarkMode ? 'bg-stone-800 text-stone-600' : 'bg-stone-200 text-stone-400') : (isDarkMode ? 'bg-amber-600 text-stone-950 hover:bg-amber-500' : 'bg-amber-50 text-stone-900 hover:bg-amber-400')}`}>
                         Grade Answer
                      </button>
                     ) : (
@@ -1231,7 +1267,7 @@ function QuizTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
                 <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[qId]} onClick={() => handleOpenNote(qId, `Quiz: Question ${q.id + 1}`, notes[qId])} />
                 {isGraded ? (
                   <div className="animate-in fade-in zoom-in duration-300">
-                    <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q.sentence.replace(/(_{2,}|\.{3,}|(?:_\s*){2,})/, q.answer))} size={20} />
+                    <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === `quiz-audio-${qId}`} onClick={() => playAnswer(`quiz-audio-${qId}`, q)} size={20} />
                   </div>
                 ) : (
                   <button onClick={() => { if (isRevealed) updateFirebase({ revealed: revealedIds.filter(id => id !== qId) }); else updateFirebase({ revealed: [...revealedIds, qId] }); }} className={`p-2 rounded-full transition-all border shadow-sm ${!isRevealed ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')}`}>
@@ -1316,8 +1352,17 @@ function TestTab({ isActive, isDarkMode, activeEpisode, progressState, updateFir
   const playAnswer = useCallback((id, text, isRev) => {
     if (playingId === id) { stopSpeak(); setPlayingId(null); return; }
     setPlayingId(id);
-    handleSpeak(text, () => { setPlayingId(null); updateFirebase({ testMastered: { ...mst, [id]: true }, testRevealed: { ...rev, [id]: true } }); }, () => setPlayingId(null));
-  }, [playingId, mst, rev, handleSpeak, stopSpeak, updateFirebase]);
+    
+    // Check if transliteration should be sent to TTS
+    const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && item?.[config.transliterationKey])
+      ? item[config.transliterationKey]
+      : text;
+
+    handleSpeak(textToSpeak, () => { 
+      setPlayingId(null); 
+      updateFirebase({ testMastered: { ...mst, [id]: true }, testRevealed: { ...rev, [id]: true } }); 
+    }, () => setPlayingId(null));
+  }, [playingId, mst, rev, item, config.ttsUseTransliteration, config.transliterationKey, handleSpeak, stopSpeak, updateFirebase]);
 
   const handleNext = useCallback(() => { 
     stopSpeak(); 
@@ -1753,11 +1798,13 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
   const [editingWord, setEditingWord] = useState(null);
   const [editListKey, setEditListKey] = useState('');
   const [editTarget, setEditTarget] = useState('');
+  const [editTranslit, setEditTranslit] = useState('');
   const [editEnglish, setEditEnglish] = useState('');
   const [editPos, setEditPos] = useState('');
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newWordTarget, setNewWordTarget] = useState('');
+  const [newWordTranslit, setNewWordTranslit] = useState('');
   const [newWordEnglish, setNewWordEnglish] = useState('');
   const [newWordPos, setNewWordPos] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1814,7 +1861,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
         'n': 'Nouns', 'v': 'Verbs', 'adj': 'Adjectives', 'adv': 'Adverbs',
         'pron': 'Pronouns', 'prep': 'Prepositions', 'conj': 'Conjunctions',
         'part': 'Particles', 'mw': 'Measure Words', 'num': 'Numeral',
-        'post': 'Postposition', 'suf': 'Suffix'
+        'post': 'Postposition', 'suf': 'Suffix', 'noun': 'Nouns', 'verb': 'Verbs'
       };
 
       Array.from(posTags).sort().forEach(pos => {
@@ -1849,12 +1896,13 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
 
       filtered = filtered.filter(({ word }) => {
         const target = removeDiacritics(word[config.primaryTextKey] || word.word || "");
+        const translit = config.transliterationKey ? removeDiacritics(word[config.transliterationKey] || "") : "";
         const en = removeDiacritics(word.english || word.meaning || word.translation || "");
-        return searchRegex.test(target) || searchRegex.test(en);
+        return searchRegex.test(target) || searchRegex.test(translit) || searchRegex.test(en);
       });
     }
     return filtered;
-  }, [allTaggedWords, activeFilter, searchTerm, duplicateWords, config.primaryTextKey]);
+  }, [allTaggedWords, activeFilter, searchTerm, duplicateWords, config.primaryTextKey, config.transliterationKey]);
 
   const groupedWords = useMemo(() => {
     const groups = {};
@@ -1880,6 +1928,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
         id: `dict_manual_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         [config.primaryTextKey]: newWordTarget.trim(),
         word: newWordTarget.trim(),
+        ...(config.transliterationKey ? { [config.transliterationKey]: newWordTranslit.trim() } : {}),
         english: newWordEnglish.trim(),
         pos: newWordPos.trim()
       };
@@ -1895,7 +1944,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
         await lexRef.set({ accumulated: [newEntry, ...list] }, { merge: true });
       }
 
-      setNewWordTarget(''); setNewWordEnglish(''); setNewWordPos(''); setShowAddForm(false);
+      setNewWordTarget(''); setNewWordTranslit(''); setNewWordEnglish(''); setNewWordPos(''); setShowAddForm(false);
     } catch (err) { console.error("Error adding word:", err); } 
     finally { setIsSubmitting(false); }
   };
@@ -1904,6 +1953,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
     setEditingWord(word);
     setEditListKey(listKey);
     setEditTarget(word[config.primaryTextKey] || word.word || '');
+    setEditTranslit(config.transliterationKey ? (word[config.transliterationKey] || '') : '');
     setEditEnglish(word.english || word.meaning || word.translation || '');
     setEditPos(word.pos || '');
   };
@@ -1916,6 +1966,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
         ...editingWord,
         [config.primaryTextKey]: editTarget.trim(),
         word: editTarget.trim(), 
+        ...(config.transliterationKey ? { [config.transliterationKey]: editTranslit.trim() } : {}),
         english: editEnglish.trim(),
         pos: editPos.trim()
     };
@@ -1982,7 +2033,6 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
   return (
     <div className="max-w-6xl mx-auto pt-3 md:pt-9 pb-12 px-4 md:px-8 font-sans relative">
       <header className={`shrink-0 mb-3 pb-3 border-b flex flex-col sm:flex-row md:flex-col justify-between sm:items-center md:justify-center md:items-center gap-3 md:gap-4 ${isDarkMode ? 'border-stone-800' : 'border-stone-200'}`}>
-        {/* Line 1: Title and Add Word action button separated by a fixed divider */}
         <div className="flex items-center gap-2 justify-center flex-wrap">
           <div className="flex items-center gap-2">
             <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-stone-800 text-amber-400' : 'bg-stone-100 text-amber-600'}`}>
@@ -1993,10 +2043,8 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
             </span>
           </div>
           
-          {/* Fixed-height divider */}
           <div className="w-px h-4 bg-stone-300 dark:bg-stone-800 self-center mx-1"></div>
 
-          {/* Elegant tracking-style Add button */}
           <button 
             onClick={() => setShowAddForm(!showAddForm)} 
             className={`flex items-center gap-1 transition-colors text-[10px] uppercase font-bold tracking-wider px-2 py-1 ${
@@ -2007,9 +2055,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
           </button>
         </div>
 
-        {/* Line 2: Centered Search Input and Filter Dropdown */}
         <div className="flex items-center gap-2 w-full sm:max-w-xl md:max-w-3xl md:mx-auto">
-          {/* Compact Search Input */}
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input 
@@ -2025,7 +2071,6 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
             />
           </div>
 
-          {/* Compact Filter Select */}
           <div className="relative w-32 sm:w-36 shrink-0">
             <select 
               value={activeFilter} 
@@ -2046,8 +2091,11 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
       {/* Streamlined Add Word Form */}
       {showAddForm && (
         <div className={`mb-6 p-4 rounded-xl border animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-stone-50 border-stone-200'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 mb-3">
+          <div className={`grid grid-cols-1 ${config.transliterationKey ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-2.5 mb-3`}>
             <input type="text" placeholder={`Target Word (${config.name})`} value={newWordTarget} onChange={e => setNewWordTarget(e.target.value)} className={`w-full px-2.5 py-1.5 text-xs rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-800 text-stone-100 focus:border-stone-700' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
+            {config.transliterationKey && (
+              <input type="text" placeholder={`Transliteration (${(config.labels && config.labels[config.transliterationKey]) || config.transliterationKey})`} value={newWordTranslit} onChange={e => setNewWordTranslit(e.target.value)} className={`w-full px-2.5 py-1.5 text-xs rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-800 text-stone-100 focus:border-stone-700' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
+            )}
             <input type="text" placeholder="English Translation" value={newWordEnglish} onChange={e => setNewWordEnglish(e.target.value)} className={`w-full px-2.5 py-1.5 text-xs rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-800 text-stone-100 focus:border-stone-700' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
             <input type="text" placeholder="Part of Speech (e.g. noun)" value={newWordPos} onChange={e => setNewWordPos(e.target.value)} className={`w-full px-2.5 py-1.5 text-xs rounded-lg border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-800 text-stone-100 focus:border-stone-700' : 'bg-white border-stone-200 focus:border-stone-400'}`} />
           </div>
@@ -2072,6 +2120,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
               {items.map(({ word, listKey }, idx) => {
                 const isString = typeof word === 'string';
                 const displayWord = isString ? word : (word[config.primaryTextKey] || word.word);
+                const displayTranslit = (!isString && config.transliterationKey) ? word[config.transliterationKey] : "";
                 const displayEn = isString ? "" : (word.english || word.meaning || word.translation || "");
                 const pos = isString ? "" : (word.pos || "");
                 const wId = isString ? `raw_${idx}_${displayWord}` : word.id;
@@ -2084,7 +2133,12 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
                       : (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-200' : 'bg-white border-stone-200 text-stone-800')
                   }`}>
                     <div className="flex items-center justify-between gap-4">
-                      <span className={`${config.fontClass || 'font-sans'} ${config.scriptStyles?.lexiconCard || 'text-base md:text-lg font-semibold'}`}>{displayWord}</span>
+                      <div className="flex flex-col">
+                        <span className={`${config.fontClass || 'font-sans'} ${config.scriptStyles?.lexiconCard || 'text-base md:text-lg font-semibold'}`}>{displayWord}</span>
+                        {displayTranslit && (
+                          <span className="text-xs font-sans text-stone-400 dark:text-stone-500 font-normal">{displayTranslit}</span>
+                        )}
+                      </div>
                       <button onClick={() => handleOpenEdit(word, listKey)} className="p-1.5 rounded-md text-stone-400 hover:text-amber-505 transition-colors ml-2"><Edit size={16} /></button>
                     </div>
                     
@@ -2113,6 +2167,16 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">Target Language</label>
                 <input type="text" value={editTarget} onChange={e => setEditTarget(e.target.value)} className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} />
               </div>
+
+              {config.transliterationKey && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">
+                    {(config.labels && config.labels[config.transliterationKey]) || 'Transliteration'}
+                  </label>
+                  <input type="text" value={editTranslit} onChange={e => setEditTranslit(e.target.value)} className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} />
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1">English Translation</label>
                 <input type="text" value={editEnglish} onChange={e => setEditEnglish(e.target.value)} className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${isDarkMode ? 'bg-stone-950 border-stone-700 text-stone-100 focus:border-stone-500' : 'bg-stone-50 border-stone-200 focus:border-stone-400'}`} />
@@ -2872,13 +2936,14 @@ export default function LanguageCourse({ config }) {
       batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(newEpisodeId), episodeDoc);
       
       const docName = activeConfig.lexiconDoc || 'lexicon';
-      if (Array.isArray(globalLexicon) || globalLexicon?.entries) {
-          const existingEntries = globalLexicon.entries || globalLexicon || [];
+      // Only Mandarin should use the legacy 'accumulated' array. All others use 'entries'.
+      if (activeConfig.id === 'mandarin') {
+          const newAcc = [...validNewLemmas, ...(globalLexicon?.accumulated || [])];
+          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
+      } else {
+          const existingEntries = globalLexicon?.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
           const newEntries = [...validNewLemmas, ...existingEntries];
           batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries }, { merge: true });
-      } else {
-          const newAcc = [...validNewLemmas, ...(globalLexicon?.accumulated || [])];
-          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { ...globalLexicon, accumulated: newAcc }, { merge: true });
       }
       
       if (activeConfig.hasStories) {
@@ -3395,9 +3460,18 @@ export default function LanguageCourse({ config }) {
                   <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Target</p>
                   <p className={`text-xl font-bold ${activeConfig.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{selectionState.text}</p>
                 </div>
-                {/* Reusing your existing PlayButton and handleSpeak */}
+                {/* Audio Button: Automatically speaks transliteration if config.ttsUseTransliteration is true */}
                 <div className="shrink-0">
-                  <PlayButton isDarkMode={isDarkMode} onClick={() => handleSpeak(selectionState.text)} size={20} />
+                  <PlayButton 
+                    isDarkMode={isDarkMode} 
+                    onClick={() => {
+                      const textToSpeak = (activeConfig.ttsUseTransliteration && aiTranslation.transliteration)
+                        ? aiTranslation.transliteration
+                        : selectionState.text;
+                      handleSpeak(textToSpeak);
+                    }} 
+                    size={20} 
+                  />
                 </div>
               </div>
 
@@ -3410,7 +3484,7 @@ export default function LanguageCourse({ config }) {
                 <p className="text-red-500 text-sm font-medium py-2">{aiTranslation.error}</p>
               ) : (
                 <>
-                  {/* Transliteration (only shown if the course config explicitly supports it) */}
+                  {/* Transliteration */}
                   {activeConfig.transliterationKey && aiTranslation.transliteration && (
                     <div>
                       <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>
