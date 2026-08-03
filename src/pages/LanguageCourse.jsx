@@ -604,6 +604,7 @@ function ReadingTab({ isActive, isDarkMode, activeEpisode, handleSpeak, stopSpea
 
 function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFirebase, handleSpeak, stopSpeak, config, isLatestEpisode, handleOpenNote, onTabNext, onTabPrev }) {
   const listenedIds = progressState.listenedDrills || [];
+  const drillRevealed = progressState.drillRevealed || [];
   const notes = progressState.notes || {};
   
   const [currentWordIdx, setCurrentWordIdx] = useState(0);
@@ -617,6 +618,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
       }
     }
   }, [currentWordIdx, isActive]);
+
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [playingId, setPlayingId] = useState(null);
   const [showLexicalNote, setShowLexicalNote] = useState(false);
@@ -658,9 +660,10 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
 
   const exId = `drill_${currentWordIdx}_${currentExIdx}`;
   
-  // Separate actual audio listening progress from reveal state
+  // Audio listening status vs reveal state (unblurred if disabled globally, listened to, or manually revealed)
   const isActuallyListened = !isLatestEpisode || listenedIds.includes(exId);
-  const isRevealed = config.disableDrillBlur || isActuallyListened;
+  const isManuallyRevealed = drillRevealed.includes(exId);
+  const isRevealed = config.disableDrillBlur || isActuallyListened || isManuallyRevealed;
 
   const targetText = currentExample ? currentExample[config.primaryTextKey] : '';
   const hasNotes = currentSection?.notes && currentSection.notes.length > 0;
@@ -671,6 +674,14 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     const text = ex[config.primaryTextKey]; 
     handleSpeak([text, ex.english, text], () => { setPlayingId(null); if (!listened) updateFirebase({ listenedDrills: [...listenedIds, id] }); }, () => setPlayingId(null));
   }, [playingId, listenedIds, config.primaryTextKey, handleSpeak, stopSpeak, updateFirebase]);
+
+  const toggleReveal = useCallback(() => {
+    if (isManuallyRevealed) {
+      updateFirebase({ drillRevealed: drillRevealed.filter(id => id !== exId) });
+    } else {
+      updateFirebase({ drillRevealed: [...drillRevealed, exId] });
+    }
+  }, [isManuallyRevealed, drillRevealed, exId, updateFirebase]);
 
   const handleNext = useCallback(() => {
     stopSpeak();
@@ -731,6 +742,10 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
           e.preventDefault();
           playDrill(currentExample, exId, isActuallyListened);
           break;
+        case 'r': case 'R':
+          e.preventDefault();
+          toggleReveal();
+          break;
         case 'l': case 'L':
           if (hasNotes) setShowLexicalNote(p => !p);
           break;
@@ -742,7 +757,7 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, currentExample, exId, isActuallyListened, currentWordIdx, totalWords, hasNotes, targetText, notes, handleNext, handlePrev, playDrill, stopSpeak, handleOpenNote]);
+  }, [isActive, currentExample, exId, isActuallyListened, currentWordIdx, totalWords, hasNotes, targetText, notes, handleNext, handlePrev, playDrill, stopSpeak, handleOpenNote, toggleReveal]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: handleNext,
@@ -885,6 +900,17 @@ function DrillTab({ isActive, isDarkMode, activeEpisode, progressState, updateFi
               </div>
               <div className="flex items-center gap-2">
                 <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />
+                <button 
+                  title={isManuallyRevealed ? "Hide Text (R)" : "Reveal Text (R)"}
+                  onClick={toggleReveal} 
+                  className={`p-2 rounded-full transition-all border shadow-sm ${
+                    !isManuallyRevealed 
+                      ? (isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 hover:text-amber-400' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50 hover:text-amber-600') 
+                      : (isDarkMode ? 'bg-amber-950/30 border-amber-500/40 text-amber-400 hover:bg-stone-800' : 'bg-amber-50 border-amber-300 text-amber-600 hover:bg-white')
+                  }`}
+                >
+                  <Eye size={18} className={isManuallyRevealed ? "opacity-60" : ""} />
+                </button>
                 <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === exId} onClick={() => playDrill(currentExample, exId, isActuallyListened)} size={20} />
               </div>
             </div>

@@ -459,7 +459,7 @@ TASKS:
         name: 'Latin Master',
         primaryTextKey: 'latin',
         lexiconDoc: 'lexicon',
-        disableDrillBlur: true,
+        // disableDrillBlur: true, // Temporarily disable.
         
         // Font & Design
         textSizeMode: 'standard',
