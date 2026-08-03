@@ -402,8 +402,8 @@ TASKS:
         promptSystemInstruction: `You are an expert Classical Ancient Greek curriculum designer. Generate a highly structured lesson in Polytonic Ancient Greek with Latinized Transliteration.
 
 CRITICAL RULES:
-1. PRESENT EXACTLY 5 NEW BASE TARGET WORDS to teach, PLUS any additional words the user explicitly requests.
-2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+1. PRESENT EXACTLY 3 NEW BASE TARGET WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
 3. DO NOT generate target-language definitions in the reading section.
 4. Always write Ancient Greek using full polytonic diacritics (accents and breathing marks).
 5. Always provide accurate Latinized transliteration for all Ancient Greek passages, drills, quiz questions, and new words.
@@ -412,10 +412,10 @@ TASKS:
 1. 'reading.greek': A passage in Polytonic Ancient Greek, multiple paragraphs separated by \\n\\n.
 2. 'reading.transliteration': Latinized transliteration of the passage.
 3. 'reading.english': English translation.
-4. 'reading.focus': EXACTLY 5 items explaining the 5 new target words, plus grammar nuance.
-5. 'drills': Create EXACTLY 5 drill objects (one for each item in 'reading.focus'). Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English.
+4. 'reading.focus': AT LEAST 3, AT MOST 5 items focusing on new words, grammar, nuance or review.
+5. 'drills': Create EXACTLY 1 drill object for EACH item in 'reading.focus'. Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English.
 6. 'quiz': Create EXACTLY 15 questions testing the reading and past context. Provide both the Ancient Greek sentence and its transliteration. Use '_____' (5 underscores) for the blank.
-7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj').`,
+7. 'newLemmas': Extract the 3 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
