@@ -1809,22 +1809,36 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
   const [newWordPos, setNewWordPos] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isObjectArray = Array.isArray(globalLexicon) || (globalLexicon && globalLexicon.entries && Array.isArray(globalLexicon.entries));
+  // Mandarin dynamically uses old distinct lists; others use the unified array
+  const isObjectArray = config.id !== 'mandarin';
+  
+  const getUniqueId = useCallback((w) => w.id || (typeof w === 'string' ? w : (w.word || w[config.primaryTextKey])), [config.primaryTextKey]);
 
   const allTaggedWords = useMemo(() => {
     if (!globalLexicon || Object.keys(globalLexicon).length === 0) return [];
     let arr = [];
+    
+    // Always fetch both lists safely to prevent data loss visibly.
+    const existingEntries = globalLexicon.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
+    const existingAcc = globalLexicon.accumulated || [];
+    
     if (isObjectArray) {
-      const list = globalLexicon.entries || globalLexicon || [];
-      list.forEach(w => arr.push({ word: w, listKey: 'entries' }));
+      const combined = [...existingEntries, ...existingAcc];
+      const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+      unique.forEach(w => arr.push({ word: w, listKey: 'entries' }));
     } else {
-      ['accumulated', 'hsk4', 'hsk3', 'hsk2', 'hsk1'].forEach(key => {
+      const combinedAcc = [...existingAcc, ...existingEntries];
+      const uniqueAcc = Array.from(new Map(combinedAcc.map(w => [getUniqueId(w), w])).values());
+      uniqueAcc.forEach(w => arr.push({ word: w, listKey: 'accumulated' }));
+      
+      ['hsk4', 'hsk3', 'hsk2', 'hsk1'].forEach(key => {
         const list = globalLexicon[key] || [];
         list.forEach(w => arr.push({ word: w, listKey: key }));
       });
     }
+    
     return arr;
-  }, [globalLexicon, isObjectArray]);
+  }, [globalLexicon, isObjectArray, config, getUniqueId]);
 
   const duplicateWords = useMemo(() => {
     const counts = {};
@@ -1935,13 +1949,18 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
 
       const docName = config.lexiconDoc || 'lexicon';
       const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+      
+      const existingEntries = globalLexicon.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
+      const existingAcc = globalLexicon.accumulated || [];
 
       if (isObjectArray) {
-        const list = globalLexicon.entries || globalLexicon;
-        await lexRef.set({ entries: [newEntry, ...list] }, { merge: true });
+        const combined = [...existingEntries, ...existingAcc];
+        const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+        await lexRef.set({ entries: [newEntry, ...unique] }, { merge: true });
       } else {
-        const list = globalLexicon.accumulated || [];
-        await lexRef.set({ accumulated: [newEntry, ...list] }, { merge: true });
+        const combined = [...existingAcc, ...existingEntries];
+        const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+        await lexRef.set({ accumulated: [newEntry, ...unique] }, { merge: true });
       }
 
       setNewWordTarget(''); setNewWordTranslit(''); setNewWordEnglish(''); setNewWordPos(''); setShowAddForm(false);
@@ -1984,14 +2003,25 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
     };
 
     try {
+      const existingEntries = globalLexicon.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
+      const existingAcc = globalLexicon.accumulated || [];
+
       if (isObjectArray) {
-          const list = globalLexicon.entries || globalLexicon || [];
-          const newList = list.map(w => isMatch(w) ? updatedWord : w);
+          const combined = [...existingEntries, ...existingAcc];
+          const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+          const newList = unique.map(w => isMatch(w) ? updatedWord : w);
           await lexRef.set({ entries: newList }, { merge: true });
       } else {
-          const list = globalLexicon[editListKey] || [];
-          const newList = list.map(w => isMatch(w) ? updatedWord : w);
-          await lexRef.set({ [editListKey]: newList }, { merge: true });
+          if (editListKey === 'accumulated' || editListKey === 'entries') {
+              const combined = [...existingAcc, ...existingEntries];
+              const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+              const newList = unique.map(w => isMatch(w) ? updatedWord : w);
+              await lexRef.set({ accumulated: newList }, { merge: true });
+          } else {
+              const list = globalLexicon[editListKey] || [];
+              const newList = list.map(w => isMatch(w) ? updatedWord : w);
+              await lexRef.set({ [editListKey]: newList }, { merge: true });
+          }
       }
       setEditingWord(null);
     } catch (err) { console.error(err); } 
@@ -2008,20 +2038,31 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
         if (w.id && editingWord.id) {
             return w.id === editingWord.id;
         }
-        const targetW = w[config.primaryTextKey] || w.word;
-        const targetEdit = editingWord[config.primaryTextKey] || editingWord.word;
+        const targetW = typeof w === 'string' ? w : (w[config.primaryTextKey] || w.word);
+        const targetEdit = typeof editingWord === 'string' ? editingWord : (editingWord[config.primaryTextKey] || editingWord.word);
         return targetW && targetEdit && targetW === targetEdit;
     };
 
     try {
+      const existingEntries = globalLexicon.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
+      const existingAcc = globalLexicon.accumulated || [];
+
       if (isObjectArray) {
-          const list = globalLexicon.entries || globalLexicon || [];
-          const newList = list.filter(w => !isMatch(w));
+          const combined = [...existingEntries, ...existingAcc];
+          const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+          const newList = unique.filter(w => !isMatch(w));
           await lexRef.set({ entries: newList }, { merge: true }); 
       } else {
-          const list = globalLexicon[editListKey] || [];
-          const newList = list.filter(w => !isMatch(w));
-          await lexRef.set({ [editListKey]: newList }, { merge: true });
+          if (editListKey === 'accumulated' || editListKey === 'entries') {
+              const combined = [...existingAcc, ...existingEntries];
+              const unique = Array.from(new Map(combined.map(w => [getUniqueId(w), w])).values());
+              const newList = unique.filter(w => !isMatch(w));
+              await lexRef.set({ accumulated: newList }, { merge: true });
+          } else {
+              const list = globalLexicon[editListKey] || [];
+              const newList = list.filter(w => !isMatch(w));
+              await lexRef.set({ [editListKey]: newList }, { merge: true });
+          }
       }
       setEditingWord(null);
     } catch (err) { console.error(err); } 
