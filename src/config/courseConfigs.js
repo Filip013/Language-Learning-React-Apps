@@ -398,7 +398,7 @@ TASKS:
         hasTestTab: false,
         hasSweepTab: false,
 
-        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: Read the provided Latinized transliteration of Ancient Greek using Classical Erasmian pronunciation. Maintain proper vowel lengths, diphthongs, and pitch accents.",
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: Read the provided transliteration of Ancient Greek using restored Classical pronunciation. Maintain proper vowel lengths, diphthongs, and pitch accents.",
         promptSystemInstruction: `You are an expert Classical Ancient Greek curriculum designer. Generate a highly structured lesson in Polytonic Ancient Greek with Latinized Transliteration.
 
 CRITICAL RULES:
