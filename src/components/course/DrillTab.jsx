@@ -97,7 +97,6 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
   }, [isManuallyRevealed, drillRevealed, exId, updateFirebase]);
 
   const handleNext = useCallback(() => {
-    stopSpeak();
     setShowLexicalNote(false);
     setSlideDirection('next');
     if (currentExIdx < totalExamples - 1) {
@@ -108,10 +107,9 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
     } else if (onTabNext) {
       onTabNext();
     }
-  }, [currentExIdx, currentWordIdx, totalExamples, totalWords, stopSpeak, onTabNext]);
+  }, [currentExIdx, currentWordIdx, totalExamples, totalWords, onTabNext]);
 
   const handlePrev = useCallback(() => {
-    stopSpeak();
     setShowLexicalNote(false);
     setSlideDirection('prev');
     if (currentExIdx > 0) {
@@ -122,7 +120,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
     } else if (onTabPrev) {
       onTabPrev();
     }
-  }, [currentExIdx, currentWordIdx, activeEpisode, stopSpeak, onTabPrev]);
+  }, [currentExIdx, currentWordIdx, activeEpisode, onTabPrev]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -143,13 +141,13 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
         case 's':
         case 'S':
           e.preventDefault();
-          if (currentWordIdx < totalWords - 1) { stopSpeak(); setSlideDirection('next'); setCurrentWordIdx(p => p + 1); }
+          if (currentWordIdx < totalWords - 1) { setSlideDirection('next'); setCurrentWordIdx(p => p + 1); }
           break;
         case 'ArrowUp':
         case 'a':
         case 'A':
           e.preventDefault();
-          if (currentWordIdx > 0) { stopSpeak(); setSlideDirection('prev'); setCurrentWordIdx(p => p - 1); }
+          if (currentWordIdx > 0) { setSlideDirection('prev'); setCurrentWordIdx(p => p - 1); }
           break;
         case ' ':
           e.preventDefault();
@@ -218,7 +216,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
               <button 
                 key={idx} 
                 data-active={isCurrentWord}
-                onClick={() => { stopSpeak(); setSlideDirection(idx > currentWordIdx ? 'next' : 'prev'); setCurrentWordIdx(idx); setCurrentExIdx(0); setShowLexicalNote(false); }} 
+                onClick={() => { setSlideDirection(idx > currentWordIdx ? 'next' : 'prev'); setCurrentWordIdx(idx); setCurrentExIdx(0); setShowLexicalNote(false); }} 
                 className={cardClasses}
               >
                 {drill.word}
@@ -338,7 +336,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
           
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar px-2 w-full justify-center">
             {currentSection.examples?.map((_, idx) => (
-              <button key={idx} onClick={() => { stopSpeak(); setSlideDirection(idx > currentExIdx ? 'next' : 'prev'); setCurrentExIdx(idx); }} className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-xs font-bold transition-all border ${currentExIdx === idx ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-50 border-amber-400 text-stone-900 shadow-sm') : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-855 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')}`}>
+              <button key={idx} onClick={() => { setSlideDirection(idx > currentExIdx ? 'next' : 'prev'); setCurrentExIdx(idx); }} className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-xs font-bold transition-all border ${currentExIdx === idx ? (isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900 shadow-sm' : 'bg-amber-50 border-amber-400 text-stone-900 shadow-sm') : (isDarkMode ? 'bg-stone-900 border-stone-800 text-stone-400 hover:bg-stone-855 hover:text-stone-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')}`}>
                 {idx + 1}
               </button>
             ))}

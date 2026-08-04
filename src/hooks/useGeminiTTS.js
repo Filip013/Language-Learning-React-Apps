@@ -61,7 +61,6 @@ export function useGeminiTTS(systemInstruction) {
         }
 
         if (audioContext.current) nextAudioTime.current = audioContext.current.currentTime; 
-        if (currentOnComplete.current) currentOnComplete.current();
         currentOnComplete.current = null;
         currentOnError.current = null;
     }, []);

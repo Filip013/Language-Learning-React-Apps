@@ -92,24 +92,22 @@ export default function QuizTab({ isActive, isDarkMode, activeEpisode, progressS
   }, [playingId, stopSpeak, handleSpeak, config.ttsUseTransliteration]);
 
   const handleNext = useCallback(() => { 
-    stopSpeak(); 
     if (currentIdx < shuffledData.length - 1) {
       setSlideDirection('next');
       setCurrentIdx(prev => prev + 1); 
     } else if (onTabNext) {
       onTabNext();
     }
-  }, [currentIdx, shuffledData.length, stopSpeak, onTabNext]);
+  }, [currentIdx, shuffledData.length, onTabNext]);
 
   const handlePrev = useCallback(() => { 
-    stopSpeak(); 
     if (currentIdx > 0) {
       setSlideDirection('prev');
       setCurrentIdx(prev => prev - 1); 
     } else if (onTabPrev) {
       onTabPrev();
     }
-  }, [currentIdx, stopSpeak, onTabPrev]);
+  }, [currentIdx, onTabPrev]);
 
   const q = shuffledData[currentIdx];
   const qId = q ? `quiz_${q.id}` : '';
@@ -245,7 +243,7 @@ export default function QuizTab({ isActive, isDarkMode, activeEpisode, progressS
               <button 
                 key={idx} 
                 data-active={isCurrent}
-                onClick={() => { stopSpeak(); setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
+                onClick={() => { setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
                 className={cardClasses}
               >
                 {idx + 1}

@@ -64,24 +64,22 @@ export default function TestTab({ isActive, isDarkMode, activeEpisode, progressS
   }, [playingId, mst, rev, item, config.ttsUseTransliteration, config.transliterationKey, handleSpeak, stopSpeak, updateFirebase]);
 
   const handleNext = useCallback(() => { 
-    stopSpeak(); 
     if (currentIdx < totalItems - 1) {
       setSlideDirection('next');
       setCurrentIdx(prev => prev + 1); 
     } else if (onTabNext) {
       onTabNext();
     }
-  }, [currentIdx, totalItems, stopSpeak, onTabNext]);
+  }, [currentIdx, totalItems, onTabNext]);
 
   const handlePrev = useCallback(() => { 
-    stopSpeak(); 
     if (currentIdx > 0) {
       setSlideDirection('prev');
       setCurrentIdx(prev => prev - 1); 
     } else if (onTabPrev) {
       onTabPrev();
     }
-  }, [currentIdx, stopSpeak, onTabPrev]);
+  }, [currentIdx, onTabPrev]);
   
   const resetTest = () => { updateFirebase({ testMastered: {}, testRevealed: {} }); setShowConfirmReset(false); setCurrentIdx(0); };
 
@@ -193,7 +191,7 @@ export default function TestTab({ isActive, isDarkMode, activeEpisode, progressS
               <button 
                 key={idx} 
                 data-active={isCurrent}
-                onClick={() => { stopSpeak(); setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
+                onClick={() => { setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
                 className={cardClasses}
               >
                 {idx + 1}

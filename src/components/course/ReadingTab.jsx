@@ -63,23 +63,21 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
 
   const handleNext = useCallback(() => {
     if (currentIndex < pages.length - 1) {
-      stopSpeak();
       setSlideDirection('next');
       setActiveView(pages[currentIndex + 1].id);
     } else if (onTabNext) {
       onTabNext();
     }
-  }, [currentIndex, pages, stopSpeak, onTabNext]);
+  }, [currentIndex, pages, onTabNext]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
-      stopSpeak();
       setSlideDirection('prev');
       setActiveView(pages[currentIndex - 1].id);
     } else if (onTabPrev) {
       onTabPrev();
     }
-  }, [currentIndex, pages, stopSpeak, onTabPrev]);
+  }, [currentIndex, pages, onTabPrev]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: handleNext,
@@ -173,7 +171,6 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
             <button 
               key={p.id} 
               onClick={() => {
-                stopSpeak();
                 setSlideDirection(idx > currentIndex ? 'next' : 'prev');
                 setActiveView(p.id);
               }}

@@ -78,23 +78,21 @@ export default function EpisodeTab({ isActive, isDarkMode, activeEpisode, progre
 
   const handleNext = useCallback(() => {
     if (currentIndex < versions.length - 1) {
-      stopSpeak();
       setSlideDirection('next');
       setActiveView(versions[currentIndex + 1].id);
     } else if (onTabNext) {
       onTabNext();
     }
-  }, [currentIndex, versions, stopSpeak, onTabNext]);
+  }, [currentIndex, versions, onTabNext]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
-      stopSpeak();
       setSlideDirection('prev');
       setActiveView(versions[currentIndex - 1].id);
     } else if (onTabPrev) {
       onTabPrev();
     }
-  }, [currentIndex, versions, stopSpeak, onTabPrev]);
+  }, [currentIndex, versions, onTabPrev]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: handleNext,
@@ -172,7 +170,6 @@ export default function EpisodeTab({ isActive, isDarkMode, activeEpisode, progre
             <button 
               key={v.id} 
               onClick={() => {
-                stopSpeak();
                 setSlideDirection(idx > currentIndex ? 'next' : 'prev');
                 setActiveView(v.id);
               }}

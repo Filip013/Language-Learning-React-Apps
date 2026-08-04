@@ -36,7 +36,7 @@ export default function LingoCraft() {
     const [revealedSentences, setRevealedSentences] = useState(new Set());
     
     // Playback & Layout State
-    const [playState, setPlayState] = useState({ index: null, status: 'idle' });
+    const [playingId, setPlayingId] = useState(null);
     const [currentIdx, setCurrentIdx] = useState(0);
     const [slideDirection, setSlideDirection] = useState('next');
     const [showSearchOverlay, setShowSearchOverlay] = useState(false);
@@ -117,7 +117,7 @@ export default function LingoCraft() {
         setError(null);
         setResult(null);
         stopSpeak();
-        setPlayState({ index: null, status: 'idle' });
+        setPlayingId(null);
         
         // Reset Layout States
         setCurrentIdx(0);
@@ -239,51 +239,45 @@ export default function LingoCraft() {
         });
     }, []);
 
-    const toggleAudio = (item, index, langName) => {
-        if (playState.index === index && playState.status === 'playing') {
+    const toggleAudio = useCallback((item, index, langName) => {
+        if (playingId !== null) {
             stopSpeak();
-            setPlayState({ index: null, status: 'idle' });
+            setPlayingId(null);
             return;
         }
 
         stopSpeak();
-        setPlayState({ index, status: 'loading' });
+        setPlayingId(index);
 
         const ttsText = getTTSText(item, langName);
 
         handleSpeak(
             ttsText,
             () => {
-                setPlayState({ index: null, status: 'idle' });
-                revealCurrentSentence(index); // Text is revealed ONLY after audio completes successfully
+                setPlayingId(null);
+                revealCurrentSentence(index);
             },
             () => {
-                setPlayState({ index: null, status: 'idle' });
+                setPlayingId(null);
                 setError("Audio generation failed for this sentence.");
             }
         );
-        
-        setTimeout(() => setPlayState(prev => prev.index === index ? { index, status: 'playing' } : prev), 300);
-    };
+    }, [playingId, stopSpeak, handleSpeak, revealCurrentSentence]);
 
     // --- Navigation Logic for Cards ---
     const handleNext = useCallback(() => {
         if (result && currentIdx < result.sentences.length - 1) {
-            stopSpeak();
-            setPlayState({ index: null, status: 'idle' });
             setSlideDirection('next');
             setCurrentIdx(prev => prev + 1);
         }
-    }, [currentIdx, result, stopSpeak]);
+    }, [currentIdx, result]);
 
     const handlePrev = useCallback(() => {
         if (result && currentIdx > 0) {
-            stopSpeak();
-            setPlayState({ index: null, status: 'idle' });
             setSlideDirection('prev');
             setCurrentIdx(prev => prev - 1);
         }
-    }, [currentIdx, result, stopSpeak]);
+    }, [currentIdx, result]);
 
     const swipeHandlers = useSwipeable({
         onSwipedLeft: handleNext,
@@ -306,8 +300,8 @@ export default function LingoCraft() {
                 return;
             }
 
-            // Exclude active input, textarea, select, and button element interactions from capturing app navigation hotkeys
-            if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement?.tagName)) return;
+            // Exclude active input and textarea element interactions from capturing app navigation hotkeys
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
 
             const scrollContainer = cardRef.current?.querySelector('.overflow-y-auto');
 
@@ -354,6 +348,7 @@ export default function LingoCraft() {
                 case ' ':
                     if (result) {
                         e.preventDefault();
+                        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
                         toggleAudio(result.sentences[currentIdx], currentIdx, result.targetLanguage.name);
                     }
                     break;
@@ -363,7 +358,7 @@ export default function LingoCraft() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [activeTab, result, currentIdx, handleNext, handlePrev, revealCurrentSentence]);
+    }, [activeTab, result, currentIdx, playingId, handleNext, handlePrev, revealCurrentSentence, toggleAudio]);
 
     const { isCjk, fontClass } = getFontStyles(result?.targetLanguage?.name);
     const isTargetEnglish = result?.targetLanguage?.name === 'English';
@@ -379,8 +374,7 @@ export default function LingoCraft() {
     const showCardLayout = activeTab === 'main' && result && !loading;
     const currentSentence = result?.sentences?.[currentIdx];
     const isRevealed = isNoBlurLang || revealedSentences.has(currentIdx);
-    const isPlaying = playState.index === currentIdx && playState.status === 'playing';
-    const isLoadingAudio = playState.index === currentIdx && playState.status === 'loading';
+    const isPlaying = playingId !== null;
 
     // Search bar is visible only on main launch screen (when result & loading are absent)
     const showDefaultSearchBar = activeTab === 'main' && !result && !loading;
@@ -640,7 +634,7 @@ export default function LingoCraft() {
                                     {result.sentences.map((_, idx) => (
                                         <button 
                                             key={idx} 
-                                            onClick={() => { stopSpeak(); setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
+                                            onClick={() => { setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
                                             className={`w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-xs font-bold transition-all border ${currentIdx === idx ? (isDarkMode ? 'bg-blue-600 border-blue-500 text-white shadow-sm' : 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm') : (isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800')}`}
                                         >
                                             {idx + 1}
@@ -702,9 +696,13 @@ export default function LingoCraft() {
                                                     <div className="absolute inset-0 flex flex-col sm:flex-row items-center justify-center gap-3 z-10 p-4">
                                                         <button 
                                                             onClick={() => toggleAudio(currentSentence, currentIdx, result.targetLanguage.name)} 
-                                                            className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'}`}
+                                                            className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${
+                                                                isPlaying
+                                                                    ? 'bg-amber-500/20 text-amber-500 border-amber-500/40 hover:bg-amber-500/30'
+                                                                    : isDarkMode ? 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                                            }`}
                                                         >
-                                                            {isLoadingAudio ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />} Play to Reveal
+                                                            {isPlaying ? <Pause size={18} className="text-amber-500 animate-pulse" /> : <Volume2 size={18} />} {isPlaying ? 'Pause' : 'Play to Reveal'}
                                                         </button>
                                                         <button 
                                                             onClick={() => revealCurrentSentence(currentIdx)} 
@@ -738,15 +736,14 @@ export default function LingoCraft() {
                                                 </button>
                                                 <button
                                                     onClick={() => toggleAudio(currentSentence, currentIdx, result.targetLanguage.name)}
-                                                    disabled={isLoadingAudio}
-                                                    title={isPlaying ? 'Pause Audio' : 'Play Audio (Space)'}
+                                                    title={isPlaying ? 'Pause Audio (Space)' : 'Play Audio (Space)'}
                                                     className={`p-1 rounded-full border transition-all active:scale-95 shadow-sm ${
                                                         isPlaying 
                                                             ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500 shadow-emerald-500/10' 
                                                             : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:text-blue-300 hover:bg-zinc-700' : 'bg-white border-stone-200 text-blue-600 hover:text-blue-700 hover:bg-stone-50'
                                                     }`}
                                                 >
-                                                    {isLoadingAudio ? <Loader2 size={20} className="animate-spin text-amber-500" /> : isPlaying ? <Pause size={20} /> : <Volume2 size={20} />}
+                                                    {isPlaying ? <Pause size={20} className="text-emerald-500 animate-pulse" /> : <Volume2 size={20} />}
                                                 </button>
                                             </div>
                                         </div>

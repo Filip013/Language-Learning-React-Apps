@@ -57,24 +57,22 @@ export default function SweepTab({ isActive, isDarkMode, activeEpisode, progress
   }, [playingId, mst, rev, handleSpeak, stopSpeak, updateFirebase]);
 
   const handleNext = useCallback(() => { 
-    stopSpeak(); 
     if (currentIdx < totalItems - 1) {
       setSlideDirection('next');
       setCurrentIdx(prev => prev + 1); 
     } else if (onTabNext) {
       onTabNext();
     }
-  }, [currentIdx, totalItems, stopSpeak, onTabNext]);
+  }, [currentIdx, totalItems, onTabNext]);
 
   const handlePrev = useCallback(() => { 
-    stopSpeak(); 
     if (currentIdx > 0) {
       setSlideDirection('prev');
       setCurrentIdx(prev => prev - 1); 
     } else if (onTabPrev) {
       onTabPrev();
     }
-  }, [currentIdx, stopSpeak, onTabPrev]);
+  }, [currentIdx, onTabPrev]);
   
   const resetSweep = () => { updateFirebase({ sweepMastered: {}, sweepRevealed: {} }); setShowConfirmReset(false); setCurrentIdx(0); };
 
@@ -113,6 +111,7 @@ export default function SweepTab({ isActive, isDarkMode, activeEpisode, progress
           break;
         case ' ':
           e.preventDefault();
+          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
           playSweep(qId, textToRead, rev[qId]);
           break;
         case 'n': case 'N':
@@ -186,7 +185,7 @@ export default function SweepTab({ isActive, isDarkMode, activeEpisode, progress
               <button 
                 key={idx} 
                 data-active={isCurrent}
-                onClick={() => { stopSpeak(); setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
+                onClick={() => { setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
                 className={cardClasses}
               >
                 {idx + 1}
