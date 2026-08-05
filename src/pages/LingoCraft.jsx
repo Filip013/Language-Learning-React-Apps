@@ -18,6 +18,17 @@ import AiTranslatePopup from '../components/common/AiTranslatePopup';
 
 const dbAppId = 'lingocraft';
 
+const getLangObj = (targetLang) => {
+    if (!targetLang) return { name: 'English', flag: '🇬🇧' };
+    if (typeof targetLang === 'string') {
+        const found = LANGUAGES.find(l => l.name === targetLang || l.code === targetLang);
+        return found || { name: targetLang, flag: '🌍' };
+    }
+    const name = targetLang.name || 'English';
+    const flag = targetLang.flag || (LANGUAGES.find(l => l.name === name)?.flag) || '🌍';
+    return { name, flag };
+};
+
 export default function LingoCraft() {
     const [user, setUser] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -190,7 +201,7 @@ export default function LingoCraft() {
             setResult(enrichedResult);
             setActiveTab('main');
 
-            const newHistory = [enrichedResult, ...history.filter(h => h.word.toLowerCase() !== enrichedResult.word.toLowerCase() || h.targetLanguage.name !== enrichedResult.targetLanguage.name)].slice(0, 40);
+            const newHistory = [enrichedResult, ...history.filter(h => h.word.toLowerCase() !== enrichedResult.word.toLowerCase() || getLangObj(h.targetLanguage).name !== getLangObj(enrichedResult.targetLanguage).name)].slice(0, 40);
             setHistory(newHistory);
             
             await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
@@ -217,7 +228,7 @@ export default function LingoCraft() {
     const loadHistoryItem = (item) => {
         setResult(item);
         setWord('');
-        setSelectedLanguage(item.targetLanguage.name);
+        setSelectedLanguage(getLangObj(item.targetLanguage).name);
         setSelectedLevel(item.level);
         setCurrentIdx(0);
         setRevealedSentences(new Set([0, 1, 2, 3, 4]));
@@ -349,7 +360,7 @@ export default function LingoCraft() {
                     if (result) {
                         e.preventDefault();
                         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-                        toggleAudio(result.sentences[currentIdx], currentIdx, result.targetLanguage.name);
+                        toggleAudio(result.sentences[currentIdx], currentIdx, getLangObj(result?.targetLanguage).name);
                     }
                     break;
                 default:
@@ -360,14 +371,17 @@ export default function LingoCraft() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activeTab, result, currentIdx, playingId, handleNext, handlePrev, revealCurrentSentence, toggleAudio]);
 
-    const { isCjk, fontClass } = getFontStyles(result?.targetLanguage?.name);
-    const isTargetEnglish = result?.targetLanguage?.name === 'English';
-    const isNoBlurLang = result?.targetLanguage?.name === 'Latin' || result?.targetLanguage?.name === 'Ancient Greek' || result?.targetLanguage?.name === 'Serbian';
+    const activeLangName = getLangObj(result?.targetLanguage).name;
+    const { isCjk, fontClass } = getFontStyles(activeLangName);
+    const isTargetEnglish = activeLangName === 'English';
+    const isNoBlurLang = ['Latin', 'Ancient Greek', 'Serbian'].includes(activeLangName);
 
-    const filteredHistory = history.filter(i => 
-        i.word.toLowerCase().includes(historySearch.toLowerCase()) || 
-        i.targetLanguage.name.toLowerCase().includes(historySearch.toLowerCase())
-    );
+    const filteredHistory = history.filter(i => {
+        const wordStr = (i.word || '').toLowerCase();
+        const langName = getLangObj(i.targetLanguage).name.toLowerCase();
+        const search = (historySearch || '').toLowerCase();
+        return wordStr.includes(search) || langName.includes(search);
+    });
 
     if (!user) return null;
 
@@ -610,7 +624,7 @@ export default function LingoCraft() {
                                     <div className="flex items-center sm:items-end flex-row sm:flex-col gap-2 sm:gap-0.5 w-full sm:w-auto justify-between sm:justify-center">
                                         <div className={`text-[10px] font-bold uppercase tracking-wider hidden sm:block ${isDarkMode ? 'text-zinc-500' : 'text-stone-400'}`}>Target</div>
                                         <div className="text-xs sm:text-sm font-bold flex items-center gap-1.5">
-                                            <span>{result.targetLanguage.flag}</span> {result.targetLanguage.name}
+                                            <span>{getLangObj(result?.targetLanguage).flag}</span> {getLangObj(result?.targetLanguage).name}
                                         </div>
                                         <div className="text-xs sm:text-sm font-bold text-blue-500 flex items-center gap-1.5">
                                             <span className={`w-1 h-1 rounded-full bg-current opacity-50 sm:hidden`}></span>
@@ -695,7 +709,7 @@ export default function LingoCraft() {
                                                 {!isRevealed && (
                                                     <div className="absolute inset-0 flex flex-col sm:flex-row items-center justify-center gap-3 z-10 p-4">
                                                         <button 
-                                                            onClick={() => toggleAudio(currentSentence, currentIdx, result.targetLanguage.name)} 
+                                                            onClick={() => toggleAudio(currentSentence, currentIdx, getLangObj(result?.targetLanguage).name)} 
                                                             className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${
                                                                 isPlaying
                                                                     ? 'bg-amber-500/20 text-amber-500 border-amber-500/40 hover:bg-amber-500/30'
@@ -735,12 +749,12 @@ export default function LingoCraft() {
                                                     <Eye size={20} />
                                                 </button>
                                                 <button
-                                                    onClick={() => toggleAudio(currentSentence, currentIdx, result.targetLanguage.name)}
+                                                    onClick={() => toggleAudio(currentSentence, currentIdx, getLangObj(result?.targetLanguage).name)}
                                                     title={isPlaying ? 'Pause Audio (Space)' : 'Play Audio (Space)'}
                                                     className={`p-1 rounded-full border transition-all active:scale-95 shadow-sm ${
                                                         isPlaying 
                                                             ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500 shadow-emerald-500/10' 
-                                                            : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:text-blue-300 hover:bg-zinc-700' : 'bg-white border-stone-200 text-blue-600 hover:text-blue-700 hover:bg-stone-50'
+                                                            : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:bg-blue-300 hover:bg-zinc-700' : 'bg-white border-stone-200 text-blue-600 hover:bg-blue-700 hover:bg-stone-50'
                                                     }`}
                                                 >
                                                     {isPlaying ? <Pause size={20} className="text-emerald-500 animate-pulse" /> : <Volume2 size={20} />}
@@ -779,7 +793,8 @@ export default function LingoCraft() {
                             </div>
                         ) : (
                             filteredHistory.map((item) => {
-                                const { isCjk: isHistCjk, fontClass: histFontClass } = getFontStyles(item.targetLanguage.name);
+                                const itemLang = getLangObj(item.targetLanguage);
+                                const { isCjk: isHistCjk, fontClass: histFontClass } = getFontStyles(itemLang.name);
                                 return (
                                     <div
                                         key={item.id}
@@ -795,7 +810,7 @@ export default function LingoCraft() {
                                                 {item.word}
                                             </div>
                                             <div className={`text-xs mt-1 font-medium flex items-center gap-2 ${isDarkMode ? 'text-zinc-400' : 'text-stone-500'}`}>
-                                                <span>{item.targetLanguage.flag} {item.targetLanguage.name}</span>
+                                                <span>{itemLang.flag} {itemLang.name}</span>
                                                 <span className="w-1 h-1 rounded-full bg-current opacity-50"></span>
                                                 <span>{item.level}</span>
                                             </div>
