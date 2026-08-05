@@ -28,12 +28,14 @@ export const LEVELS = [
 
 export const getFontStyles = (langName, textContent = '') => {
     const name = String(langName || '').toLowerCase();
-    const hasCjkChar = /[\u4e00-\u9fff\u3040-\u30ff]/.test(String(textContent || ''));
-    
-    if (name.includes('japanese') || name.includes('ja') || name.includes('kanji') || name.includes('kana')) {
+    const str = String(textContent || '');
+    const hasKana = /[\u3040-\u30ff]/.test(str);
+    const hasHan = /[\u4e00-\u9fff]/.test(str);
+
+    if (name.includes('japanese') || name.includes('ja') || name.includes('kanji') || name.includes('kana') || hasKana) {
         return { isCjk: true, fontClass: 'font-ja' };
     }
-    if (name.includes('chinese') || name.includes('mandarin') || name.includes('cantonese') || name.includes('zh') || name.includes('taiwanese') || name.includes('cjk') || hasCjkChar) {
+    if (name.includes('chinese') || name.includes('mandarin') || name.includes('cantonese') || name.includes('zh') || name.includes('taiwanese') || name.includes('cjk') || hasHan) {
         return { isCjk: true, fontClass: 'font-zh moe-font' };
     }
     return { isCjk: false, fontClass: '' };

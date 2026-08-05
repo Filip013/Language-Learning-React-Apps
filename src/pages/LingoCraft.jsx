@@ -772,7 +772,8 @@ export default function LingoCraft() {
                         ) : (
                             filteredHistory.map((item) => {
                                 const itemLang = getLangObj(item.targetLanguage);
-                                const { isCjk: isHistCjk, fontClass: histFontClass } = getFontStyles(itemLang.name, item.word || '');
+                                const sampleHistText = (item.word || '') + ' ' + (item.sentences?.[0]?.original || '');
+                                const { isCjk: isHistCjk, fontClass: histFontClass } = getFontStyles(itemLang.name, sampleHistText);
                                 return (
                                     <div
                                         key={item.id}
