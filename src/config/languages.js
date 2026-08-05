@@ -26,14 +26,15 @@ export const LEVELS = [
     { id: 'Advanced', label: 'C1-C2' }
 ];
 
-export const getFontStyles = (langName) => {
-    if (!langName) return { isCjk: false, fontClass: '' };
-    const name = String(langName).toLowerCase();
-    if (name.includes('chinese') || name.includes('mandarin') || name.includes('cantonese') || name.includes('zh') || name.includes('taiwanese')) {
-        return { isCjk: true, fontClass: 'font-zh moe-font' };
-    }
+export const getFontStyles = (langName, textContent = '') => {
+    const name = String(langName || '').toLowerCase();
+    const hasCjkChar = /[\u4e00-\u9fff\u3040-\u30ff]/.test(String(textContent || ''));
+    
     if (name.includes('japanese') || name.includes('ja') || name.includes('kanji') || name.includes('kana')) {
         return { isCjk: true, fontClass: 'font-ja' };
+    }
+    if (name.includes('chinese') || name.includes('mandarin') || name.includes('cantonese') || name.includes('zh') || name.includes('taiwanese') || name.includes('cjk') || hasCjkChar) {
+        return { isCjk: true, fontClass: 'font-zh moe-font' };
     }
     return { isCjk: false, fontClass: '' };
 };

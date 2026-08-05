@@ -371,8 +371,10 @@ export default function LingoCraft() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activeTab, result, currentIdx, playingId, handleNext, handlePrev, revealCurrentSentence, toggleAudio]);
 
-    const activeLangName = getLangObj(result?.targetLanguage).name;
-    const { isCjk, fontClass } = getFontStyles(activeLangName);
+    const activeLangName = result?.targetLanguage ? getLangObj(result.targetLanguage).name : selectedLanguage;
+    const currentSentence = result?.sentences?.[currentIdx];
+    const sampleText = currentSentence?.original || result?.word || '';
+    const { isCjk, fontClass } = getFontStyles(activeLangName, sampleText);
     const { fontClass: selFontClass } = getFontStyles(selectedLanguage);
     const isTargetEnglish = activeLangName === 'English';
     const isNoBlurLang = ['Latin', 'Ancient Greek', 'Serbian'].includes(activeLangName);
@@ -387,7 +389,6 @@ export default function LingoCraft() {
     if (!user) return null;
 
     const showCardLayout = activeTab === 'main' && result && !loading;
-    const currentSentence = result?.sentences?.[currentIdx];
     const isRevealed = isNoBlurLang || revealedSentences.has(currentIdx);
     const isPlaying = playingId !== null;
 
@@ -771,7 +772,7 @@ export default function LingoCraft() {
                         ) : (
                             filteredHistory.map((item) => {
                                 const itemLang = getLangObj(item.targetLanguage);
-                                const { isCjk: isHistCjk, fontClass: histFontClass } = getFontStyles(itemLang.name);
+                                const { isCjk: isHistCjk, fontClass: histFontClass } = getFontStyles(itemLang.name, item.word || '');
                                 return (
                                     <div
                                         key={item.id}
