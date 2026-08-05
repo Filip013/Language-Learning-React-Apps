@@ -124,37 +124,69 @@ export default function Home() {
 
 
 
+    useEffect(() => {
+        if (!isTauri()) return;
+        let unlisten = null;
+        import('@tauri-apps/plugin-deep-link').then(({ onOpenUrl }) => {
+            onOpenUrl((urls) => {
+                for (const urlStr of urls) {
+                    try {
+                        const url = new URL(urlStr);
+                        const token = url.searchParams.get('token');
+                        if (token) {
+                            const credential = auth.GoogleAuthProvider.credential(token.trim());
+                            auth.signInWithCredential(credential).then(() => {
+                                window.location.reload();
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Deep link parse error:", e);
+                    }
+                }
+            }).then(fn => { unlisten = fn; });
+        }).catch(console.error);
+
+        return () => { if (unlisten) unlisten(); };
+    }, []);
+
     const handleLogin = async () => {
         if (isTauri()) {
             try {
                 const { openUrl } = await import('@tauri-apps/plugin-opener');
-                const baseUrl = import.meta.env.DEV ? "http://localhost:5173" : "https://lingo-hub-nine.vercel.app";
-                const authProxyUrl = `${baseUrl}/desktop-auth?source=tauri`;
+                const authProxyUrl = "https://lingo-hub-nine.vercel.app/desktop-auth?source=tauri";
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 
-                // Start the local server to listen for the token (do this BEFORE opening the URL)
-                const tokenPromise = invoke('start_auth_server');
-                
-                // Open the browser (DO NOT await this, as xdg-open can block on Linux)
-                openUrl(authProxyUrl).catch(console.error);
-                
-                // Wait for the local server to receive the token
-                const token = await tokenPromise;
-                
-                if (token) {
-                    const credential = auth.GoogleAuthProvider.credential(token.trim());
+                if (!isMobile) {
+                    // Start local TCP server for Windows/Linux desktop
+                    const tokenPromise = invoke('start_auth_server');
+                    openUrl(authProxyUrl).catch(console.error);
                     
-                    // Because we wrapped firebase.js with the v9 Modular Auth API initialized
-                    // with browserLocalPersistence, this will execute instantaneously and perfectly
-                    // serialize the user session to IndexedDB WITHOUT loading the hanging iframe!
-                    await auth.signInWithCredential(credential);
+                    // Race between local TCP server and manual paste
+                    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
+                    let token = await Promise.race([tokenPromise, timeoutPromise]);
                     
-                    window.location.reload();
+                    if (!token) {
+                        token = prompt("If your browser didn't redirect automatically, paste your auth token here:");
+                    }
+                    
+                    if (token && token.trim()) {
+                        const credential = auth.GoogleAuthProvider.credential(token.trim());
+                        await auth.signInWithCredential(credential);
+                        window.location.reload();
+                    }
                 } else {
-                    console.error("Token was null from Rust server!");
+                    // Mobile: Open Vercel Auth proxy in phone browser
+                    openUrl(authProxyUrl).catch(console.error);
+                    const manualToken = prompt("After signing in on your browser, paste your auth token here:");
+                    if (manualToken && manualToken.trim()) {
+                        const credential = auth.GoogleAuthProvider.credential(manualToken.trim());
+                        await auth.signInWithCredential(credential);
+                        window.location.reload();
+                    }
                 }
             } catch (err) {
-                console.error("Desktop Auth Error:", err);
-                alert("Desktop Auth Error: " + err);
+                console.error("Tauri Auth Error:", err);
+                alert("Auth Error: " + (err.message || err));
             }
         } else {
             try {

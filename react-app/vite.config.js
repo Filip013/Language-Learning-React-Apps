@@ -7,6 +7,7 @@ const base = process.env.VITE_BASE || '/';
 export default defineConfig({
   base,
   server: {
+    host: process.env.TAURI_DEV_HOST || false,
     watch: {
       ignored: ['**/src-tauri/**']
     }
