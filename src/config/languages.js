@@ -30,7 +30,7 @@ export const getFontStyles = (langName) => {
     if (!langName) return { isCjk: false, fontClass: '' };
     const name = String(langName).toLowerCase();
     if (name.includes('chinese') || name.includes('mandarin') || name.includes('cantonese') || name.includes('zh') || name.includes('taiwanese')) {
-        return { isCjk: true, fontClass: 'font-zh' };
+        return { isCjk: true, fontClass: 'font-zh moe-font' };
     }
     if (name.includes('japanese') || name.includes('ja') || name.includes('kanji') || name.includes('kana')) {
         return { isCjk: true, fontClass: 'font-ja' };

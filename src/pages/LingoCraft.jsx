@@ -396,30 +396,6 @@ export default function LingoCraft() {
 
     return (
         <div className={`flex flex-col transition-colors duration-300 ${showCardLayout ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]'} ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-stone-50 text-stone-900'}`}>
-            <style dangerouslySetInnerHTML={{__html: `
-              @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
-              @import url('https://db.onlinewebfonts.com/c/947e00387f802f409bd2f3e74b9c0730?family=HGSKyokashotai');
-              @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
-
-              /* Custom web font served from the home TV box server */
-              @font-face {
-                font-family: 'KyoKaSho';
-                src: url('https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2') format('woff2');
-                font-weight: normal;
-                font-style: normal;
-                font-display: swap;
-              }
-
-              .font-zh { font-family: 'DFKai-SB', 'STKaiti', 'KaiTi', 'BiauKai', 'Kaiti TC', serif !important; }
-              
-              /* Japanese font priority: KyoKaSho (TV Box) -> HGSKyokashotai -> STKaiti -> sans-serif */
-              .font-ja { font-family: 'KyoKaSho', 'HGSKyokashotai', 'STKaiti', sans-serif !important; }
-
-              html, body { scrollbar-width: none; -ms-overflow-style: none; }
-              html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
-              .no-scrollbar::-webkit-scrollbar { display: none !important; }
-              .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-            `}} />
 
             {/* TOP NAVIGATION BAR */}
             <nav className={`shrink-0 z-50 sticky top-0 backdrop-blur-md shadow-sm border-b ${isDarkMode ? 'bg-zinc-950/85 border-zinc-800' : 'bg-white/85 border-stone-200'}`}>
