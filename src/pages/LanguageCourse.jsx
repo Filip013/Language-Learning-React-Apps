@@ -1,9 +1,9 @@
-// src/pages/LanguageCourse.jsx
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   MessageSquare, Volume2, BookOpen, BookMarked, 
   CheckCircle2, PenTool, Activity, Search, 
-  Book 
+  Book, ArrowLeft
 } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { auth, db } from '../firebase';
@@ -721,13 +721,27 @@ export default function LanguageCourse({ config }) {
       )}
 
       {/* Top Navigation Bar */}
-      <nav className={`shrink-0 border-b overflow-x-auto no-scrollbar flex items-center justify-center gap-1.5 px-3 py-2 ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200 shadow-sm'}`}>
+      <nav className={`shrink-0 border-b overflow-x-auto no-scrollbar flex items-center justify-start md:justify-center gap-1.5 px-3 py-2 ${isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200 shadow-sm'}`}>
+        <Link 
+          to="/" 
+          className={`flex items-center justify-center p-2 md:px-2.5 md:py-1.5 rounded-lg border transition-all shrink-0 active:scale-95 ${isDarkMode ? 'bg-stone-800 border-stone-700 text-stone-300 hover:text-white hover:bg-stone-700' : 'bg-stone-100 border-stone-200 text-stone-600 hover:bg-stone-200 hover:text-stone-900'}`}
+          title="Back to Hub"
+        >
+          <ArrowLeft size={16} />
+          <span className="hidden md:inline text-xs md:text-sm font-bold ml-1.5">Home</span>
+        </Link>
+
         {navItems.map(item => {
           const Icon = item.icon;
           return (
-            <button key={item.id} onClick={() => handleTabSwitch(item.id)} className={`flex items-center gap-1.5 px-2.5 py-1 md:py-1.5 rounded-lg text-xs md:text-sm font-bold transition-colors whitespace-nowrap ${activeTab === item.id ? (isDarkMode ? 'bg-stone-700 text-amber-400' : 'bg-stone-800 text-white') : (isDarkMode ? 'text-stone-400 hover:bg-stone-800' : 'text-stone-500 hover:bg-stone-100')}`}>
-              <Icon size={14} />
-              <span>{item.label}</span>
+            <button 
+              key={item.id} 
+              onClick={() => handleTabSwitch(item.id)} 
+              title={item.label}
+              className={`flex items-center justify-center p-2 md:px-2.5 md:py-1.5 rounded-lg text-xs md:text-sm font-bold transition-colors whitespace-nowrap shrink-0 ${activeTab === item.id ? (isDarkMode ? 'bg-stone-700 text-amber-400' : 'bg-stone-800 text-white') : (isDarkMode ? 'text-stone-400 hover:bg-stone-800' : 'text-stone-500 hover:bg-stone-100')}`}
+            >
+              <Icon size={16} />
+              <span className="hidden md:inline ml-1.5">{item.label}</span>
             </button>
           );
         })}
