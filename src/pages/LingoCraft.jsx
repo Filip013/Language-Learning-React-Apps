@@ -373,6 +373,7 @@ export default function LingoCraft() {
 
     const activeLangName = getLangObj(result?.targetLanguage).name;
     const { isCjk, fontClass } = getFontStyles(activeLangName);
+    const { fontClass: selFontClass } = getFontStyles(selectedLanguage);
     const isTargetEnglish = activeLangName === 'English';
     const isNoBlurLang = ['Latin', 'Ancient Greek', 'Serbian'].includes(activeLangName);
 
@@ -409,7 +410,7 @@ export default function LingoCraft() {
                 font-display: swap;
               }
 
-              .font-zh { font-family: 'DFKai-SB', sans-serif !important; }
+              .font-zh { font-family: 'DFKai-SB', 'STKaiti', 'KaiTi', 'BiauKai', 'Kaiti TC', serif !important; }
               
               /* Japanese font priority: KyoKaSho (TV Box) -> HGSKyokashotai -> STKaiti -> sans-serif */
               .font-ja { font-family: 'KyoKaSho', 'HGSKyokashotai', 'STKaiti', sans-serif !important; }
@@ -476,7 +477,7 @@ export default function LingoCraft() {
                                     onChange={(e) => setWord(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                                     placeholder="Enter target word..."
-                                    className={`w-full pl-9 sm:pl-10 pr-4 py-1.5 sm:py-2.5 rounded-xl border text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-medium ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-100 placeholder-zinc-500' : 'bg-white border-stone-200 text-stone-800 placeholder-stone-400'}`}
+                                    className={`w-full pl-9 sm:pl-10 pr-4 py-1.5 sm:py-2.5 rounded-xl border text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-medium ${selFontClass} ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-100 placeholder-zinc-500' : 'bg-white border-stone-200 text-stone-800 placeholder-stone-400'}`}
                                 />
                             </div>
                             <div className="flex gap-2">
@@ -529,7 +530,7 @@ export default function LingoCraft() {
                                         }
                                     }}
                                     placeholder="Enter target word..."
-                                    className={`w-full pl-9 pr-4 py-2 rounded-xl border text-sm transition-all font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-100 placeholder-zinc-500' : 'bg-white border-stone-200 text-stone-800 placeholder-stone-400'}`}
+                                    className={`w-full pl-9 pr-4 py-2 rounded-xl border text-sm transition-all font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${selFontClass} ${isDarkMode ? 'bg-zinc-950 border-zinc-700 text-zinc-100 placeholder-zinc-500' : 'bg-white border-stone-200 text-stone-800 placeholder-stone-400'}`}
                                     autoFocus
                                     tabIndex={1}
                                 />
@@ -829,7 +830,7 @@ export default function LingoCraft() {
                 </main>
             )}
             {/* Global Shared AI Translate Popup */}
-            <AiTranslatePopup isDarkMode={isDarkMode} handleSpeak={handleSpeak} />
+            <AiTranslatePopup isDarkMode={isDarkMode} handleSpeak={handleSpeak} config={{ fontClass: fontClass }} />
         </div>
     );
 }

@@ -28,8 +28,13 @@ export const LEVELS = [
 
 export const getFontStyles = (langName) => {
     if (!langName) return { isCjk: false, fontClass: '' };
-    if (langName.includes('Chinese')) return { isCjk: true, fontClass: 'font-zh' };
-    if (langName.includes('Japanese')) return { isCjk: true, fontClass: 'font-ja' };
+    const name = String(langName).toLowerCase();
+    if (name.includes('chinese') || name.includes('mandarin') || name.includes('cantonese') || name.includes('zh') || name.includes('taiwanese')) {
+        return { isCjk: true, fontClass: 'font-zh' };
+    }
+    if (name.includes('japanese') || name.includes('ja') || name.includes('kanji') || name.includes('kana')) {
+        return { isCjk: true, fontClass: 'font-ja' };
+    }
     return { isCjk: false, fontClass: '' };
 };
 
