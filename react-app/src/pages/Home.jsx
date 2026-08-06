@@ -214,6 +214,51 @@ export default function Home() {
         </a>
     );
 
+    const renderAuthModal = () => {
+        if (!showAuthModal) return null;
+
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
+                <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-200 dark:border-zinc-800 overflow-hidden">
+                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-stone-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="bg-stone-100 dark:bg-zinc-800 p-1.5 sm:p-2 rounded-lg sm:rounded-xl">
+                                <Globe size={18} className="text-stone-700 dark:text-zinc-300" />
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-bold text-stone-800 dark:text-zinc-100">Finish Sign-In</h3>
+                        </div>
+                        <button onClick={() => setShowAuthModal(false)} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+                            <XCircle size={22} />
+                        </button>
+                    </div>
+
+                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 bg-stone-50 dark:bg-zinc-950/50">
+                        <p className="text-xs sm:text-sm text-stone-500 dark:text-zinc-400 font-medium leading-relaxed">
+                            Your browser should have opened the sign-in page. After signing in, copy the token shown there and paste it below:
+                        </p>
+                        <input
+                            type="text"
+                            value={pastedToken}
+                            onChange={(e) => setPastedToken(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitPastedToken(); }}
+                            placeholder="Paste your auth token here..."
+                            autoFocus
+                            className="w-full bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-stone-800 dark:text-zinc-100 placeholder-stone-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+                        />
+                        <button
+                            onClick={handleSubmitPastedToken}
+                            disabled={authLoading || !pastedToken.trim()}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2"
+                        >
+                            <Database size={18} />
+                            {authLoading ? 'Signing in...' : 'Sign in'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (!user) return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50 dark:bg-zinc-950 transition-colors duration-500 font-sans">
             <div className="bg-white dark:bg-zinc-900 p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-stone-200 dark:border-zinc-800 text-center max-w-sm w-full">
@@ -308,51 +353,6 @@ export default function Home() {
                                 </div>
                             ))
                         )}
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    const renderAuthModal = () => {
-        if (!showAuthModal) return null;
-
-        return (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
-                <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-200 dark:border-zinc-800 overflow-hidden">
-                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-stone-100 dark:border-zinc-800">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="bg-stone-100 dark:bg-zinc-800 p-1.5 sm:p-2 rounded-lg sm:rounded-xl">
-                                <Globe size={18} className="text-stone-700 dark:text-zinc-300" />
-                            </div>
-                            <h3 className="text-lg sm:text-xl font-bold text-stone-800 dark:text-zinc-100">Finish Sign-In</h3>
-                        </div>
-                        <button onClick={() => setShowAuthModal(false)} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
-                            <XCircle size={22} />
-                        </button>
-                    </div>
-
-                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 bg-stone-50 dark:bg-zinc-950/50">
-                        <p className="text-xs sm:text-sm text-stone-500 dark:text-zinc-400 font-medium leading-relaxed">
-                            Your browser should have opened the sign-in page. After signing in, copy the token shown there and paste it below:
-                        </p>
-                        <input
-                            type="text"
-                            value={pastedToken}
-                            onChange={(e) => setPastedToken(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitPastedToken(); }}
-                            placeholder="Paste your auth token here..."
-                            autoFocus
-                            className="w-full bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-stone-800 dark:text-zinc-100 placeholder-stone-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
-                        />
-                        <button
-                            onClick={handleSubmitPastedToken}
-                            disabled={authLoading || !pastedToken.trim()}
-                            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2"
-                        >
-                            <Database size={18} />
-                            {authLoading ? 'Signing in...' : 'Sign in'}
-                        </button>
                     </div>
                 </div>
             </div>
