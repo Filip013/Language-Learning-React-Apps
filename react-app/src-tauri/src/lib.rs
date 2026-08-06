@@ -66,7 +66,6 @@ pub fn run() {
       }
       if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
-        let _ = window.center();
         let _ = window.set_focus();
       }
       Ok(())
