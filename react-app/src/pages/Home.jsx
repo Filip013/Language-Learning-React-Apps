@@ -75,6 +75,9 @@ export default function Home() {
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
     const [activityLogs, setActivityLogs] = useState([]);
     const [deletingLogId, setDeletingLogId] = useState(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [pastedToken, setPastedToken] = useState('');
+    const [authLoading, setAuthLoading] = useState(false);
 
     useEffect(() => {
         if (!user || !isLogModalOpen) return;
@@ -134,36 +137,23 @@ export default function Home() {
             try {
                 const { openUrl } = await import('@tauri-apps/plugin-opener');
                 const authProxyUrl = "https://lingo-hub-nine.vercel.app/desktop-auth?source=tauri";
-                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 
-                if (!isMobile) {
-                    // Start local TCP server for Windows/Linux desktop
-                    const tokenPromise = invoke('start_auth_server');
-                    openUrl(authProxyUrl).catch(console.error);
-                    
-                    // Race between local TCP server and manual paste
-                    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
-                    let token = await Promise.race([tokenPromise, timeoutPromise]);
-                    
-                    if (!token) {
-                        token = prompt("If your browser didn't redirect automatically, paste your auth token here:");
-                    }
-                    
+                // 1. Open system browser to Vercel Auth proxy
+                openUrl(authProxyUrl).catch(console.error);
+                
+                // 2. Open in-app Auth Modal with token input
+                setPastedToken('');
+                setShowAuthModal(true);
+                
+                // 3. Start background TCP listener for desktop
+                invoke('start_auth_server').then(async (token) => {
                     if (token && token.trim()) {
                         const credential = auth.GoogleAuthProvider.credential(token.trim());
                         await auth.signInWithCredential(credential);
+                        setShowAuthModal(false);
                         window.location.reload();
                     }
-                } else {
-                    // Mobile: Open Vercel Auth proxy in phone browser
-                    openUrl(authProxyUrl).catch(console.error);
-                    const manualToken = prompt("After signing in on your browser, paste your auth token here:");
-                    if (manualToken && manualToken.trim()) {
-                        const credential = auth.GoogleAuthProvider.credential(manualToken.trim());
-                        await auth.signInWithCredential(credential);
-                        window.location.reload();
-                    }
-                }
+                }).catch(console.error);
             } catch (err) {
                 console.error("Tauri Auth Error:", err);
                 alert("Auth Error: " + (err.message || err));
@@ -176,6 +166,22 @@ export default function Home() {
                 console.error("Google Sign-In error:", err);
                 alert(`Sign in failed: ${err.message || err}`);
             }
+        }
+    };
+
+    const handleSubmitPastedToken = async () => {
+        if (!pastedToken.trim()) return;
+        setAuthLoading(true);
+        try {
+            const credential = auth.GoogleAuthProvider.credential(pastedToken.trim());
+            await auth.signInWithCredential(credential);
+            setShowAuthModal(false);
+            window.location.reload();
+        } catch (err) {
+            console.error("Auth Token Error:", err);
+            alert("Invalid or expired token: " + (err.message || err));
+        } finally {
+            setAuthLoading(false);
         }
     };
 
@@ -307,6 +313,51 @@ export default function Home() {
         );
     };
 
+    const renderAuthModal = () => {
+        if (!showAuthModal) return null;
+
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-950/60 backdrop-blur-sm animate-in fade-in">
+                <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-200 dark:border-zinc-800 overflow-hidden">
+                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-stone-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="bg-stone-100 dark:bg-zinc-800 p-1.5 sm:p-2 rounded-lg sm:rounded-xl">
+                                <Globe size={18} className="text-stone-700 dark:text-zinc-300" />
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-bold text-stone-800 dark:text-zinc-100">Finish Sign-In</h3>
+                        </div>
+                        <button onClick={() => setShowAuthModal(false)} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+                            <XCircle size={22} />
+                        </button>
+                    </div>
+
+                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 bg-stone-50 dark:bg-zinc-950/50">
+                        <p className="text-xs sm:text-sm text-stone-500 dark:text-zinc-400 font-medium leading-relaxed">
+                            Your browser should have opened the sign-in page. After signing in, copy the token shown there and paste it below:
+                        </p>
+                        <input
+                            type="text"
+                            value={pastedToken}
+                            onChange={(e) => setPastedToken(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitPastedToken(); }}
+                            placeholder="Paste your auth token here..."
+                            autoFocus
+                            className="w-full bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-stone-800 dark:text-zinc-100 placeholder-stone-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+                        />
+                        <button
+                            onClick={handleSubmitPastedToken}
+                            disabled={authLoading || !pastedToken.trim()}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2"
+                        >
+                            <Database size={18} />
+                            {authLoading ? 'Signing in...' : 'Sign in'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-zinc-950 transition-colors duration-500 font-sans text-stone-900 dark:text-zinc-100">
             <nav className="sticky top-0 z-50 border-b backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center border-stone-200/80 dark:border-zinc-800/80 bg-stone-50/80 dark:bg-zinc-950/80">
@@ -399,6 +450,7 @@ export default function Home() {
                 </div>
             </main>
             {renderActivityLogModal()}
+            {renderAuthModal()}
         </div>
     );
 }

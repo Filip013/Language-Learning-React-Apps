@@ -31,7 +31,12 @@
   },
   "plugins": {
     "deep-link": {
-      "schemes": ["lingohub"]
+      "mobile": [
+        { "scheme": ["lingohub"] }
+      ],
+      "desktop": {
+        "schemes": ["lingohub"]
+      }
     }
   },
   "bundle": {

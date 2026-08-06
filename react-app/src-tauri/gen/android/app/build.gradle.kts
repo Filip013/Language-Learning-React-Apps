@@ -13,14 +13,35 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val keystorePropertiesFile = file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+val hasKeystore = keystorePropertiesFile.exists()
+
 android {
     compileSdk = 36
     namespace = "com.lingohub.app"
+    signingConfigs {
+        if (hasKeystore) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "com.lingohub.app"
         minSdk = 24
-        targetSdk = 36
+        // targetSdk kept at 34 so Android 15/16 do NOT force edge-to-edge:
+        // opt-out attr is disabled for targetSdk 36, and we want visible
+        // system bars (top/bottom borders), not content under the bars.
+        targetSdk = 34
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
@@ -38,6 +59,9 @@ android {
             }
         }
         getByName("release") {
+            if (hasKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
