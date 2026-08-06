@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'desktop_auth/desktop_auth.dart';
 import '../constants/app_constants.dart';
 
 class FirebaseService {
@@ -108,59 +108,11 @@ class FirebaseService {
   }
 
   static Future<UserCredential?> _signInWithGoogleWindows() async {
-    HttpServer? server;
-    try {
-      server = await HttpServer.bind(InternetAddress.loopbackIPv4, 51730);
-      const authUrl = 'https://lingo-hub-nine.vercel.app/desktop-auth?source=tauri';
-      await _openBrowser(authUrl);
-
-      await for (final request in server) {
-        final token = request.uri.queryParameters['token'];
-        if (token != null && token.isNotEmpty) {
-          request.response.headers.contentType = ContentType.html;
-          request.response.write('''
-            <!DOCTYPE html>
-            <html>
-              <head><title>Authentication Successful</title></head>
-              <body style="font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 40px; background: #09090b; color: #ffffff;">
-                <h2>✓ Signed in successfully!</h2>
-                <p style="color: #a1a1aa;">You can close this tab and return to Language Hub.</p>
-                <script>setTimeout(() => window.close(), 1200);</script>
-              </body>
-            </html>
-          ''');
-          await request.response.close();
-          await server.close();
-
-          final credential = GoogleAuthProvider.credential(idToken: token.trim());
-          return await auth.signInWithCredential(credential);
-        } else {
-          request.response.statusCode = HttpStatus.badRequest;
-          request.response.write('Token missing');
-          await request.response.close();
-        }
-      }
-    } catch (e) {
-      debugPrint('Windows Google Auth Server error: $e');
-      rethrow;
-    } finally {
-      await server?.close();
-    }
-    return null;
+    return await signInWithGoogleWindows(auth);
   }
 
   static Future<void> _openBrowser(String url) async {
-    try {
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-        await Process.run('cmd', ['/c', 'start', '', url]);
-        return;
-      }
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (!kIsWeb && Platform.isWindows) {
-        await Process.run('cmd', ['/c', 'start', '', url]);
-      }
-    }
+    await openWindowsBrowser(url);
   }
 
   static Future<void> signOut() async {
