@@ -40,6 +40,8 @@ async fn start_auth_server() -> Result<String, String> {
     }).await.map_err(|e| e.to_string())?
 }
 
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   #[allow(unused_mut)]
@@ -61,6 +63,11 @@ pub fn run() {
             .level(log::LevelFilter::Info)
             .build(),
         )?;
+      }
+      if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.center();
+        let _ = window.set_focus();
       }
       Ok(())
     })
