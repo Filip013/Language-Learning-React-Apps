@@ -1,6 +1,7 @@
   import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
   import { useEffect } from 'react';
 
+  import { auth, db } from './firebase';
   import Home from './pages/Home';
   import LingoCraft from './pages/LingoCraft';
   import MigrationTool from './pages/MigrationTool';
@@ -14,6 +15,7 @@
   import { courseConfigs } from './config/courseConfigs';
 
   function App() {
+    // Global theme engine (localStorage override with system prefers-color-scheme fallback).
     useEffect(() => {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       
@@ -52,6 +54,25 @@
         mediaQuery.removeEventListener('change', handleSystemChange);
         window.removeEventListener('storage', handleStorageChange);
       };
+    }, []);
+
+    // Global API-key sync: copy the Gemini keys stored in Firestore (hub user doc)
+    // into localStorage as soon as the user signs in, so pages like LingoCraft and
+    // LanguageCourse have them available on first load without visiting Home settings.
+    useEffect(() => {
+      let unsubDoc = null;
+      const unsubAuth = auth.onAuthStateChanged((user) => {
+        if (unsubDoc) { unsubDoc(); unsubDoc = null; }
+        if (!user) return;
+        const hubUserRef = db.collection('artifacts').doc('hub').collection('users').doc(user.uid);
+        unsubDoc = hubUserRef.onSnapshot((snap) => {
+          if (!snap.exists) return;
+          const data = snap.data();
+          if (data.geminiApiKey) localStorage.setItem('geminiApiKey', data.geminiApiKey);
+          if (data.geminiPaidApiKey) localStorage.setItem('geminiPaidApiKey', data.geminiPaidApiKey);
+        });
+      });
+      return () => { if (unsubDoc) unsubDoc(); unsubAuth(); };
     }, []);
 
     return (

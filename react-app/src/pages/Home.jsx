@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Settings, ChevronDown, Database, Sun, Moon, Globe, LogOut, Wrench, Gamepad2, History, XCircle, Trash2, DownloadCloud } from 'lucide-react';
+import { Settings, ChevronDown, Database, Globe, LogOut, Wrench, Gamepad2, History, XCircle, Trash2, DownloadCloud } from 'lucide-react';
 import firebase, { auth, db } from '../firebase';
 import { isTauri, invoke } from '@tauri-apps/api/core';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 const ALL_COURSES = [
     { id: "ancient_greek", name: "Ancient Greek", url: "/ancient-greek", color: "hover:border-amber-600", flag: "📜" },
@@ -71,7 +72,6 @@ export default function Home() {
     const [user, setUser] = useState(null);
     const [activePanel, setActivePanel] = useState(null); // null | 'tools' | 'settings'
     const [recentActivity, setRecentActivity] = useState({});
-    const [isDarkMode, setIsDarkMode] = useState(false);
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
     const [activityLogs, setActivityLogs] = useState([]);
     const [deletingLogId, setDeletingLogId] = useState(null);
@@ -88,26 +88,6 @@ export default function Home() {
     }, [user, isLogModalOpen]);
 
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const checkTheme = () => {
-            const localTheme = localStorage.getItem('lingocraft_theme');
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            setIsDarkMode(localTheme === 'dark' || (!localTheme && systemDark));
-        };
-        checkTheme();
-        window.addEventListener('theme-changed', checkTheme);
-        return () => window.removeEventListener('theme-changed', checkTheme);
-    }, []);
-
-    const toggleTheme = () => {
-        const newTheme = isDarkMode ? 'light' : 'dark';
-        setIsDarkMode(!isDarkMode);
-        localStorage.setItem('lingocraft_theme', newTheme);
-        if (newTheme === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-        window.dispatchEvent(new Event('theme-changed'));
-    };
 
     useEffect(() => {
         const unsub = auth.onAuthStateChanged(setUser);
@@ -335,9 +315,7 @@ export default function Home() {
                     <span className="font-bold tracking-tight text-base sm:text-lg">Cloud Hub</span>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
-                    <button onClick={toggleTheme} className="p-1.5 sm:p-2 rounded-full border border-stone-200 dark:border-zinc-700 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors">
-                        {isDarkMode ? <Sun size={16} className="text-stone-300 sm:w-[18px] sm:h-[18px]" /> : <Moon size={16} className="text-stone-600 sm:w-[18px] sm:h-[18px]" />}
-                    </button>
+                    <ThemeToggle className="border-stone-200 dark:border-zinc-700 hover:bg-stone-100 dark:hover:bg-zinc-800 text-stone-600 dark:text-stone-300" />
                     <button onClick={() => auth.signOut()} className="p-1.5 sm:p-2 rounded-full border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                         <LogOut size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>

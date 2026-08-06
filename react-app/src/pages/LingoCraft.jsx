@@ -14,6 +14,7 @@ import {
   getSystemInstruction, getTtsSystemInstruction 
 } from '../config/languages';
 import AiTranslatePopup from '../components/common/AiTranslatePopup';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 
 const dbAppId = 'lingocraft';
@@ -422,6 +423,7 @@ export default function LingoCraft() {
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-2">
+                        <ThemeToggle className="bg-white border-stone-200 text-blue-600 hover:bg-stone-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-blue-400 dark:hover:bg-zinc-800" />
                         {/* Search Icon on Header - resets search input state upon toggle */}
                         {(result || loading) && (
                             <button 

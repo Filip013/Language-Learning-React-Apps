@@ -12,6 +12,7 @@ import { useGeminiTTS } from '../hooks/useGeminiTTS';
 // Shared Common Components
 import UserNoteModal from '../components/common/UserNoteModal';
 import AiTranslatePopup from '../components/common/AiTranslatePopup';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 // Modular Course Tabs
 import EpisodeTab from '../components/course/EpisodeTab';
@@ -745,6 +746,8 @@ export default function LanguageCourse({ config }) {
             </button>
           );
         })}
+
+        <ThemeToggle className="ml-auto md:ml-0 bg-stone-100 border-stone-200 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-700" />
       </nav>
 
       <main className={`flex-1 w-full min-h-0 ${isStudyTab ? 'flex flex-col h-full overflow-hidden md:py-4' : ''}`}>
