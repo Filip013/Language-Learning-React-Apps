@@ -220,11 +220,12 @@ export default function Home() {
                 <div className="flex justify-center mb-4 sm:mb-6"><div className="bg-stone-100 dark:bg-zinc-800 p-3 sm:p-4 rounded-2xl sm:rounded-3xl"><Globe size={32} className="text-stone-800 dark:text-zinc-100 sm:w-[40px] sm:h-[40px]" /></div></div>
                 <h1 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 text-stone-800 dark:text-zinc-100 tracking-tight">Cloud Hub</h1>
                 <p className="text-stone-500 dark:text-zinc-400 text-xs sm:text-sm mb-6 sm:mb-8 font-medium">Access your language databases.</p>
-                <button onClick={handleLogin} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2">
+                <button onClick={handleLogin} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2 cursor-pointer">
                     <Database size={20} />
                     Sign in to sync
                 </button>
             </div>
+            {renderAuthModal()}
         </div>
     );
 
