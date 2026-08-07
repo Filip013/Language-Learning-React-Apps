@@ -114,9 +114,9 @@ class TTSService {
         };
 
         _channel!.sink.add(jsonEncode(setupMessage));
-
         final pcmBuffer = BytesBuilder();
         final Completer<void> turnCompleter = Completer<void>();
+        bool turnCompleted = false;
 
         _channel!.stream.listen(
           (data) async {
@@ -156,36 +156,39 @@ class TTSService {
                   }
                 }
                 if (serverContent['turnComplete'] == true) {
+                  turnCompleted = true;
+                  await _channel?.sink.close();
+                  _channel = null;
+
                   if (kIsWeb) {
-                    await _channel?.sink.close();
-                    _channel = null;
                     if (!turnCompleter.isCompleted) {
                       turnCompleter.complete();
                     }
                   } else {
-                    await _channel?.sink.close();
-                    _channel = null;
-
                     final pcmBytes = pcmBuffer.toBytes();
                     if (_isPlaying && pcmBytes.isNotEmpty) {
                       final wavBytes = _pcmToWav(pcmBytes, 24000);
-                      final playbackCompleter = Completer<void>();
-                      StreamSubscription? sub;
-                      sub = _audioPlayer.onPlayerComplete.listen((_) {
-                        sub?.cancel();
-                        if (!playbackCompleter.isCompleted) {
-                          playbackCompleter.complete();
-                        }
-                      });
-
+                      final player = AudioPlayer();
                       try {
-                        await _audioPlayer.stop();
-                        await _audioPlayer.play(BytesSource(wavBytes));
-                        await playbackCompleter.future;
+                        final playbackCompleter = Completer<void>();
+                        final sub = player.onPlayerComplete.listen((_) {
+                          if (!playbackCompleter.isCompleted) {
+                            playbackCompleter.complete();
+                          }
+                        });
+
+                        await player.play(BytesSource(wavBytes));
+
+                        final durationMs = (pcmBytes.length / 48).round();
+                        await playbackCompleter.future.timeout(
+                          Duration(milliseconds: durationMs + 1500),
+                          onTimeout: () {},
+                        );
+                        await sub.cancel();
                       } catch (e) {
                         debugPrint("Native TTS playback error: $e");
                       } finally {
-                        sub.cancel();
+                        await player.dispose();
                       }
                     }
 
@@ -209,7 +212,7 @@ class TTSService {
             // A normal turn closes the channel after turnComplete; only treat
             // an early close as an error. Always release the turn awaiter so
             // stop() mid-turn doesn't leak a pending speakList future.
-            if (_isPlaying && !turnCompleter.isCompleted) {
+            if (_isPlaying && !turnCompleted) {
               debugPrint("TTS WebSocket closed before turnComplete");
               _isPlaying = false;
               onError?.call();
