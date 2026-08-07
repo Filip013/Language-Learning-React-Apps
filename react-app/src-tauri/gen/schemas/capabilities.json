@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"enables the default permissions","local":true,"windows":["*"],"permissions":["core:default","opener:default","opener:allow-open-url","window-state:default","window-state:allow-restore-state","window-state:allow-save-window-state","deep-link:default"]}}
