@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/services/web_font_service.dart';
@@ -132,12 +133,46 @@ class _LexiconTabState extends State<LexiconTab> {
   final TextEditingController _addPosCtrl = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleGlobalKey);
+  }
+
+  @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     _addTargetCtrl.dispose();
     _addTranslitCtrl.dispose();
     _addEnglishCtrl.dispose();
     _addPosCtrl.dispose();
     super.dispose();
+  }
+
+  // Cross-tab keyboard nav (mirrors React's global keydown for lexicon):
+  // ArrowRight/w → next tab, ArrowLeft/q → prev tab.
+  bool _handleGlobalKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus != null && primaryFocus.context?.widget is EditableText) {
+      return false;
+    }
+
+    final courseProv = Provider.of<CourseProvider>(context, listen: false);
+    if (courseProv.activeTab != 'lexicon') return false;
+
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.arrowRight:
+      case LogicalKeyboardKey.keyW:
+        courseProv.goToNextTab();
+        return true;
+      case LogicalKeyboardKey.arrowLeft:
+      case LogicalKeyboardKey.keyQ:
+        courseProv.goToPrevTab();
+        return true;
+      default:
+        return false;
+    }
   }
 
   // ---- Memoized derived data (mirrors React useMemo chain) ----
@@ -392,11 +427,22 @@ class _LexiconTabState extends State<LexiconTab> {
       groups.putIfAbsent(title, () => []).add(item);
     }
 
-    return SingleChildScrollView(
+    // Cross-tab swipe (mirrors React's lexiconSwipeHandlers: left → next, right → prev).
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity == null) return;
+        if (details.primaryVelocity! < -150) {
+          courseProv.goToNextTab();
+        } else if (details.primaryVelocity! > 150) {
+          courseProv.goToPrevTab();
+        }
+      },
+      child: SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -406,7 +452,7 @@ class _LexiconTabState extends State<LexiconTab> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    TabBadge(icon: Icons.search_rounded, label: '${config.name} Lexicon'),
+                    TabBadge(icon: Icons.search_rounded, label: 'LEXICON'),
                     Positioned(
                       right: 0,
                       child: InkWell(
@@ -708,7 +754,8 @@ class _LexiconTabState extends State<LexiconTab> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildAddField(TextEditingController controller, String hint) {

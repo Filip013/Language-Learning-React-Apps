@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../core/services/web_font_service.dart';
 import '../../../core/widgets/language_text_style.dart';
+import '../../../core/widgets/platform_font.dart';
 import '../../../core/widgets/play_button.dart';
 import '../../../core/widgets/tab_badge.dart';
 import '../../../core/widgets/user_note_modal.dart';
@@ -110,6 +111,10 @@ class _ReadingTabState extends State<ReadingTab> {
         _setView(courseProv, pages[currentIdx + 1]['id']!);
         return true;
       }
+      // At the last sub-view: chain to the next tab (mirrors React's
+      // `else if (onTabNext) onTabNext()` in handleNext).
+      courseProv.goToNextTab();
+      return true;
     }
 
     if (key == LogicalKeyboardKey.arrowLeft ||
@@ -119,6 +124,9 @@ class _ReadingTabState extends State<ReadingTab> {
         _setView(courseProv, pages[currentIdx - 1]['id']!);
         return true;
       }
+      // At the first sub-view: chain back to the previous tab.
+      courseProv.goToPrevTab();
+      return true;
     }
 
     if (key == LogicalKeyboardKey.space) {
@@ -274,12 +282,12 @@ class _ReadingTabState extends State<ReadingTab> {
               const SizedBox(height: 16),
               Text(
                 'No Lesson Available',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+                style: TextStyle(fontSize: platformFontSize(18), fontWeight: FontWeight.bold, color: textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
                 'Please select or generate a lesson from the Studio tab.',
-                style: TextStyle(fontSize: 14, color: textSecondary),
+                style: TextStyle(fontSize: platformFontSize(14), color: textSecondary),
               ),
             ],
           ),
@@ -298,11 +306,22 @@ class _ReadingTabState extends State<ReadingTab> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity != null) {
-          if (details.primaryVelocity! < -150 && currentIdx < pages.length - 1) {
+        if (details.primaryVelocity == null) return;
+        final v = details.primaryVelocity!;
+        if (v < -150) {
+          // At the last sub-view: chain to the next tab (mirrors React's
+          // `else if (onTabNext) onTabNext()`).
+          if (currentIdx < pages.length - 1) {
             _setView(courseProv, pages[currentIdx + 1]['id']!);
-          } else if (details.primaryVelocity! > 150 && currentIdx > 0) {
+          } else {
+            courseProv.goToNextTab();
+          }
+        } else if (v > 150) {
+          // At the first sub-view: chain back to the previous tab.
+          if (currentIdx > 0) {
             _setView(courseProv, pages[currentIdx - 1]['id']!);
+          } else {
+            courseProv.goToPrevTab();
           }
         }
       },
@@ -316,7 +335,7 @@ class _ReadingTabState extends State<ReadingTab> {
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1040),
                 child: Column(
                   children: [
                     // 1. Tab Badge
@@ -373,7 +392,7 @@ class _ReadingTabState extends State<ReadingTab> {
                                     child: Text(
                                       label,
                                       style: TextStyle(
-                                        fontSize: isMobile ? 11 : 13,
+                                        fontSize: platformFontSize(isMobile ? 11 : 13),
                                         fontWeight: FontWeight.bold,
                                         color: pillColor,
                                       ),
@@ -447,7 +466,7 @@ class _ReadingTabState extends State<ReadingTab> {
                                     ? () => _setView(courseProv, pages[currentIdx - 1]['id']!)
                                     : null,
                                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                                label: const Text('Prev'),
+                                label: Text('Prev'),
                                 style: TextButton.styleFrom(
                                   foregroundColor: textPrimary,
                                   disabledForegroundColor: textSecondary.withValues(alpha: 0.3),
@@ -457,7 +476,7 @@ class _ReadingTabState extends State<ReadingTab> {
                               Text(
                                 pages.isNotEmpty ? 'Page ${currentIdx + 1} of ${pages.length}' : '',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: platformFontSize(11),
                                   fontWeight: FontWeight.bold,
                                   color: textSecondary,
                                   letterSpacing: 1.2,
@@ -468,7 +487,7 @@ class _ReadingTabState extends State<ReadingTab> {
                                 onPressed: currentIdx < pages.length - 1
                                     ? () => _setView(courseProv, pages[currentIdx + 1]['id']!)
                                     : null,
-                                label: const Text('Next'),
+                                label: Text('Next'),
                                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
                                 style: TextButton.styleFrom(
                                   foregroundColor: textPrimary,
@@ -504,7 +523,7 @@ class _ReadingTabState extends State<ReadingTab> {
   ) {
     final title = Text(
       label,
-      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textPrimary),
+      style: TextStyle(fontSize: platformFontSize(14), fontWeight: FontWeight.bold, color: textPrimary),
     );
 
     // Focus & Grammar: lightbulb title + note button
@@ -600,7 +619,7 @@ class _ReadingTabState extends State<ReadingTab> {
                   const SizedBox(height: 4),
                   Text(
                     text,
-                    style: TextStyle(fontSize: 16, color: textPrimary, height: 1.5),
+                    style: TextStyle(fontSize: platformFontSize(16), color: textPrimary, height: 1.5),
                   ),
                 ],
               ),
@@ -637,7 +656,7 @@ class _ReadingTabState extends State<ReadingTab> {
 
       return Text(
         engText.toString(),
-        style: TextStyle(fontSize: 18, color: textPrimary, height: 1.5, fontWeight: FontWeight.w500),
+        style: TextStyle(fontSize: platformFontSize(16), color: textPrimary, height: 1.5, fontWeight: FontWeight.w500),
       );
     }
 
@@ -680,7 +699,7 @@ class _ReadingTabState extends State<ReadingTab> {
                   ),
                   if (explanation.isNotEmpty) const SizedBox(height: 6),
                   if (explanation.isNotEmpty)
-                    Text(explanation, style: TextStyle(fontSize: 15, color: textPrimary, height: 1.4)),
+                    Text(explanation, style: TextStyle(fontSize: platformFontSize(15), color: textPrimary, height: 1.4)),
                 ],
               ),
             );

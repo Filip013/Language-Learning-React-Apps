@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../core/services/web_font_service.dart';
 import '../../../core/widgets/language_text_style.dart';
+import '../../../core/widgets/platform_font.dart';
 import '../../../core/widgets/play_button.dart';
 import '../../../core/widgets/tab_badge.dart';
 import '../../../core/widgets/user_note_modal.dart';
@@ -346,13 +347,13 @@ class _QuizTabState extends State<QuizTab> {
               const SizedBox(height: 16),
               Text(
                 'No Quiz Yet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+                style: TextStyle(fontSize: platformFontSize(18), fontWeight: FontWeight.bold, color: textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
                 'Generate a lesson from the Studio tab to create a review quiz.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: textSecondary),
+                style: TextStyle(fontSize: platformFontSize(14), color: textSecondary),
               ),
             ],
           ),
@@ -407,7 +408,7 @@ class _QuizTabState extends State<QuizTab> {
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1040),
                 child: Column(
                   children: [
                     // 1. Tab badge + reset (standalone, separate from the nav bar)
@@ -423,16 +424,16 @@ class _QuizTabState extends State<QuizTab> {
                                 ? InkWell(
                                     onTap: () => setState(() => _showConfirmReset = true),
                                     borderRadius: BorderRadius.circular(8),
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       child: Row(
                                         children: [
-                                          Icon(Icons.refresh_rounded, size: 12, color: Color(0xFFA1A1AA)),
+                                          const Icon(Icons.refresh_rounded, size: 12, color: Color(0xFFA1A1AA)),
                                           SizedBox(width: 4),
                                           Text(
                                             'Reset',
                                             style: TextStyle(
-                                              fontSize: 10,
+                                              fontSize: platformFontSize(10),
                                               fontWeight: FontWeight.bold,
                                               letterSpacing: 1,
                                               color: Color(0xFFA1A1AA),
@@ -455,9 +456,9 @@ class _QuizTabState extends State<QuizTab> {
                                     ),
                                     child: Row(
                                       children: [
-                                        const Text(
-                                          'Reset?',
-                                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
+                                        Text(
+                          'Reset?',
+                          style: TextStyle(fontSize: platformFontSize(10), fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
                                         ),
                                         const SizedBox(width: 6),
                                         InkWell(
@@ -468,18 +469,18 @@ class _QuizTabState extends State<QuizTab> {
                                               color: const Color(0xFFEF4444),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
-                                            child: const Text(
+                                            child: Text(
                                               'Yes',
-                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                              style: TextStyle(fontSize: platformFontSize(10), fontWeight: FontWeight.bold, color: Colors.white),
                                             ),
                                           ),
                                         ),
                                         const SizedBox(width: 4),
                                         InkWell(
                                           onTap: () => setState(() => _showConfirmReset = false),
-                                          child: const Text(
+                                          child: Text(
                                             'No',
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78716C)),
+                                            style: TextStyle(fontSize: platformFontSize(10), fontWeight: FontWeight.bold, color: Color(0xFF78716C)),
                                           ),
                                         ),
                                       ],
@@ -538,7 +539,7 @@ class _QuizTabState extends State<QuizTab> {
                                   child: Text(
                                     '${idx + 1}',
                                     style: TextStyle(
-                                      fontSize: isMobile ? 11 : 13,
+                                      fontSize: platformFontSize(isMobile ? 11 : 13),
                                       fontWeight: FontWeight.bold,
                                       color: pillColor,
                                     ),
@@ -635,7 +636,7 @@ class _QuizTabState extends State<QuizTab> {
                               Text(
                                 'Question ${_currentIdx + 1}',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: platformFontSize(11),
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                   color: textSecondary,
@@ -707,7 +708,7 @@ class _QuizTabState extends State<QuizTab> {
                                       Text(
                                         'GRADED',
                                         style: TextStyle(
-                                          fontSize: 9,
+                                          fontSize: platformFontSize(9),
                                           fontWeight: FontWeight.bold,
                                           letterSpacing: 1,
                                           color: textSecondary.withValues(alpha: 0.7),
@@ -716,7 +717,7 @@ class _QuizTabState extends State<QuizTab> {
                                       Text(
                                         '$gradedCount / ${_shuffledData.length}',
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: platformFontSize(14),
                                           fontWeight: FontWeight.bold,
                                           color: textPrimary,
                                         ),
@@ -736,7 +737,7 @@ class _QuizTabState extends State<QuizTab> {
                                         Text(
                                           'SCORE',
                                           style: TextStyle(
-                                            fontSize: 9,
+                                            fontSize: platformFontSize(9),
                                             fontWeight: FontWeight.bold,
                                             letterSpacing: 1,
                                             color: textSecondary.withValues(alpha: 0.7),
@@ -746,8 +747,8 @@ class _QuizTabState extends State<QuizTab> {
                                           children: [
                                             Text(
                                               '$correctCount',
-                                              style: const TextStyle(
-                                                fontSize: 14,
+                                              style: TextStyle(
+                                                fontSize: platformFontSize(14),
                                                 fontWeight: FontWeight.bold,
                                                 color: Color(0xFF10B981),
                                               ),
@@ -816,7 +817,7 @@ class _QuizTabState extends State<QuizTab> {
       child: Text(
         'Hint: ${q['englishHint']}',
         style: TextStyle(
-          fontSize: 14,
+          fontSize: platformFontSize(14),
           fontStyle: FontStyle.italic,
           color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF78716C),
         ),
@@ -863,9 +864,9 @@ class _QuizTabState extends State<QuizTab> {
                   ),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Grade Answer',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: platformFontSize(14), fontWeight: FontWeight.bold),
               ),
             ),
           )
@@ -881,7 +882,7 @@ class _QuizTabState extends State<QuizTab> {
               Text(
                 isCorrect ? 'Correct!' : 'Incorrect',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: platformFontSize(15),
                   fontWeight: FontWeight.bold,
                   color: isCorrect ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
                 ),

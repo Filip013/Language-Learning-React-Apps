@@ -206,7 +206,7 @@ class _StoryTabState extends State<StoryTab> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Column(
             children: [
               // 1. Tab badge

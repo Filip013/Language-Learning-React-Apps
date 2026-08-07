@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../core/services/web_font_service.dart';
 import '../../../core/widgets/language_text_style.dart';
+import '../../../core/widgets/platform_font.dart';
 import '../../../core/widgets/play_button.dart';
 import '../../../core/widgets/tab_badge.dart';
 import '../../../core/widgets/user_note_modal.dart';
@@ -343,13 +344,13 @@ class _DrillTabState extends State<DrillTab> {
               const SizedBox(height: 16),
               Text(
                 'No Drills Yet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+                style: TextStyle(fontSize: platformFontSize(18), fontWeight: FontWeight.bold, color: textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
                 'Generate a lesson from the Studio tab to create interactive drills.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: textSecondary),
+                style: TextStyle(fontSize: platformFontSize(14), color: textSecondary),
               ),
             ],
           ),
@@ -409,7 +410,7 @@ class _DrillTabState extends State<DrillTab> {
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1040),
                 child: Column(
                   children: [
                     // 1. Tab Badge
@@ -561,7 +562,7 @@ class _DrillTabState extends State<DrillTab> {
                                   Text(
                                     'Example ${_currentExIdx + 1}',
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: platformFontSize(11),
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.2,
                                       color: textSecondary,
@@ -578,15 +579,15 @@ class _DrillTabState extends State<DrillTab> {
                                           color: const Color(0xFF10B981).withValues(alpha: 0.25),
                                         ),
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.check_rounded, size: 12, color: Color(0xFF10B981)),
+                                          const Icon(Icons.check_rounded, size: 12, color: Color(0xFF10B981)),
                                           SizedBox(width: 3),
                                           Text(
                                             'Listened',
                                             style: TextStyle(
-                                              fontSize: 10,
+                                              fontSize: platformFontSize(10),
                                               fontWeight: FontWeight.bold,
                                               letterSpacing: 0.8,
                                               color: Color(0xFF10B981),
@@ -692,7 +693,7 @@ class _DrillTabState extends State<DrillTab> {
         const SizedBox(height: 10),
         Text(
           english,
-          style: TextStyle(fontSize: 16, height: 1.5, color: textPrimary),
+          style: TextStyle(fontSize: platformFontSize(16), height: 1.5, color: textPrimary),
         ),
         if (secondaryText.isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -711,7 +712,7 @@ class _DrillTabState extends State<DrillTab> {
           Text(
             translit,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: platformFontSize(16),
               height: 1.5,
               color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF78716C),
             ),
@@ -755,7 +756,7 @@ class _DrillTabState extends State<DrillTab> {
                   child: Text(
                     wordTranslit,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: platformFontSize(15),
                       color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF78716C),
                     ),
                   ),
@@ -816,7 +817,7 @@ class _DrillTabState extends State<DrillTab> {
                             Text(
                               'Play to Reveal',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: platformFontSize(13),
                                 fontWeight: FontWeight.bold,
                                 color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
                               ),
@@ -853,14 +854,14 @@ class _DrillTabState extends State<DrillTab> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.lightbulb_outline_rounded, size: 16, color: Color(0xFFF59E0B)),
+                              const Icon(Icons.lightbulb_outline_rounded, size: 16, color: Color(0xFFF59E0B)),
                               SizedBox(width: 6),
                               Text(
                                 'LEXICAL NOTE',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: platformFontSize(11),
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                   color: Color(0xFFF59E0B),
@@ -884,7 +885,7 @@ class _DrillTabState extends State<DrillTab> {
                             child: Text(
                               n.toString(),
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: platformFontSize(14),
                                 height: 1.5,
                                 color: isDark ? const Color(0xFFD4D4D8) : const Color(0xFF57534E),
                               ),
@@ -909,14 +910,14 @@ class _DrillTabState extends State<DrillTab> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.lightbulb_outline_rounded, size: 14, color: Color(0xFFF59E0B)),
+                          const Icon(Icons.lightbulb_outline_rounded, size: 14, color: Color(0xFFF59E0B)),
                           SizedBox(width: 6),
                           Text(
                             'Lexical Note',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: platformFontSize(11),
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.8,
                               color: Color(0xFFA1A1AA),

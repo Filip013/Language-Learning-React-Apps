@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'platform_font.dart';
+
 /// Shared text style for target-language script rendering across course tabs.
 ///
 /// CJK scripts (Chinese / Mandarin / Japanese) use their dedicated font
@@ -18,8 +20,9 @@ TextStyle languageTextStyle(
 }) {
   final isBigFontLang =
       langName.contains('Chinese') || langName.contains('Japanese') || langName.contains('Mandarin');
-  final effectiveSize =
-      (isBigFontLang && minCjkSize && fontSize < 30) ? 36.0 : fontSize;
+  final effectiveSize = platformFontSize(
+    (isBigFontLang && minCjkSize && fontSize < 30) ? 36.0 : fontSize,
+  );
 
   if (langName.contains('Chinese') || langName.contains('Mandarin')) {
     if (isSimplified) {

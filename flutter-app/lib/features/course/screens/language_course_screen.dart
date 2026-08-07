@@ -22,6 +22,13 @@ class LanguageCourseScreen extends StatefulWidget {
 
 class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
   String _lastSelectedText = '';
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +60,25 @@ class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
       if (config.hasStories) {'id': 'story', 'label': 'Story', 'icon': Icons.book_rounded},
     ];
 
+    // Keep the PageView in sync with provider-driven tab changes (header tap,
+    // keyboard goToNextTab/goToPrevTab, alt+1..9): animate to the active tab's
+    // page. Swipe-originated changes already match (onPageChanged set the tab),
+    // so this is a no-op there.
+    final activeIndex = navItems.indexWhere((item) => item['id'] == courseProv.activeTab);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients || activeIndex == -1) return;
+      // Don't fight an in-flight swipe or animation; only sync when settled.
+      if (_pageController.position.isScrollingNotifier.value) return;
+      final current = _pageController.page?.round() ?? -1;
+      if (current != activeIndex) {
+        _pageController.animateToPage(
+          activeIndex,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: SafeArea(
@@ -62,9 +88,12 @@ class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < 768;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1040),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
                     children: [
                       IconButton(
                         constraints: compact ? const BoxConstraints() : null,
@@ -111,6 +140,8 @@ class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
                         onPressed: () => homeProv.toggleTheme(),
                       ),
                     ],
+                      ),
+                    ),
                   ),
                 );
               },
@@ -118,8 +149,10 @@ class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
 
             const SizedBox(height: 4),
 
-            // Active Tab Content View (selectable — right-click / long-press
-            // selection menu includes AI Translate)
+            // Active Tab Content View — PageView enables cross-tab swipe
+            // (mirrors React's useSwipeable onTabNext/onTabPrev over navItems).
+            // All tabs stay mounted so each keeps its scroll position when you
+            // swipe away and back (e.g. last drill sentence → first quiz item).
             Expanded(
               child: SelectionArea(
                 onSelectionChanged: (selection) {
@@ -139,7 +172,21 @@ class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
                     anchors: selectableRegionState.contextMenuAnchors,
                   );
                 },
-                child: _buildActiveTabContent(courseProv.activeTab),
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    final id = navItems[index]['id'] as String;
+                    if (courseProv.activeTab != id) {
+                      courseProv.setActiveTab(id);
+                    }
+                  },
+                  children: [
+                    for (final item in navItems)
+                      _KeepAliveTab(
+                        child: _buildActiveTabContent(item['id'] as String),
+                      ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -220,5 +267,28 @@ class _LanguageCourseScreenState extends State<LanguageCourseScreen> {
       default:
         return const ReadingTab();
     }
+  }
+}
+
+/// Keeps a PageView page (tab) mounted so its scroll position and local state
+/// survive swiping away and back — mirrors React's `hidden`-div tabs.
+class _KeepAliveTab extends StatefulWidget {
+  const _KeepAliveTab({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAliveTab> createState() => _KeepAliveTabState();
+}
+
+class _KeepAliveTabState extends State<_KeepAliveTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

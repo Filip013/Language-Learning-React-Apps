@@ -16,9 +16,43 @@ class _StudioTabState extends State<StudioTab> {
   final TextEditingController _topicController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleGlobalKey);
+  }
+
+  @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     _topicController.dispose();
     super.dispose();
+  }
+
+  // Cross-tab keyboard nav (mirrors React's global keydown for studio):
+  // ArrowRight/w → next tab, ArrowLeft/q → prev tab.
+  bool _handleGlobalKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus != null && primaryFocus.context?.widget is EditableText) {
+      return false;
+    }
+
+    final courseProv = Provider.of<CourseProvider>(context, listen: false);
+    if (courseProv.activeTab != 'studio') return false;
+
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.arrowRight:
+      case LogicalKeyboardKey.keyW:
+        courseProv.goToNextTab();
+        return true;
+      case LogicalKeyboardKey.arrowLeft:
+      case LogicalKeyboardKey.keyQ:
+        courseProv.goToPrevTab();
+        return true;
+      default:
+        return false;
+    }
   }
 
   @override
@@ -34,17 +68,28 @@ class _StudioTabState extends State<StudioTab> {
     final activeEpisode = courseProv.activeEpisode;
     final episodes = courseProv.episodesList;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 1. Sub-header: STUDIO CONTROL Badge
-              const TabBadge(
-                icon: Icons.chat_bubble_outline_rounded,
+    // Cross-tab swipe (mirrors React's studioSwipeHandlers: swipe left → next tab).
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity == null) return;
+        if (details.primaryVelocity! < -150) {
+          courseProv.goToNextTab();
+        } else if (details.primaryVelocity! > 150) {
+          courseProv.goToPrevTab();
+        }
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1040),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 1. Sub-header: STUDIO CONTROL Badge
+                const TabBadge(
+                  icon: Icons.chat_bubble_outline_rounded,
                 label: 'STUDIO CONTROL',
               ),
 
@@ -558,6 +603,7 @@ class _StudioTabState extends State<StudioTab> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

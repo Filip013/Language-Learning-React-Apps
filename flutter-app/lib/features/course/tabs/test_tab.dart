@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/tts_service.dart';
 import '../../../core/services/web_font_service.dart';
 import '../../../core/widgets/language_text_style.dart';
+import '../../../core/widgets/platform_font.dart';
 import '../../../core/widgets/play_button.dart';
 import '../../../core/widgets/tab_badge.dart';
 import '../../../core/widgets/user_note_modal.dart';
@@ -256,13 +257,13 @@ class _TestTabState extends State<TestTab> {
               const SizedBox(height: 16),
               Text(
                 'No Test Yet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+                style: TextStyle(fontSize: platformFontSize(18), fontWeight: FontWeight.bold, color: textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
                 'Generate a lesson from the Studio tab to create an active translation test.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: textSecondary),
+                style: TextStyle(fontSize: platformFontSize(14), color: textSecondary),
               ),
             ],
           ),
@@ -297,7 +298,7 @@ class _TestTabState extends State<TestTab> {
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1040),
                 child: Column(
                   children: [
                     // 1. Tab badge + reset (standalone, separate from the nav bar)
@@ -313,16 +314,16 @@ class _TestTabState extends State<TestTab> {
                                 ? InkWell(
                                     onTap: () => setState(() => _showConfirmReset = true),
                                     borderRadius: BorderRadius.circular(8),
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       child: Row(
                                         children: [
-                                          Icon(Icons.refresh_rounded, size: 12, color: Color(0xFFA1A1AA)),
+                                          const Icon(Icons.refresh_rounded, size: 12, color: Color(0xFFA1A1AA)),
                                           SizedBox(width: 4),
                                           Text(
                                             'RESET',
                                             style: TextStyle(
-                                              fontSize: 10,
+                                              fontSize: platformFontSize(10),
                                               fontWeight: FontWeight.bold,
                                               letterSpacing: 1,
                                               color: Color(0xFFA1A1AA),
@@ -345,24 +346,24 @@ class _TestTabState extends State<TestTab> {
                                     ),
                                     child: Row(
                                       children: [
-                                        const Text(
-                                          'Reset?',
-                                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
+                                        Text(
+                          'Reset?',
+                          style: TextStyle(fontSize: platformFontSize(10), fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
                                         ),
                                         const SizedBox(width: 8),
                                         InkWell(
                                           onTap: () => _resetTest(courseProv),
-                                          child: const Text(
+                                          child: Text(
                                             'Yes',
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                                            style: TextStyle(fontSize: platformFontSize(10), fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         InkWell(
                                           onTap: () => setState(() => _showConfirmReset = false),
-                                          child: const Text(
+                                          child: Text(
                                             'No',
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78716C)),
+                                            style: TextStyle(fontSize: platformFontSize(10), fontWeight: FontWeight.bold, color: Color(0xFF78716C)),
                                           ),
                                         ),
                                       ],
@@ -421,7 +422,7 @@ class _TestTabState extends State<TestTab> {
                                   child: Text(
                                     '${idx + 1}',
                                     style: TextStyle(
-                                      fontSize: isMobile ? 11 : 13,
+                                      fontSize: platformFontSize(isMobile ? 11 : 13),
                                       fontWeight: FontWeight.bold,
                                       color: pillColor,
                                     ),
@@ -502,7 +503,7 @@ class _TestTabState extends State<TestTab> {
                               Text(
                                 'Sentence ${_currentIdx + 1}',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: platformFontSize(11),
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                   color: textSecondary,
@@ -561,7 +562,7 @@ class _TestTabState extends State<TestTab> {
                                   Text(
                                     'SENTENCE',
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: platformFontSize(9),
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1,
                                       color: textSecondary.withValues(alpha: 0.7),
@@ -570,7 +571,7 @@ class _TestTabState extends State<TestTab> {
                                   Text(
                                     '${_currentIdx + 1} / ${items.length}',
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: platformFontSize(13),
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1,
                                       color: textPrimary,
@@ -644,7 +645,7 @@ class _TestTabState extends State<TestTab> {
         Text(
           english,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: platformFontSize(16),
             height: 1.5,
             color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF57534E),
           ),
@@ -703,7 +704,7 @@ class _TestTabState extends State<TestTab> {
                             Text(
                               'Play to Reveal',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: platformFontSize(13),
                                 fontWeight: FontWeight.bold,
                                 color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
                               ),

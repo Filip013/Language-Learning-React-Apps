@@ -192,7 +192,7 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -306,7 +306,7 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Column(
             children: [
               Row(
@@ -466,7 +466,7 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
       },
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: MediaQuery.of(context).size.width < 640 ? 14 : 24,
@@ -937,7 +937,7 @@ class _LingoCraftScreenState extends State<LingoCraftScreen> {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1280),
+        constraints: const BoxConstraints(maxWidth: 1040),
         child: Column(
           children: [
             Padding(
