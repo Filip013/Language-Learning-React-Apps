@@ -168,27 +168,27 @@ class TTSService {
                     final pcmBytes = pcmBuffer.toBytes();
                     if (_isPlaying && pcmBytes.isNotEmpty) {
                       final wavBytes = _pcmToWav(pcmBytes, 24000);
-                      final player = AudioPlayer();
+                      
                       try {
-                        final playbackCompleter = Completer<void>();
-                        final sub = player.onPlayerComplete.listen((_) {
-                          if (!playbackCompleter.isCompleted) {
-                            playbackCompleter.complete();
-                          }
-                        });
-
-                        await player.play(BytesSource(wavBytes));
-
+                        await _audioPlayer.stop();
+                        await _audioPlayer.setSourceBytes(wavBytes, mimeType: 'audio/wav');
+                        await _audioPlayer.resume();
+                        
+                        // Estimate duration
                         final durationMs = (pcmBytes.length / 48).round();
-                        await playbackCompleter.future.timeout(
-                          Duration(milliseconds: durationMs + 1500),
-                          onTimeout: () {},
-                        );
-                        await sub.cancel();
+                        final deadline = DateTime.now().add(Duration(milliseconds: durationMs + 1500));
+                        
+                        // Wait for playback to start
+                        while (_isPlaying && DateTime.now().isBefore(deadline) && _audioPlayer.state != PlayerState.playing && _audioPlayer.state != PlayerState.completed) {
+                          await Future.delayed(const Duration(milliseconds: 20));
+                        }
+                        
+                        // Wait for playback to finish
+                        while (_isPlaying && DateTime.now().isBefore(deadline) && _audioPlayer.state != PlayerState.completed && _audioPlayer.state != PlayerState.stopped) {
+                          await Future.delayed(const Duration(milliseconds: 20));
+                        }
                       } catch (e) {
                         debugPrint("Native TTS playback error: $e");
-                      } finally {
-                        await player.dispose();
                       }
                     }
 

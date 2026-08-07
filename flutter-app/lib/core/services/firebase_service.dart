@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'desktop_auth/desktop_auth.dart';
 import '../constants/app_constants.dart';
 
@@ -109,10 +108,6 @@ class FirebaseService {
 
   static Future<UserCredential?> _signInWithGoogleWindows() async {
     return await signInWithGoogleWindows(auth);
-  }
-
-  static Future<void> _openBrowser(String url) async {
-    await openWindowsBrowser(url);
   }
 
   static Future<void> signOut() async {

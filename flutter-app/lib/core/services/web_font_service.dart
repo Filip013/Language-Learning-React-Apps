@@ -33,7 +33,9 @@ class WebFontService {
 
   static Future<void> _doLoad(String fontFamily, String url) async {
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(Uri.parse(url), headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36'
+      });
       if (response.statusCode == 200) {
         final fontLoader = FontLoader(fontFamily);
         fontLoader.addFont(Future.value(ByteData.sublistView(response.bodyBytes)));
@@ -48,31 +50,42 @@ class WebFontService {
     }
   }
 
-  /// Loads the preferred CJK font for [langName]; fallback families are only
-  /// fetched if the preferred one could not be loaded.
-  static Future<void> ensurePreferredFontsLoaded(String langName) async {
+  /// Loads the preferred CJK fonts for [langName] in parallel.
+  /// This restores the behavior from earlier commits where fallbacks
+  /// are downloaded concurrently to ensure the Flutter engine repaints text
+  /// correctly once a valid native TTF loads.
+  static void ensurePreferredFontsLoaded(String langName) {
     if (langName.contains('Chinese') || langName.contains('Mandarin')) {
-      final preferred = await loadFontOnDemand(
+      loadFontOnDemand(
         'DFKai-SB',
         'https://db.onlinewebfonts.com/t/fe4f9dac99fb6b607c03981e6ce16869.ttf',
       );
-      if (!preferred) {
-        await loadFontOnDemand(
-          'STKaiti',
-          'https://db.onlinewebfonts.com/t/1ee9941f1b8c128110ca4307dda59917.ttf',
-        );
-      }
-    } else if (langName.contains('Japanese')) {
-      final preferred = await loadFontOnDemand(
-        'KyoKaSho',
-        'https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2',
+      loadFontOnDemand(
+        'STKaiti',
+        'https://db.onlinewebfonts.com/t/1ee9941f1b8c128110ca4307dda59917.ttf',
       );
-      if (!preferred) {
-        await loadFontOnDemand(
-          'HGSKyokashotai',
-          'https://db.onlinewebfonts.com/t/947e00387f802f409bd2f3e74b9c0730.ttf',
+    } else if (langName.contains('Japanese')) {
+      // Use WOFF2 for Web (faster/compressed) and TTF for Native platforms.
+      if (kIsWeb) {
+        loadFontOnDemand(
+          'KyoKaSho',
+          'https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2',
+        );
+      } else {
+        loadFontOnDemand(
+          'KyoKaSho',
+          'https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.ttf',
         );
       }
+      loadFontOnDemand(
+        'HGSKyokashotai',
+        'https://db.onlinewebfonts.com/t/947e00387f802f409bd2f3e74b9c0730.ttf',
+      );
+      loadFontOnDemand(
+        'STKaiti',
+        'https://db.onlinewebfonts.com/t/1ee9941f1b8c128110ca4307dda59917.ttf',
+      );
     }
   }
 }
+

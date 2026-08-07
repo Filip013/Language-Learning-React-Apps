@@ -472,7 +472,7 @@ TASKS:
             @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
             @font-face {
                 font-family: 'KyoKaSho';
-                src: url('https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2') format('truetype');
+                src: url('https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2') format('woff2');
                 font-weight: normal;
                 font-style: normal;
                 font-display: swap;
