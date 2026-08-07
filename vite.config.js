@@ -12,6 +12,9 @@ export default defineConfig({
       ignored: ['**/src-tauri/**']
     }
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom']
+  },
   plugins: [
     react(),
     VitePWA({
