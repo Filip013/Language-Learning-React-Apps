@@ -40,7 +40,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
       for (let wIdx = 0; wIdx < activeEpisode.drills.length; wIdx++) {
         const section = activeEpisode.drills[wIdx];
         for (let eIdx = 0; eIdx < (section.examples?.length || 0); eIdx++) {
-          if (!listenedIds.includes(`drill_${wIdx}_${eIdx}`)) {
+          if (!listenedIds.includes(`drill_${wIdx}_${eIdx}`) && !drillRevealed.includes(`drill_${wIdx}_${eIdx}`)) {
             foundWordIdx = wIdx; foundExIdx = eIdx; found = true; break;
           }
         }
@@ -58,7 +58,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
       
       setAutoNavigatedEpisodeId(activeEpisode.id);
     }
-  }, [isActive, activeEpisode, listenedIds, autoNavigatedEpisodeId]);
+  }, [isActive, activeEpisode, listenedIds, drillRevealed, autoNavigatedEpisodeId]);
 
   const totalWords = activeEpisode?.drills?.length || 0;
   const currentSection = activeEpisode?.drills?.[currentWordIdx];
@@ -69,7 +69,8 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
   
   const isActuallyListened = !isLatestEpisode || listenedIds.includes(exId);
   const isManuallyRevealed = drillRevealed.includes(exId);
-  const isRevealed = config.disableDrillBlur || isActuallyListened || isManuallyRevealed;
+  const isCompleted = isActuallyListened || isManuallyRevealed;
+  const isRevealed = config.disableDrillBlur || isCompleted;
 
   const targetText = currentExample ? currentExample[config.primaryTextKey] : '';
   const hasNotes = currentSection?.notes && currentSection.notes.length > 0;
@@ -180,7 +181,10 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
   const isWordCompleted = (wordIdx) => {
     if (!isLatestEpisode || config.disableDrillBlur) return true;
     const section = activeEpisode.drills[wordIdx];
-    return section.examples?.every((_, idx) => listenedIds.includes(`drill_${wordIdx}_${idx}`));
+    return section.examples?.every((_, idx) => {
+      const id = `drill_${wordIdx}_${idx}`;
+      return listenedIds.includes(id) || drillRevealed.includes(id);
+    });
   };
 
   if (!activeEpisode?.drills?.length) return <div className="p-10 text-center font-sans opacity-50">No drills generated yet.</div>;
@@ -307,7 +311,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
             <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Example {currentExIdx + 1}</span>
-                {isActuallyListened && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>Listened</span>}
+                {isCompleted && <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-emerald-500/20 flex items-center"><Check size={12} className="mr-1"/>{isActuallyListened ? 'Listened' : 'Completed'}</span>}
               </div>
               <div className="flex items-center gap-2">
                 <NoteButton isDarkMode={isDarkMode} hasNote={!!notes[exId]} onClick={() => handleOpenNote(exId, `Drill: ${targetText}`, notes[exId])} />

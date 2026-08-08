@@ -405,6 +405,7 @@ export default function LanguageCourse({ config }) {
             sweepMastered: d.sweepMastered || d.sweep?.mastered || {},
             sweepRevealed: d.sweepRevealed || d.sweep?.revealed || {},
             listenedDrills: d.listenedDrills || Object.keys(d.drills?.mastered || {}).map(id => id.replace(/_/g, '-')), 
+            drillRevealed: d.drillRevealed || Object.keys(d.drills?.revealed || {}), 
         };
         setProgressState(unifiedProgress);
       } else {
@@ -466,7 +467,11 @@ export default function LanguageCourse({ config }) {
       hasSubsequentProgressForReading;
 
     const totalDrillItems = activeEpisode.drills ? activeEpisode.drills.reduce((acc, d) => acc + (d.examples?.length || 0), 0) : 0;
-    const isDrillCompleted = totalDrillItems === 0 || (progressState.listenedDrills || []).length >= totalDrillItems ||
+    const completedDrillItems = activeEpisode.drills ? activeEpisode.drills.reduce((acc, d, wIdx) => acc + (d.examples || []).filter((_, eIdx) => {
+      const id = `drill_${wIdx}_${eIdx}`;
+      return (progressState.listenedDrills || []).includes(id) || (progressState.drillRevealed || []).includes(id);
+    }).length, 0) : 0;
+    const isDrillCompleted = totalDrillItems === 0 || completedDrillItems >= totalDrillItems ||
       hasQuizProgress || hasTestProgress || hasSweepProgress;
 
     const totalQuizItems = activeEpisode.quiz?.length || 0;
