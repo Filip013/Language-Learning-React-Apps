@@ -4,5 +4,11 @@
         <!-- Opt out of Android 15+ enforced edge-to-edge so the app lays out
              inside the system bars (no fullscreen look). -->
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+
+        <!-- Light theme: match the app's light stone-50 background -->
+        <item name="android:statusBarColor">#FAFAF9</item>
+        <item name="android:navigationBarColor">#FAFAF9</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>
