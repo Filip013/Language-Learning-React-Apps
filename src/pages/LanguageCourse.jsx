@@ -6,7 +6,7 @@ import {
   Book, ArrowLeft
 } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
-import { auth, db } from '../firebase';
+import firebase, { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
 // Shared Common Components
@@ -24,6 +24,21 @@ import SweepTab from '../components/course/SweepTab';
 import LexiconTab from '../components/course/LexiconTab';
 import StoryTab from '../components/course/StoryTab';
 import StudioTab from '../components/course/StudioTab';
+
+const mergeLexiconLists = (lists) => {
+  const seenIds = new Set();
+  const result = [];
+  for (const list of lists) {
+    for (const w of list || []) {
+      if (w && typeof w === 'object' && w.id) {
+        if (seenIds.has(w.id)) continue;
+        seenIds.add(w.id);
+      }
+      result.push(w);
+    }
+  }
+  return result;
+};
 
 export default function LanguageCourse({ config }) {
   const [user, setUser] = useState(null);
@@ -83,24 +98,22 @@ export default function LanguageCourse({ config }) {
   }, [noteModal.id, progressState.notes, activeEpisodeId, user, activeConfig]);
 
   const generatePromptString = async (isForAPI = false) => {
-    let prioritizedWords = [];
-    let otherWords = [];
-    
     const lex = globalLexicon || {};
-    if (lex.accumulated) prioritizedWords = [...lex.accumulated];
-    else if (lex.entries) prioritizedWords = [...lex.entries];
-    
-    Object.keys(lex).forEach(key => {
-      if (key !== 'accumulated' && key !== 'entries' && Array.isArray(lex[key])) {
-        otherWords = [...otherWords, ...lex[key]];
-      }
-    });
 
-    const flatLexicon = [...prioritizedWords, ...otherWords].map(w => {
+    const listValues = [
+      ...(lex.accumulated || []),
+      ...(lex.entries || []),
+      ...(Array.isArray(lex) ? lex : []),
+      ...Object.entries(lex)
+        .filter(([key, value]) => key !== 'accumulated' && key !== 'entries' && Array.isArray(value))
+        .flatMap(([, value]) => value)
+    ];
+
+    const flatLexicon = listValues.map(w => {
         if (typeof w === 'string') return w;
         if (w && typeof w === 'object') return w.word || w[activeConfig.primaryTextKey] || w.targetText || '';
         return '';
-    }).filter(Boolean).join(', ');
+    }).filter(Boolean).filter((text, index, arr) => arr.indexOf(text) === index).join(', ');
     
     let currentStoryText = "";
     if (activeConfig.hasStories) {
@@ -545,8 +558,9 @@ export default function LanguageCourse({ config }) {
           batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
       } else {
           const existingEntries = globalLexicon?.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
-          const newEntries = [...validNewLemmas, ...existingEntries];
-          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries }, { merge: true });
+          const existingAcc = globalLexicon?.accumulated || [];
+          const newEntries = mergeLexiconLists([validNewLemmas, existingEntries, existingAcc]);
+          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries, accumulated: firebase.firestore.FieldValue.delete() }, { merge: true });
       }
       
       if (activeConfig.hasStories) {
@@ -619,14 +633,14 @@ export default function LanguageCourse({ config }) {
 
       if (activeEpisode?.newLemmas && activeEpisode.newLemmas.length > 0) {
         const docName = activeConfig.lexiconDoc || 'lexicon';
-        if (Array.isArray(globalLexicon) || globalLexicon?.entries) {
-            const list = globalLexicon.entries || globalLexicon;
-            const toDeleteIds = activeEpisode.newLemmas.map(l => l.id).filter(Boolean);
-            const newEntries = list.filter(w => !toDeleteIds.includes(w.id));
-            batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries }, { merge: true });
-        } else {
-            const newAcc = (globalLexicon?.accumulated || []).filter(w => !activeEpisode.newLemmas.some(lemma => lemma.id === w.id));
+        const toDeleteIds = activeEpisode.newLemmas.map(l => l.id).filter(Boolean);
+        if (activeConfig.id === 'mandarin') {
+            const newAcc = (globalLexicon?.accumulated || []).filter(w => !toDeleteIds.includes(w.id));
             batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
+        } else {
+            const merged = mergeLexiconLists([globalLexicon?.entries || (Array.isArray(globalLexicon) ? globalLexicon : []), globalLexicon?.accumulated || []]);
+            const newEntries = merged.filter(w => !toDeleteIds.includes(w.id));
+            batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries, accumulated: firebase.firestore.FieldValue.delete() }, { merge: true });
         }
       }
 
