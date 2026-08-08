@@ -189,10 +189,11 @@ export function useGeminiTTS(systemInstruction) {
                                 if (!hasMore) {
                                     if (silentAudioRef.current) silentAudioRef.current.pause();
 
-                                    if (currentOnComplete.current) {
-                                        currentOnComplete.current();
-                                        currentOnComplete.current = null;
-                                    }
+                            if (currentOnComplete.current) {
+                                currentOnComplete.current();
+                                currentOnComplete.current = null;
+                            }
+                            currentOnError.current = null;
                                 }
                             }
                         }, 100);
@@ -201,8 +202,8 @@ export function useGeminiTTS(systemInstruction) {
             };
 
             ws.current.onerror = (e) => {
+                console.warn("Audio connection failed.", e);
                 if (currentOnError.current) currentOnError.current();
-                alert("Audio connection failed. Check console for details.");
             };
         };
 
