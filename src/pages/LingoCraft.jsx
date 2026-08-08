@@ -4,7 +4,7 @@ import {
   Globe, Search, History, Database, 
   Loader2, Sparkles, AlertCircle, BookOpen, 
   Volume2, Pause, Trash2, ArrowLeft,
-  ChevronLeft, ChevronRight, Eye
+  ChevronLeft, ChevronRight, Eye, Languages
 } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { auth, db } from '../firebase';
@@ -229,7 +229,7 @@ export default function LingoCraft() {
     const loadHistoryItem = (item) => {
         setResult(item);
         setWord('');
-        setSelectedLanguage(getLangObj(item.targetLanguage).name);
+        if (item.targetLanguage) setSelectedLanguage(getLangObj(item.targetLanguage).name);
         setSelectedLevel(item.level);
         setCurrentIdx(0);
         setRevealedSentences(new Set([0, 1, 2, 3, 4]));
@@ -237,11 +237,17 @@ export default function LingoCraft() {
         window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
+    const getTranslation = (sentence) => {
+        return sentence?.englishTranslation || sentence?.translation || sentence?.translated || '';
+    };
+
     const getTTSText = (item, langName) => {
         if (langName === 'English') return [item.original];
         const targetScript = (langName?.includes('Greek') && item.transcription) ? item.transcription : item.original;
-        return [targetScript, item.englishTranslation, targetScript];
+        return [targetScript, getTranslation(item), targetScript];
     };
+
+    const activeLangName = result?.targetLanguage ? getLangObj(result.targetLanguage).name : (result ? '' : selectedLanguage);
 
     const revealCurrentSentence = useCallback((index) => {
         setRevealedSentences(prev => {
@@ -361,7 +367,7 @@ export default function LingoCraft() {
                     if (result) {
                         e.preventDefault();
                         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-                        toggleAudio(result.sentences[currentIdx], currentIdx, getLangObj(result?.targetLanguage).name);
+                        toggleAudio(result.sentences[currentIdx], currentIdx, activeLangName);
                     }
                     break;
                 default:
@@ -370,9 +376,8 @@ export default function LingoCraft() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [activeTab, result, currentIdx, playingId, handleNext, handlePrev, revealCurrentSentence, toggleAudio]);
+    }, [activeTab, result, currentIdx, playingId, handleNext, handlePrev, revealCurrentSentence, toggleAudio, activeLangName]);
 
-    const activeLangName = result?.targetLanguage ? getLangObj(result.targetLanguage).name : selectedLanguage;
     const currentSentence = result?.sentences?.[currentIdx];
     const sampleText = currentSentence?.original || result?.word || '';
     const { isCjk, fontClass } = getFontStyles(activeLangName, sampleText);
@@ -667,10 +672,13 @@ export default function LingoCraft() {
                                                         )}
                                                     </div>
 
-                                                    {!isTargetEnglish && (
+                                                    {!isTargetEnglish && getTranslation(currentSentence) && (
                                                         <div className={`p-4 rounded-xl border mt-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/80' : 'bg-stone-50 border-stone-100'}`}>
-                                                            <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDarkMode ? 'text-zinc-500' : 'text-stone-400'}`}>Translation</div>
-                                                            <p className={`text-sm sm:text-base font-medium ${isDarkMode ? 'text-zinc-300' : 'text-stone-600'}`}>{currentSentence.englishTranslation}</p>
+                                                            <div className="flex items-center gap-1.5 mb-1">
+                                                                <Languages className={`w-4 h-4 shrink-0 ${isDarkMode ? 'text-blue-500' : 'text-blue-600'}`} />
+                                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>Translation</span>
+                                                            </div>
+                                                            <p className={`text-sm sm:text-base font-medium ${isDarkMode ? 'text-zinc-300' : 'text-stone-600'}`}>{getTranslation(currentSentence)}</p>
                                                         </div>
                                                     )}
 
@@ -689,7 +697,7 @@ export default function LingoCraft() {
                                                 {!isRevealed && (
                                                     <div className="absolute inset-0 flex flex-col sm:flex-row items-center justify-center gap-3 z-10 p-4">
                                                         <button 
-                                                            onClick={() => toggleAudio(currentSentence, currentIdx, getLangObj(result?.targetLanguage).name)} 
+                                                            onClick={() => toggleAudio(currentSentence, currentIdx, activeLangName)} 
                                                             className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-lg text-sm sm:text-base font-bold border transition-transform hover:scale-105 active:scale-95 ${
                                                                 isPlaying
                                                                     ? 'bg-amber-500/20 text-amber-500 border-amber-500/40 hover:bg-amber-500/30'
@@ -715,29 +723,29 @@ export default function LingoCraft() {
                                             <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
                                                 Context 0{currentIdx + 1}
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-5">
                                                 <button
                                                     onClick={() => revealCurrentSentence(currentIdx)}
                                                     disabled={isRevealed}
                                                     title="Reveal text without audio (R)"
-                                                    className={`p-1 rounded-full border transition-all active:scale-95 shadow-sm ${
+                                                    className={`p-1.5 rounded-full border transition-all active:scale-95 shadow-sm ${
                                                         isRevealed 
                                                             ? 'opacity-30 cursor-not-allowed border-transparent text-zinc-500' 
                                                             : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700' : 'bg-white border-stone-200 text-stone-600 hover:text-stone-800 hover:bg-stone-50'
                                                     }`}
                                                 >
-                                                    <Eye size={20} />
+                                                    <Eye size={24} />
                                                 </button>
                                                 <button
-                                                    onClick={() => toggleAudio(currentSentence, currentIdx, getLangObj(result?.targetLanguage).name)}
+                                                    onClick={() => toggleAudio(currentSentence, currentIdx, activeLangName)}
                                                     title={isPlaying ? 'Pause Audio (Space)' : 'Play Audio (Space)'}
-                                                    className={`p-1 rounded-full border transition-all active:scale-95 shadow-sm ${
+                                                    className={`p-1.5 rounded-full border transition-all active:scale-95 shadow-sm ${
                                                         isPlaying 
                                                             ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500 shadow-emerald-500/10' 
                                                             : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:bg-blue-300 hover:bg-zinc-700' : 'bg-white border-stone-200 text-blue-600 hover:bg-blue-700 hover:bg-stone-50'
                                                     }`}
                                                 >
-                                                    {isPlaying ? <Pause size={20} className="text-emerald-500 animate-pulse" /> : <Volume2 size={20} />}
+                                                    {isPlaying ? <Pause size={24} className="text-emerald-500 animate-pulse" /> : <Volume2 size={24} />}
                                                 </button>
                                             </div>
                                         </div>
