@@ -14,6 +14,9 @@ flutter-app/build/
 flutter-app/.dart_tool/
 flutter-app/.flutter-plugins-dependencies
 
+# Tool caches
+.hermes/
+
 # Logs
 logs
 *.log
