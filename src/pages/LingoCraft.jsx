@@ -30,6 +30,22 @@ const getLangObj = (targetLang) => {
     return { name, flag };
 };
 
+// Levels are stored by id ('Beginner'), but older history/prefs may hold a label ('B1-B2').
+// Normalize anything back to the canonical id and expose the friendly label for display.
+const getLevelId = (value) => {
+    if (!value) return LEVELS[1].id;
+    const norm = String(value).trim();
+    const found = LEVELS.find(l => l.id === norm)
+        || LEVELS.find(l => l.label === norm)
+        || LEVELS.find(l => l.label.replace(/-/g, '') === norm.replace(/-/g, ''));
+    return found ? found.id : LEVELS[1].id;
+};
+
+const getLevelLabel = (value) => {
+    const id = getLevelId(value);
+    return LEVELS.find(l => l.id === id)?.label || LEVELS[1].label;
+};
+
 export default function LingoCraft() {
     const [user, setUser] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -88,7 +104,7 @@ export default function LingoCraft() {
             if (docSnap.exists) {
                 const data = docSnap.data();
                 if (data.language) setSelectedLanguage(data.language);
-                if (data.level) setSelectedLevel(data.level);
+                if (data.level) setSelectedLevel(getLevelId(data.level));
             }
         });
 
@@ -103,13 +119,14 @@ export default function LingoCraft() {
     }, [user]);
 
     const handlePrefChange = async (type, value) => {
-        if (!user) return;
+        const normalized = type === 'level' ? getLevelId(value) : value;
         if (type === 'language') setSelectedLanguage(value);
-        if (type === 'level') setSelectedLevel(value);
+        if (type === 'level') setSelectedLevel(normalized);
+        if (!user) return;
         
         try {
             await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('config').doc('preferences').set({
-                [type]: value
+                [type]: normalized
             }, { merge: true });
         } catch (e) { console.error(e) }
     };
@@ -230,7 +247,7 @@ export default function LingoCraft() {
         setResult(item);
         setWord('');
         if (item.targetLanguage) setSelectedLanguage(getLangObj(item.targetLanguage).name);
-        setSelectedLevel(item.level);
+        setSelectedLevel(getLevelId(item.level));
         setCurrentIdx(0);
         setRevealedSentences(new Set([0, 1, 2, 3, 4]));
         setActiveTab('main');
@@ -613,7 +630,7 @@ export default function LingoCraft() {
                                         </div>
                                         <div className="text-xs sm:text-sm font-bold text-blue-500 flex items-center gap-1.5">
                                             <span className={`w-1 h-1 rounded-full bg-current opacity-50 sm:hidden`}></span>
-                                            {result.level}
+                                            {getLevelLabel(result.level)}
                                         </div>
                                     </div>
                                 </div>
@@ -801,7 +818,7 @@ export default function LingoCraft() {
                                             <div className={`text-xs mt-1 font-medium flex items-center gap-2 ${isDarkMode ? 'text-zinc-400' : 'text-stone-500'}`}>
                                                 <span>{itemLang.flag} {itemLang.name}</span>
                                                 <span className="w-1 h-1 rounded-full bg-current opacity-50"></span>
-                                                <span>{item.level}</span>
+                                                <span>{getLevelLabel(item.level)}</span>
                                             </div>
                                         </div>
                                         <button
