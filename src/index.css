@@ -6,6 +6,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body, #root {
+    @apply bg-stone-50 text-stone-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-200;
+    min-height: 100vh;
+  }
+}
+
 /* Custom web font served from the home TV box server */
 @font-face {
   font-family: 'KyoKaSho';

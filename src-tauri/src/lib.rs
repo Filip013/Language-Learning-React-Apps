@@ -54,6 +54,21 @@ pub fn run() {
     builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
   }
 
+  #[cfg(mobile)]
+  {
+    builder = builder.plugin(
+      tauri::plugin::Builder::<_, ()>::new("systemBars")
+        .setup(|_app, api| {
+          #[cfg(target_os = "android")]
+          {
+            let _handle = api.register_android_plugin("com.lingohub.app", "SystemBarsPlugin")?;
+          }
+          Ok(())
+        })
+        .build(),
+    );
+  }
+
   builder
     .invoke_handler(tauri::generate_handler![start_auth_server])
     .setup(|app| {

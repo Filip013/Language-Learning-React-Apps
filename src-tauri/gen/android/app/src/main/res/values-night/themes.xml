@@ -5,7 +5,8 @@
              inside the system bars (no fullscreen look). -->
         <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
 
-        <!-- Dark theme: match the app's dark zinc-950/stone-950 background -->
+        <!-- Dark theme fallback: match the app's dark zinc-950/stone-950 background until JS syncs -->
+        <item name="android:windowBackground">#09090B</item>
         <item name="android:statusBarColor">#09090B</item>
         <item name="android:navigationBarColor">#09090B</item>
         <item name="android:windowLightStatusBar">false</item>

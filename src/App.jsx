@@ -1,5 +1,6 @@
   import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
   import { useEffect } from 'react';
+  import { invoke, isTauri } from '@tauri-apps/api/core';
 
   import { auth, db } from './firebase';
   import Home from './pages/Home';
@@ -30,6 +31,13 @@
         }
         const meta = document.getElementById('theme-color-meta');
         if (meta) meta.setAttribute('content', themeColor);
+
+        // Sync native system bars on Android/Tauri
+        if (isTauri() && /Android/i.test(navigator.userAgent)) {
+          invoke('plugin:systemBars|set_theme', { isDark })
+            .then(() => console.log('[ThemeSync] invoke succeeded'))
+            .catch((err) => console.error('[ThemeSync] invoke error:', err));
+        }
       };
 
       applyTheme();
@@ -49,10 +57,12 @@
 
       mediaQuery.addEventListener('change', handleSystemChange);
       window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('theme-changed', applyTheme);
 
       return () => {
         mediaQuery.removeEventListener('change', handleSystemChange);
         window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('theme-changed', applyTheme);
       };
     }, []);
 
