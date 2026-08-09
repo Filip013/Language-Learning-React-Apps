@@ -67,6 +67,28 @@ pub fn run() {
         })
         .build(),
     );
+    builder = builder.plugin(
+      tauri::plugin::Builder::<_, ()>::new("share")
+        .setup(|_app, api| {
+          #[cfg(target_os = "android")]
+          {
+            let _handle = api.register_android_plugin("com.lingohub.app", "SharePlugin")?;
+          }
+          Ok(())
+        })
+        .build(),
+    );
+    builder = builder.plugin(
+      tauri::plugin::Builder::<_, ()>::new("clipboard")
+        .setup(|_app, api| {
+          #[cfg(target_os = "android")]
+          {
+            let _handle = api.register_android_plugin("com.lingohub.app", "ClipboardPlugin")?;
+          }
+          Ok(())
+        })
+        .build(),
+    );
   }
 
   builder

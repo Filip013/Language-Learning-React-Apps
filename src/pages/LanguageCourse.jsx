@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import firebase, { auth, db } from '../firebase';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 
 // Shared Common Components
@@ -24,6 +25,8 @@ import SweepTab from '../components/course/SweepTab';
 import LexiconTab from '../components/course/LexiconTab';
 import StoryTab from '../components/course/StoryTab';
 import StudioTab from '../components/course/StudioTab';
+
+const isAndroidTauri = () => isTauri() && /Android/i.test(navigator.userAgent);
 
 const mergeLexiconLists = (lists) => {
   const seenIds = new Set();
@@ -251,30 +254,38 @@ export default function LanguageCourse({ config }) {
       const exportedText = await generatePromptString(false);
 
       try {
-        await navigator.clipboard.writeText(exportedText);
+        if (isAndroidTauri()) {
+          await invoke('plugin:clipboard|write_text', { text: exportedText });
+        } else {
+          await navigator.clipboard.writeText(exportedText);
+        }
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2500);
       } catch (clipboardErr) {
         console.warn("Could not copy to clipboard:", clipboardErr);
       }
 
-      const fileName = `${activeConfig.name.replace(/\s+/g, '_')}_Prompt_${Date.now()}.txt`;
-      const file = new File([exportedText], fileName, { type: 'text/plain' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'Prompt Export',
-          files: [file]
-        });
+      if (isAndroidTauri()) {
+        await invoke('plugin:share|share', { text: exportedText });
       } else {
-        const url = URL.createObjectURL(file);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const fileName = `${activeConfig.name.replace(/\s+/g, '_')}_Prompt_${Date.now()}.txt`;
+        const file = new File([exportedText], fileName, { type: 'text/plain' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'Prompt Export',
+            files: [file]
+          });
+        } else {
+          const url = URL.createObjectURL(file);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -619,7 +630,7 @@ export default function LanguageCourse({ config }) {
 
   const handlePasteLesson = async () => {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = isAndroidTauri() ? await invoke('plugin:clipboard|read_text') : await navigator.clipboard.readText();
       if (!text) throw new Error("Clipboard is empty.");
       await processImportedJSON(text.trim());
     } catch (err) {
