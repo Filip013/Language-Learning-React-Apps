@@ -115,7 +115,12 @@ export default function LanguageCourse({ config }) {
 
     const flatLexicon = listValues.map(w => {
         if (typeof w === 'string') return w;
-        if (w && typeof w === 'object') return w.word || w[activeConfig.primaryTextKey] || w.targetText || '';
+        if (w && typeof w === 'object') {
+            if (activeConfig.ttsUseTransliteration && activeConfig.transliterationKey && w[activeConfig.transliterationKey]) {
+                return w[activeConfig.transliterationKey];
+            }
+            return w.word || w[activeConfig.primaryTextKey] || w.targetText || '';
+        }
         return '';
     }).filter(Boolean).filter((text, index, arr) => arr.indexOf(text) === index).join(', ');
     

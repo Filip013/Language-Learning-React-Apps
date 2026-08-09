@@ -401,6 +401,8 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When the text is Ancient Greek (including its Latinized transliteration), read it using restored Classical pronunciation, maintaining proper vowel lengths, diphthongs, and pitch accents. When the text is English, read it in English.",
         promptSystemInstruction: `You are an expert Classical Ancient Greek curriculum designer. Generate a highly structured lesson in Polytonic Ancient Greek with Latinized Transliteration.
 
+NOTE: The KNOWN VOCABULARY is provided in Latinized transliteration; long vowels are marked with macrons (ā, ī, ȳ). Use these vowel lengths when writing the polytonic Greek.
+
 CRITICAL RULES:
 1. PRESENT EXACTLY 3 NEW BASE TARGET WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
 2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
