@@ -15,7 +15,11 @@ const THEME_KEY = 'lingocraft_theme';
  * page-specific color/background classes through `className`.
  */
 export default function ThemeToggle({ className = '', size = 16 }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const localTheme = localStorage.getItem(THEME_KEY);
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return localTheme === 'dark' || (!localTheme && systemDark);
+  });
 
   useEffect(() => {
     const checkTheme = () => {

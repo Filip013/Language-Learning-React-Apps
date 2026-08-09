@@ -11,7 +11,7 @@ const COURSES = Object.keys(courseConfigs).map(key => ({
 }));
 
 export default function BatchUpdater() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(auth.currentUser);
     const [selectedCourseId, setSelectedCourseId] = useState('mandarin');
     
     const [originalData, setOriginalData] = useState(null);

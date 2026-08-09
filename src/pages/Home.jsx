@@ -69,7 +69,7 @@ const ApiKeyManager = ({ title, description, storageKey, user }) => {
 };
 
 export default function Home() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(auth.currentUser);
     const [activePanel, setActivePanel] = useState(null); // null | 'tools' | 'settings'
     const [recentActivity, setRecentActivity] = useState({});
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);

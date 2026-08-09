@@ -18,7 +18,7 @@ const APPS_TO_MIGRATE = [
 ];
 
 export default function MigrationTool() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(auth.currentUser);
     const [logs, setLogs] = useState([]);
     const [isActionRunning, setIsActionRunning] = useState(false);
     // Initialize all to false as requested

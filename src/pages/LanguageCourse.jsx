@@ -41,9 +41,13 @@ const mergeLexiconLists = (lists) => {
 };
 
 export default function LanguageCourse({ config }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(auth.currentUser);
   const [activeTab, setActiveTab] = useState('studio');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const localTheme = localStorage.getItem('lingocraft_theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return localTheme === 'dark' || (!localTheme && systemDark);
+  });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const scrollPositions = useRef({});
   

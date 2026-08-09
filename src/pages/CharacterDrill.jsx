@@ -26,8 +26,12 @@ const PIECE_COLORS = [
 ];
 
 export default function CharacterDrill() {
-  const [user, setUser] = useState(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [user, setUser] = useState(auth.currentUser);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const localTheme = localStorage.getItem('lingocraft_theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return localTheme === 'dark' || (!localTheme && systemDark);
+  });
   const [activeTab, setActiveTab] = useState('main'); 
   const [historySearch, setHistorySearch] = useState('');
   
