@@ -398,15 +398,14 @@ TASKS:
         hasTestTab: false,
         hasSweepTab: false,
 
-        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: Read the provided transliteration of Ancient Greek using restored Classical pronunciation. Maintain proper vowel lengths, diphthongs, and pitch accents.",
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When the text is Ancient Greek (including its Latinized transliteration), read it using restored Classical pronunciation, maintaining proper vowel lengths, diphthongs, and pitch accents. When the text is English, read it in English.",
         promptSystemInstruction: `You are an expert Classical Ancient Greek curriculum designer. Generate a highly structured lesson in Polytonic Ancient Greek with Latinized Transliteration.
 
 CRITICAL RULES:
 1. PRESENT EXACTLY 3 NEW BASE TARGET WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
 2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
-3. DO NOT generate target-language definitions in the reading section.
-4. Always write Ancient Greek using full polytonic diacritics (accents and breathing marks).
-5. Always provide accurate Latinized transliteration for all Ancient Greek passages, drills, quiz questions, and new words.
+3. Always write Ancient Greek using full polytonic diacritics (accents and breathing marks).
+4. Always provide accurate Latinized transliteration for all Ancient Greek passages, drills, quiz questions, and new words. In the transliteration, explicitly mark the length of α, ι, and υ: use a macron (ā, ī, ū) when the vowel is long.
 
 TASKS:
 1. 'reading.greek': A passage in Polytonic Ancient Greek, multiple paragraphs separated by \\n\\n.
