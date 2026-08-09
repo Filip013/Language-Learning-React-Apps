@@ -22,15 +22,18 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
       if (text.length > 0 && selection.rangeCount > 0) {
         try {
           const range = selection.getRangeAt(0);
-          const rect = range.getBoundingClientRect();
+          const rects = range.getClientRects();
+          const lastRect = rects.length > 0
+            ? Array.from(rects).reduce((max, r) => (r.bottom > max.bottom ? r : max))
+            : range.getBoundingClientRect();
 
-          if (rect.width > 0 && rect.height > 0) {
+          if (lastRect.width > 0 && lastRect.height > 0) {
             setSelectionState(prev => {
               if (prev.showPanel) return prev;
               return {
                 text,
-                x: rect.left + (rect.width / 2),
-                y: rect.top,
+                x: lastRect.left + (lastRect.width / 2),
+                y: lastRect.bottom,
                 showIcon: true,
                 showPanel: false
               };
@@ -47,6 +50,31 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
       document.removeEventListener('selectionchange', handleSelection);
     };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        setSelectionState(prev => ({ ...prev, showIcon: false, showPanel: false }));
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      if (!selectionState.showPanel) return;
+
+      const panel = document.getElementById('ai-translate-panel');
+      if (panel && !panel.contains(e.target)) {
+        setSelectionState(prev => ({ ...prev, showPanel: false }));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handleClickOutside);
+    };
+  }, [selectionState.showPanel]);
 
   const handleAITranslate = async () => {
     setSelectionState(prev => ({ ...prev, showIcon: false, showPanel: true }));
@@ -98,17 +126,18 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
       {/* 1. Floating Icon Action Button */}
       {selectionState.showIcon && !selectionState.showPanel && (
         <button
+          id="ai-translate-btn"
           style={{ 
             position: 'fixed', 
-            top: Math.max(20, selectionState.y - 10) + 'px', 
-            left: selectionState.x + 'px', 
-            transform: 'translate(-50%, -100%)', 
+            top: Math.min(window.innerHeight - 44, selectionState.y + 14) + 'px', 
+            left: Math.max(30, Math.min(window.innerWidth - 30, selectionState.x)) + 'px', 
+            transform: 'translate(-50%, 0)', 
             zIndex: 9999 
           }}
           onMouseDown={(e) => e.preventDefault()} // Prevents clearing text selection on click!
           onTouchStart={(e) => e.preventDefault()} // Prevents clearing text selection on mobile tap!
           onClick={handleAITranslate}
-          className={`p-2 rounded-full shadow-lg border flex items-center justify-center cursor-pointer animate-in zoom-in duration-200 ${
+          className={`p-2 rounded-full shadow-xl border flex items-center justify-center cursor-pointer animate-in zoom-in duration-200 ${
             isDarkMode ? 'bg-amber-600 border-amber-500 text-stone-900' : 'bg-amber-500 border-amber-400 text-white'
           }`}
         >
