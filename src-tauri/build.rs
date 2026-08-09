@@ -1,4 +1,5 @@
 fn main() {
+  println!("cargo:rerun-if-changed=../dist");
   tauri_build::try_build(
     tauri_build::Attributes::new()
       .plugin(
