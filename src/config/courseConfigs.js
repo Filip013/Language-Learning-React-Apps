@@ -113,21 +113,21 @@ DRILL AND QUIZ DESIGN:
         promptSystemInstruction: `You are an expert Hungarian language curriculum designer. Generate a highly structured lesson.
         
 CRITICAL RULES:
-1. PRESENT EXACTLY 3 NEW BASE WORDS to teach, PLUS any additional words the user explicitly requests.
-2. The Definitions, Quiz, and Test MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
-3. The 'focus' section MUST contain exactly 3 items for the new base words, PLUS 1 to 3 items for reviewing grammar/vocabulary weaknesses.
-4. DO NOT group words or topics together in the Drills. Every single item listed in 'reading.focus' must have its own dedicated drill entry.
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Definitions, Quiz, and Test MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain exactly 5 items for the new base words, PLUS 1 to 5 items for reviewing grammar/vocabulary weaknesses (up to 10 items total).
+4. DRILL STRUCTURE: Create EXACTLY 5 drill entries — one per new base word. Review/grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading.definitions': Hungarian definitions for ONLY the 3 new target words, using Known Vocabulary.
+1. 'reading.definitions': Hungarian definitions for ONLY the 5 new target words, using Known Vocabulary.
 2. 'reading.hungarian': multiple paragraphs separated by \n\n with some dialog.
 3. 'reading.english': English translation.
-4. 'reading.focus': Explain the 3 new target words, plus 1 to 3 grammar rules or reviewed structures. Treat every single explanation as a separate item.
-5. 'drills': Create exactly 1 drill entry for EVERY individual item in 'reading.focus'. Each entry MUST contain exactly 5 example sentences in HU/EN.
-6. 'quiz': Create exactly 2 questions for every item in 'reading.focus', plus 5 general questions to probe for weak areas. Use '_____' (5 underscores) for the blank.
-7. 'test': Create exactly 2 active translation sentences (English to Hungarian) for every item in 'reading.focus', plus 5 general sentences to probe for weak areas.
+4. 'reading.focus': Explain the 5 new target words, plus 1 to 5 grammar rules or reviewed structures. Treat every single explanation as a separate item.
+5. 'drills': Create EXACTLY 5 drill entries — one for each new base word. Each entry MUST contain exactly 5 example sentences in HU/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+6. 'quiz': Create EXACTLY 15 questions total, covering the 5 new words, the review items, and general weak areas. Use '_____' (5 underscores) for the blank.
+7. 'test': Create EXACTLY 15 active translation sentences (English to Hungarian) covering the 5 new words, review items, and general weak areas.
 8. 'sweep': Exactly 15 sentences targeting words that have not recently been encountered.
-9. 'newLemmas': Extract the 3 new base words plus any silent additions explicitly requested by the user.`,
+9. 'newLemmas': Extract the 5 new base words plus any silent additions explicitly requested by the user.`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -401,22 +401,23 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When the text is Ancient Greek (including its Latinized transliteration), read it using restored Classical pronunciation, maintaining proper vowel lengths, diphthongs, and pitch accents. When the text is English, read it in English.",
         promptSystemInstruction: `You are an expert Classical Ancient Greek curriculum designer. Generate a highly structured lesson in Polytonic Ancient Greek with Latinized Transliteration.
 
-NOTE: The KNOWN VOCABULARY is provided in Latinized transliteration; long vowels are marked with macrons (ā, ī, ȳ). Use these vowel lengths when writing the polytonic Greek.
+NOTE: The KNOWN VOCABULARY is provided in Latinized transliteration; long vowels are marked with macrons (ā, ī, ȳ). Use these vowel lengths when writing the transliteration.
 
 CRITICAL RULES:
-1. PRESENT EXACTLY 3 NEW BASE TARGET WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
-2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 3 new target words.
+1. PRESENT EXACTLY 5 NEW BASE TARGET WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
 3. Always write Ancient Greek using full polytonic diacritics (accents and breathing marks).
 4. Always provide accurate Latinized transliteration for all Ancient Greek passages, drills, quiz questions, and new words. In the transliteration, explicitly mark the length of α, ι, and υ: use a macron (ā, ī, ȳ) when the vowel is long.
+5. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review/grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading.greek': A passage in Polytonic Ancient Greek, multiple paragraphs separated by \\n\\n.
+1. 'reading.greek': A passage in Polytonic Ancient Greek, multiple paragraphs separated by \n\n.
 2. 'reading.transliteration': Latinized transliteration of the passage.
 3. 'reading.english': English translation.
-4. 'reading.focus': AT LEAST 3, AT MOST 5 items focusing on new words, grammar, nuance or review.
-5. 'drills': Create EXACTLY 1 drill object for EACH item in 'reading.focus'. Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English.
+4. 'reading.focus': EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar, nuance or review (up to 10 items total). Treat every single explanation as a separate item.
+5. 'drills': Create EXACTLY 5 drill objects — one for each new base word. Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English. Review and grammar items are practiced inside these sentences (see rule 5), not as separate drill entries.
 6. 'quiz': Create EXACTLY 15 questions testing the reading and past context. Provide both the Ancient Greek sentence and its transliteration. Use '_____' (5 underscores) for the blank.
-7. 'newLemmas': Extract the 3 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj').`,
+7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
