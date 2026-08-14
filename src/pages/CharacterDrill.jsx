@@ -81,7 +81,7 @@ export default function CharacterDrill() {
   useEffect(() => {
     if (!user) return;
 
-    const historyRef = db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history');
+    const historyRef = db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history');
     const unsubHistory = historyRef.onSnapshot((docSnap) => {
         if (docSnap.exists) setHistory(docSnap.data().items || []);
     });
@@ -89,7 +89,7 @@ export default function CharacterDrill() {
     const fetchLexicon = async () => {
         try {
             let chars = new Set();
-            const docRef = db.collection('artifacts').doc('mandarin-master').collection('users').doc(user.uid).collection('database').doc('lexicon');
+            const docRef = db.collection('lingo-hub').doc('mandarin-master').collection('users').doc(user.uid).collection('database').doc('lexicon');
             const docSnap = await docRef.get();
             
             if (docSnap.exists) {
@@ -338,7 +338,7 @@ export default function CharacterDrill() {
 
         const newHistory = [drillRecord, ...history].slice(0, 50);
         setHistory(newHistory);
-        await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
+        await db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
 
     } catch (err) {
         console.error(err);
@@ -362,7 +362,7 @@ export default function CharacterDrill() {
     const newHistory = history.filter(item => item.id !== id);
     setHistory(newHistory);
     try {
-        await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
+        await db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
     } catch (e) {}
   };
 

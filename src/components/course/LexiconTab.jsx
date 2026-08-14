@@ -160,7 +160,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
       };
 
       const docName = config.lexiconDoc || 'lexicon';
-      const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+      const lexRef = db.collection('lingo-hub').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
       
       const existingEntries = globalLexicon.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
       const existingAcc = globalLexicon.accumulated || [];
@@ -203,7 +203,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
     };
 
     const docName = config.lexiconDoc || 'lexicon';
-    const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+    const lexRef = db.collection('lingo-hub').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
     
     const isMatch = (w) => {
         if (w.id && editingWord.id) {
@@ -244,7 +244,7 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
     if (!user || !globalLexicon || !editingWord) return;
     setIsSubmitting(true);
     const docName = config.lexiconDoc || 'lexicon';
-    const lexRef = db.collection('artifacts').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+    const lexRef = db.collection('lingo-hub').doc(config.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
     
     const isMatch = (w) => {
         if (w.id && editingWord.id) {

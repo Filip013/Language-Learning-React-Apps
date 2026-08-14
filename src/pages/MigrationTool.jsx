@@ -60,8 +60,8 @@ export default function MigrationTool() {
                 }
 
                 log(`\n--- Migrating ${app.name} ---`);
-                const oldUserRef = db.collection('artifacts').doc(app.id).collection('users').doc(CANVAS_UID);
-                const newUserRef = db.collection('artifacts').doc(app.id).collection('users').doc(user.uid);
+                const oldUserRef = db.collection('lingo-hub').doc(app.id).collection('users').doc(CANVAS_UID);
+                const newUserRef = db.collection('lingo-hub').doc(app.id).collection('users').doc(user.uid);
                 
                 let appCount = 0;
 
@@ -112,7 +112,7 @@ export default function MigrationTool() {
 
         try {
             for (const app of APPS_TO_MIGRATE) {
-                const oldUserRef = db.collection('artifacts').doc(app.id).collection('users').doc(CANVAS_UID);
+                const oldUserRef = db.collection('lingo-hub').doc(app.id).collection('users').doc(CANVAS_UID);
                 
                 // Delete Collections
                 for (const colName of app.collections) {

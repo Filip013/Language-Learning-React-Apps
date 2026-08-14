@@ -103,7 +103,7 @@ export default function LingoCraft() {
     useEffect(() => {
         if (!user) return;
 
-        const prefsRef = db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('config').doc('preferences');
+        const prefsRef = db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('config').doc('preferences');
         const unsubPrefs = prefsRef.onSnapshot((docSnap) => {
             if (docSnap.exists) {
                 const data = docSnap.data();
@@ -112,7 +112,7 @@ export default function LingoCraft() {
             }
         });
 
-        const historyRef = db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history');
+        const historyRef = db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history');
         const unsubHistory = historyRef.onSnapshot((docSnap) => {
             if (docSnap.exists) {
                 setHistory(docSnap.data().items || []);
@@ -129,7 +129,7 @@ export default function LingoCraft() {
         if (!user) return;
         
         try {
-            await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('config').doc('preferences').set({
+            await db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('config').doc('preferences').set({
                 [type]: normalized
             }, { merge: true });
         } catch (e) { console.error(e) }
@@ -226,7 +226,7 @@ export default function LingoCraft() {
             const newHistory = [enrichedResult, ...history.filter(h => h.word.toLowerCase() !== enrichedResult.word.toLowerCase() || getLangObj(h.targetLanguage).name !== getLangObj(enrichedResult.targetLanguage).name)].slice(0, 40);
             setHistory(newHistory);
             
-            await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
+            await db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
 
         } catch (err) {
             console.error(err);
@@ -242,7 +242,7 @@ export default function LingoCraft() {
         const newHistory = history.filter(item => item.id !== id);
         setHistory(newHistory);
         try {
-            await db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
+            await db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('data').doc('history').set({ items: newHistory });
         } catch (e) {}
         if (result && result.id === id) setResult(null);
     };

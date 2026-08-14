@@ -99,7 +99,7 @@ export default function LanguageCourse({ config }) {
        const currentNotes = progressState.notes || {};
        const updatedNotes = { ...currentNotes, [noteModal.id]: newText.trim() };
        setProgressState(prev => ({ ...prev, notes: updatedNotes }));
-       db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId).set({ notes: updatedNotes }, { merge: true });
+       db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId).set({ notes: updatedNotes }, { merge: true });
     }
     setNoteModal({ isOpen: false, id: null, title: '', initialText: '' });
   }, [noteModal.id, progressState.notes, activeEpisodeId, user, activeConfig]);
@@ -138,7 +138,7 @@ export default function LanguageCourse({ config }) {
     const pastEps = episodesList.slice(0, 10).reverse();
     
     const progressPromises = pastEps.map(ep => 
-      db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get()
+      db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(ep.id).get()
     );
     const progressSnaps = await Promise.all(progressPromises);
     
@@ -372,13 +372,13 @@ export default function LanguageCourse({ config }) {
   useEffect(() => {
     if (!user) return;
     const docName = activeConfig.lexiconDoc || 'lexicon';
-    const lexRef = db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+    const lexRef = db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
     const unsubLex = lexRef.onSnapshot(snap => setGlobalLexicon(snap.exists ? snap.data() : {}));
     
     if (activeConfig.hasStories) {
-      const prefsRef = db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('settings').doc('prefs');
+      const prefsRef = db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('settings').doc('prefs');
       const unsubPrefs = prefsRef.onSnapshot(snap => { if (snap.exists) { setUserPrefs(snap.data()); setViewingStoryId(prev => prev === 'season_3' ? (snap.data().activeStoryId || 'season_3') : prev); }});
-      const storiesRef = db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('stories');
+      const storiesRef = db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('stories');
       const unsubStories = storiesRef.onSnapshot(snap => setStoryList(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))));
       return () => { unsubLex(); unsubPrefs(); unsubStories(); };
     }
@@ -387,7 +387,7 @@ export default function LanguageCourse({ config }) {
 
   useEffect(() => {
     if (!user) return;
-    const epsRef = db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').orderBy('timestamp', 'desc').limit(10);
+    const epsRef = db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').orderBy('timestamp', 'desc').limit(10);
     return epsRef.onSnapshot(snap => {
       const eps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setEpisodesList(eps);
@@ -397,9 +397,9 @@ export default function LanguageCourse({ config }) {
 
   useEffect(() => {
     if (!activeEpisodeId || !user) { setActiveEpisode(null); setProgressState({}); return; }
-    const epRef = db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(activeEpisodeId);
+    const epRef = db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(activeEpisodeId);
     const unsubEp = epRef.onSnapshot(snap => { if (snap.exists) setActiveEpisode({ id: snap.id, ...snap.data() }); });
-    const progRef = db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId);
+    const progRef = db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId);
     
     const unsubProg = progRef.onSnapshot(snap => {
       if (snap.exists) {
@@ -438,7 +438,7 @@ export default function LanguageCourse({ config }) {
   const updateFirebase = useCallback(async (updates) => {
     if (!activeEpisodeId || !user) return;
     setProgressState(prev => ({ ...prev, ...updates }));
-    await db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId).set(updates, { merge: true });
+    await db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId).set(updates, { merge: true });
   }, [activeEpisodeId, user, activeConfig]);
 
   const handleTabSwitch = (newTab) => {
@@ -575,34 +575,34 @@ export default function LanguageCourse({ config }) {
       const episodeDoc = { ...lessonJSON, newLemmas: validNewLemmas, id: newEpisodeId, timestamp: Date.now(), userPrompt: topicInput || "Imported JSON Lesson" };
       
       const batch = db.batch();
-      batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(newEpisodeId), episodeDoc);
+      batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(newEpisodeId), episodeDoc);
       
       const docName = activeConfig.lexiconDoc || 'lexicon';
       if (activeConfig.id === 'mandarin') {
           const newAcc = [...validNewLemmas, ...(globalLexicon?.accumulated || [])];
-          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
+          batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
       } else {
           const existingEntries = globalLexicon?.entries || (Array.isArray(globalLexicon) ? globalLexicon : []);
           const existingAcc = globalLexicon?.accumulated || [];
           const newEntries = mergeLexiconLists([validNewLemmas, existingEntries, existingAcc]);
-          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries, accumulated: firebase.firestore.FieldValue.delete() }, { merge: true });
+          batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries, accumulated: firebase.firestore.FieldValue.delete() }, { merge: true });
       }
       
       if (activeConfig.hasStories) {
           let targetStoryId = userPrefs.activeStoryId || 'season_3';
           if (lessonJSON.storyStatus === 'new_story') {
             targetStoryId = `season_${Date.now()}`;
-            batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('settings').doc('prefs'), { activeStoryId: targetStoryId }, { merge: true });
+            batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('settings').doc('prefs'), { activeStoryId: targetStoryId }, { merge: true });
           }
           const targetStoryData = storyList.find(s => s.id === targetStoryId) || { episodes: [] };
           const targetEps = [...(targetStoryData.episodes || [])];
           if (lessonJSON.story?.traditional) targetEps.push({ id: newEpisodeId, title: lessonJSON.title, text: lessonJSON.story.traditional });
-          batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('stories').doc(targetStoryId), { currentTitle: lessonJSON.storyTitle || "Story", episodes: targetEps, timestamp: targetStoryData.timestamp || Date.now() }, { merge: true });
+          batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('stories').doc(targetStoryId), { currentTitle: lessonJSON.storyTitle || "Story", episodes: targetEps, timestamp: targetStoryData.timestamp || Date.now() }, { merge: true });
       }
       
       await batch.commit();
       try {
-          await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).collection('logs').add({
+          await db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).collection('logs').add({
               appId: activeConfig.dbAppId,
               courseName: activeConfig.name,
               action: 'import',
@@ -642,8 +642,8 @@ export default function LanguageCourse({ config }) {
     if (!activeEpisodeId || !user) return;
     try {
       const batch = db.batch();
-      batch.delete(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(activeEpisodeId));
-      batch.delete(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId));
+      batch.delete(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('episodes').doc(activeEpisodeId));
+      batch.delete(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('progress').doc(activeEpisodeId));
       
       if (activeConfig.hasStories) {
           let targetStory = null;
@@ -652,7 +652,7 @@ export default function LanguageCourse({ config }) {
           }
           if (targetStory) {
             const updatedEps = targetStory.episodes.filter(e => e.id !== activeEpisodeId);
-            batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('stories').doc(targetStory.id), { episodes: updatedEps }, { merge: true });
+            batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('stories').doc(targetStory.id), { episodes: updatedEps }, { merge: true });
           }
       }
 
@@ -661,17 +661,17 @@ export default function LanguageCourse({ config }) {
         const toDeleteIds = activeEpisode.newLemmas.map(l => l.id).filter(Boolean);
         if (activeConfig.id === 'mandarin') {
             const newAcc = (globalLexicon?.accumulated || []).filter(w => !toDeleteIds.includes(w.id));
-            batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
+            batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { accumulated: newAcc }, { merge: true });
         } else {
             const merged = mergeLexiconLists([globalLexicon?.entries || (Array.isArray(globalLexicon) ? globalLexicon : []), globalLexicon?.accumulated || []]);
             const newEntries = merged.filter(w => !toDeleteIds.includes(w.id));
-            batch.set(db.collection('artifacts').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries, accumulated: firebase.firestore.FieldValue.delete() }, { merge: true });
+            batch.set(db.collection('lingo-hub').doc(activeConfig.dbAppId).collection('users').doc(user.uid).collection('database').doc(docName), { entries: newEntries, accumulated: firebase.firestore.FieldValue.delete() }, { merge: true });
         }
       }
 
       await batch.commit();
       try {
-          await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).collection('logs').add({
+          await db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).collection('logs').add({
               appId: activeConfig.dbAppId,
               courseName: activeConfig.name,
               action: 'delete',

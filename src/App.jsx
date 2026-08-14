@@ -74,7 +74,7 @@
       const unsubAuth = auth.onAuthStateChanged((user) => {
         if (unsubDoc) { unsubDoc(); unsubDoc = null; }
         if (!user) return;
-        const hubUserRef = db.collection('artifacts').doc('hub').collection('users').doc(user.uid);
+        const hubUserRef = db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid);
         unsubDoc = hubUserRef.onSnapshot((snap) => {
           if (!snap.exists) return;
           const data = snap.data();

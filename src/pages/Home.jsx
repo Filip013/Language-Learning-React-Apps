@@ -26,7 +26,7 @@ const ApiKeyManager = ({ title, description, storageKey, user }) => {
 
     useEffect(() => {
         if (!user) return;
-        db.collection('artifacts').doc('hub').collection('users').doc(user.uid).get().then(snap => {
+        db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).get().then(snap => {
             if (snap.exists && snap.data()[storageKey]) {
                 const cloudKey = snap.data()[storageKey];
                 localStorage.setItem(storageKey, cloudKey); 
@@ -40,13 +40,13 @@ const ApiKeyManager = ({ title, description, storageKey, user }) => {
         localStorage.setItem(storageKey, inputKey.trim());
         setSavedKey(inputKey.trim());
         setInputKey(''); 
-        if (user) await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).set({ [storageKey]: inputKey.trim() }, { merge: true });
+        if (user) await db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).set({ [storageKey]: inputKey.trim() }, { merge: true });
     };
 
     const handleRemove = async () => {
         localStorage.removeItem(storageKey);
         setSavedKey('');
-        if (user) await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).set({ [storageKey]: firebase.firestore.FieldValue.delete() }, { merge: true });
+        if (user) await db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).set({ [storageKey]: firebase.firestore.FieldValue.delete() }, { merge: true });
     };
 
     return (
@@ -81,7 +81,7 @@ export default function Home() {
 
     useEffect(() => {
         if (!user || !isLogModalOpen) return;
-        const unsub = db.collection('artifacts').doc('hub').collection('users').doc(user.uid).collection('logs')
+        const unsub = db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).collection('logs')
             .orderBy('timestamp', 'desc')
             .limit(50) // Fetch the last 50 actions
             .onSnapshot(snap => {
@@ -99,7 +99,7 @@ export default function Home() {
 
     useEffect(() => {
         if (!user) return;
-        const unsub = db.collection('artifacts').doc('hub').collection('users').doc(user.uid).onSnapshot(snap => {
+        const unsub = db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).onSnapshot(snap => {
             if (snap.exists) setRecentActivity(snap.data().recentAccess || {});
         });
         return () => unsub();
@@ -187,7 +187,7 @@ export default function Home() {
 
     const handleCourseClick = async (e, course) => {
         e.preventDefault();
-        if (user) await db.collection('artifacts').doc('hub').collection('users').doc(user.uid).set({ recentAccess: { ...recentActivity, [course.id]: Date.now() } }, { merge: true });
+        if (user) await db.collection('lingo-hub').doc('hub').collection('users').doc(user.uid).set({ recentAccess: { ...recentActivity, [course.id]: Date.now() } }, { merge: true });
         navigate(course.url);
     };
 
@@ -277,7 +277,7 @@ export default function Home() {
     const handleDeleteLog = async (logId) => {
         if (!user) return;
         try {
-            await db.collection('artifacts')
+            await db.collection('lingo-hub')
                 .doc('hub')
                 .collection('users')
                 .doc(user.uid)

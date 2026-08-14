@@ -44,7 +44,7 @@ export default function BatchUpdater() {
             const dbAppId = config.dbAppId;
             const docName = config.lexiconDoc || 'lexicon';
             
-            const docRef = db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+            const docRef = db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
             const snap = await docRef.get();
             
             if (!snap.exists) {
@@ -271,7 +271,7 @@ Here is the table:\n\n${markdownText}`;
 
             const dbAppId = config.dbAppId;
             const docName = config.lexiconDoc || 'lexicon';
-            const docRef = db.collection('artifacts').doc(dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
+            const docRef = db.collection('lingo-hub').doc(dbAppId).collection('users').doc(user.uid).collection('database').doc(docName);
             
             await docRef.set(updatedData); // Overwrite entirely to clean out legacy strings
             
