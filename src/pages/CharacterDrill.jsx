@@ -528,7 +528,7 @@ export default function CharacterDrill() {
                       className={`px-3 py-1.5 rounded-lg border font-medium outline-none ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white border-stone-300 text-stone-700'}`}
                   >
                       <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
-                      <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                      <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
                       <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
                   </select>
               </div>
