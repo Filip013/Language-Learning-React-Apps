@@ -466,6 +466,7 @@ CRITICAL RULES:
 3. Always write Ancient Greek using full polytonic diacritics (accents and breathing marks).
 4. Always provide accurate Latinized transliteration for all Ancient Greek passages, drills, quiz questions, and new words. In the transliteration, explicitly mark the length of α, ι, and υ: use a macron (ā, ī, ȳ) when the vowel is long.
 5. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review/grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review item must appear in at least one example sentence, naturally paired with the new word being drilled.
+6. NOUN ARTICLES: For all nouns (in 'newLemmas', drills, definitions, focus notes), always prefix the appropriate definite article in front of the noun indicating its gender (e.g., 'ὁ ἀδελφός', 'ἡ ἡδονή', 'τό δῶρον', 'ὁ/ἡ βοῦς', 'αἱ Ἀθῆναι'). Include the article in the transliteration as well (e.g., 'ho adelphós', 'hē hēdonḗ', 'to dōron').
 
 TASKS:
 1. 'reading.greek': A passage in Polytonic Ancient Greek, multiple paragraphs separated by \n\n.
@@ -474,7 +475,7 @@ TASKS:
 4. 'reading.focus': EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar, nuance or review (up to 10 items total). Treat every single explanation as a separate item.
 5. 'drills': Create EXACTLY 5 drill objects — one for each new base word. Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English. Review and grammar items are practiced inside these sentences (see rule 5), not as separate drill entries.
 6. 'quiz': Create EXACTLY 15 questions testing the reading and past context. Provide both the Ancient Greek sentence and its transliteration. Use '_____' (5 underscores) for the blank.
-7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj').`,
+7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj'). For nouns, always prefix the definite article in both Greek and Transliteration (e.g., 'ἡ ἡδονή' / 'hē hēdonḗ').`,
 
         promptOutputFormat: {
           title: "Lesson Title",

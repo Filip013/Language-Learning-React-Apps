@@ -98,8 +98,11 @@ export default function BatchUpdater() {
 
     const generateMarkdown = (words, config) => {
         const primaryKey = config.primaryTextKey || 'word';
-        let md = `| ID | List | Target | English | POS |\n`;
-        md += `|---|---|---|---|---|\n`;
+        const transKey = config.transliterationKey;
+        
+        let md = transKey 
+            ? `| ID | List | Target | Pronunciation | English | POS |\n|---|---|---|---|---|---|\n`
+            : `| ID | List | Target | English | POS |\n|---|---|---|---|---|\n`;
         
         words.forEach(w => {
             const target = cleanCell(w[primaryKey] || w.word);
@@ -107,32 +110,28 @@ export default function BatchUpdater() {
             const pos = cleanCell(w.pos);
             const id = cleanCell(w.id);
             const listKey = cleanCell(w._originalList);
+            const trans = transKey ? cleanCell(w[transKey] || w.transliteration || w.pinyin || w.romaji || '') : '';
             
-            md += `| ${id} | ${listKey} | ${target} | ${en} | ${pos} |\n`;
+            if (transKey) {
+                md += `| ${id} | ${listKey} | ${target} | ${trans} | ${en} | ${pos} |\n`;
+            } else {
+                md += `| ${id} | ${listKey} | ${target} | ${en} | ${pos} |\n`;
+            }
         });
         
         setMarkdownText(md);
     };
 
-    const handleCopyPrompt = () => {
-        const prompt = `I have a Markdown table containing my language learning lexicon. Please analyze it and strictly fix any inconsistent 'POS' (Part of Speech) column tags to be uniform (e.g., 'noun', 'verb', 'adjective', 'adverb', 'phrase', 'conjunction', 'pronoun', 'particle', 'measure word'). 
-
-RULES:
-1. Do NOT add or remove any rows or columns for existing words.
-2. Preserve all IDs, Lists, Target words, and English translations exactly as they are.
-3. IF I asked you to add NEW words, add them as new rows at the bottom of the table. For new words, set the ID column to "NEW" and the List column to "accumulated".
-4. Only output the raw, modified Markdown table so I can paste it back.
-
-Here is the table:\n\n${markdownText}`;
-
-        navigator.clipboard.writeText(prompt);
-        setStatus({ type: 'success', msg: 'Prompt + Markdown Table copied to clipboard!' });
+    const handleCopyMarkdown = () => {
+        navigator.clipboard.writeText(markdownText);
+        setStatus({ type: 'success', msg: 'Markdown Table copied to clipboard!' });
     };
 
     const handleReviewChanges = () => {
         if (!pastedMarkdown.trim()) return;
         const config = courseConfigs[selectedCourseId];
         const primaryKey = config.primaryTextKey || 'word';
+        const transKey = config.transliterationKey;
         
         try {
             // Filter out empty lines, headers, and separator lines
@@ -140,6 +139,18 @@ Here is the table:\n\n${markdownText}`;
             
             const parsedList = lines.map(line => {
                 const cols = line.split('|').map(c => c.trim());
+                // Handle 6 data columns (ID, List, Target, Pronunciation, English, POS)
+                if (cols.length >= 7) {
+                    return {
+                        id: cols[1],
+                        _originalList: cols[2],
+                        target: cols[3],
+                        transliteration: cols[4],
+                        english: cols[5],
+                        pos: cols[6]
+                    };
+                }
+                // Handle standard 5 data columns (ID, List, Target, English, POS)
                 return {
                     id: cols[1],
                     _originalList: cols[2],
@@ -157,16 +168,20 @@ Here is the table:\n\n${markdownText}`;
 
                 if (isNew || (!origWord && parsedWord.target)) {
                     // Treat as an ADDITION
+                    const diffs = {
+                        target: { from: null, to: parsedWord.target },
+                        english: { from: null, to: parsedWord.english },
+                        pos: { from: null, to: parsedWord.pos }
+                    };
+                    if (parsedWord.transliteration !== undefined) {
+                        diffs.transliteration = { from: null, to: parsedWord.transliteration };
+                    }
                     detectedChanges.push({
                         type: 'add',
                         id: 'NEW',
                         targetList: parsedWord._originalList || 'accumulated', // Default to accumulated
                         wordDisplay: parsedWord.target,
-                        diffs: {
-                            target: { from: null, to: parsedWord.target },
-                            english: { from: null, to: parsedWord.english },
-                            pos: { from: null, to: parsedWord.pos }
-                        }
+                        diffs
                     });
                 } else if (origWord) {
                     // Treat as a MODIFICATION (Upgrade string -> object or object -> object)
@@ -178,8 +193,12 @@ Here is the table:\n\n${markdownText}`;
                     const origTarget = origWord[primaryKey] || origWord.word || '';
                     const origEn = origWord.english || origWord.meaning || origWord.translation || '';
                     const origPos = origWord.pos || '';
+                    const origTrans = transKey ? (origWord[transKey] || origWord.transliteration || origWord.pinyin || origWord.romaji || '') : '';
 
                     if (origTarget !== parsedWord.target || isLegacyString) diffs.target = { from: origTarget, to: parsedWord.target };
+                    if (parsedWord.transliteration !== undefined && (origTrans !== parsedWord.transliteration || isLegacyString)) {
+                        diffs.transliteration = { from: origTrans, to: parsedWord.transliteration };
+                    }
                     if (origEn !== parsedWord.english || isLegacyString) diffs.english = { from: origEn, to: parsedWord.english };
                     if (origPos !== parsedWord.pos || isLegacyString) diffs.pos = { from: origPos, to: parsedWord.pos };
 
@@ -219,6 +238,7 @@ Here is the table:\n\n${markdownText}`;
         try {
             const config = courseConfigs[selectedCourseId];
             const primaryKey = config.primaryTextKey || 'word';
+            const transKey = config.transliterationKey;
             let updatedData = JSON.parse(JSON.stringify(originalData || {})); 
 
             changes.forEach(change => {
@@ -235,6 +255,9 @@ Here is the table:\n\n${markdownText}`;
                         english: change.diffs.english?.to || '',
                         pos: change.diffs.pos?.to || ''
                     };
+                    if (transKey && change.diffs.transliteration?.to !== undefined) {
+                        newObj[transKey] = change.diffs.transliteration.to;
+                    }
                     
                     updatedData[listKey].unshift(newObj); // Add to the top of the list
                 } 
@@ -253,6 +276,9 @@ Here is the table:\n\n${markdownText}`;
                         
                         if (change.diffs.english?.to) newObj.english = change.diffs.english.to;
                         if (change.diffs.pos?.to) newObj.pos = change.diffs.pos.to;
+                        if (transKey && change.diffs.transliteration?.to !== undefined) {
+                            newObj[transKey] = change.diffs.transliteration.to;
+                        }
                         
                         updatedData[listKey][idx] = newObj; // Overwrite string with object
                     } else {
@@ -261,6 +287,9 @@ Here is the table:\n\n${markdownText}`;
                             if (change.diffs.target?.to) {
                                 updatedData[listKey][idx][primaryKey] = change.diffs.target.to;
                                 updatedData[listKey][idx].word = change.diffs.target.to;
+                            }
+                            if (transKey && change.diffs.transliteration?.to !== undefined) {
+                                updatedData[listKey][idx][transKey] = change.diffs.transliteration.to;
                             }
                             if (change.diffs.english?.to !== undefined) updatedData[listKey][idx].english = change.diffs.english.to;
                             if (change.diffs.pos?.to !== undefined) updatedData[listKey][idx].pos = change.diffs.pos.to;
@@ -352,10 +381,10 @@ Here is the table:\n\n${markdownText}`;
 
                         {markdownText && (
                             <button 
-                                onClick={handleCopyPrompt} 
+                                onClick={handleCopyMarkdown} 
                                 className="mt-4 w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-bold py-3 rounded-xl transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
                             >
-                                <Copy size={18} /> Copy Prompt + Markdown
+                                <Copy size={18} /> Copy Markdown Table
                             </button>
                         )}
                     </section>
@@ -373,7 +402,9 @@ Here is the table:\n\n${markdownText}`;
                                 <textarea 
                                     value={pastedMarkdown} 
                                     onChange={(e) => setPastedMarkdown(e.target.value)}
-                                    placeholder="| ID | List | Target | English | POS |&#10;|---|---|---|---|---|"
+                                    placeholder={courseConfigs[selectedCourseId]?.transliterationKey 
+                                        ? "| ID | List | Target | Pronunciation | English | POS |\n|---|---|---|---|---|---|"
+                                        : "| ID | List | Target | English | POS |\n|---|---|---|---|---|"}
                                     className="w-full flex-1 min-h-[16rem] p-4 text-xs font-mono bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl outline-none resize-none whitespace-pre overflow-x-auto focus:ring-2 focus:ring-stone-500/30"
                                 />
                                 <button 
