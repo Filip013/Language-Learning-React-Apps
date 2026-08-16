@@ -544,7 +544,18 @@ export default function LanguageCourse({ config }) {
       const lessonJSON = JSON.parse(textToParse);
       const newEpisodeId = `ep_${Date.now()}`;
       
-      if (lessonJSON.drills) lessonJSON.drills.forEach(d => { if (d.examples) d.examples = d.examples.slice(0, 5); });
+      if (lessonJSON.drills) {
+        lessonJSON.drills.forEach(d => { 
+          if (d.examples) d.examples = d.examples.slice(0, 5); 
+          if (typeof d.word === 'string' && d.word.includes('(')) {
+            const match = d.word.match(/\((.*?)\)/);
+            if (match && !d.transliteration) {
+              d.transliteration = match[1].trim();
+            }
+            d.word = d.word.replace(/\s*\([^)]*\)/g, '').trim();
+          }
+        });
+      }
       
       const validNewLemmas = (lessonJSON.newLemmas || []).map(w => {
           const uniqueId = `dict_${Date.now()}_${Math.random().toString(36).substring(7)}`;

@@ -187,6 +187,23 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
     });
   };
 
+  const cleanDrillWord = (word) => {
+    if (!word || typeof word !== 'string') return '';
+    return word.replace(/\s*\([^)]*\)/g, '').trim();
+  };
+
+  const getDrillTransliteration = (section, cfg) => {
+    if (!section) return '';
+    if (cfg.transliterationKey && section[cfg.transliterationKey]) {
+      return section[cfg.transliterationKey];
+    }
+    if (typeof section.word === 'string') {
+      const match = section.word.match(/\(([^)]+)\)/);
+      if (match) return match[1].trim();
+    }
+    return '';
+  };
+
   if (!activeEpisode?.drills?.length) return <div className="p-10 text-center font-sans opacity-50">No drills generated yet.</div>;
   if (!currentExample) return null;
 
@@ -223,7 +240,7 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
                 onClick={() => { setSlideDirection(idx > currentWordIdx ? 'next' : 'prev'); setCurrentWordIdx(idx); setCurrentExIdx(0); setShowLexicalNote(false); }} 
                 className={cardClasses}
               >
-                {drill.word}
+                {cleanDrillWord(drill.word)}
               </button>
             );
           })}
@@ -237,10 +254,10 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col relative">
               <div className="shrink-0 text-center mb-4">
                 <h2 className={`${config.scriptStyles?.mainHeader || 'text-2xl md:text-3xl font-bold tracking-tight'} tracking-wide px-4 ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-800'}`}>
-                  {currentSection.word}
+                  {cleanDrillWord(currentSection.word)}
                 </h2>
-                {config.transliterationKey && currentSection[config.transliterationKey] && (
-                  <p className="mt-1 font-sans text-base opacity-70">{currentSection[config.transliterationKey]}</p>
+                {config.transliterationKey && getDrillTransliteration(currentSection, config) && (
+                  <p className="mt-1 font-sans text-base opacity-70">{getDrillTransliteration(currentSection, config)}</p>
                 )}
               </div>
 

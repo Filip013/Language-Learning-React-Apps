@@ -473,7 +473,7 @@ TASKS:
 2. 'reading.transliteration': Latinized transliteration of the passage.
 3. 'reading.english': English translation.
 4. 'reading.focus': EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar, nuance or review (up to 10 items total). Treat every single explanation as a separate item.
-5. 'drills': Create EXACTLY 5 drill objects — one for each new base word. Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English. Review and grammar items are practiced inside these sentences (see rule 5), not as separate drill entries.
+5. 'drills': Create EXACTLY 5 drill objects — one for each new base word. Each MUST contain 'word' (Polytonic Ancient Greek word only; do NOT include transliteration in parentheses inside 'word'), 'transliteration' (Latinized transliteration), 'translation', and EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English. Review and grammar items are practiced inside these sentences (see rule 5), not as separate drill entries.
 6. 'quiz': Create EXACTLY 15 questions testing the reading and past context. Provide both the Ancient Greek sentence and its transliteration. Use '_____' (5 underscores) for the blank.
 7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj'). For nouns, always prefix the definite article in both Greek and Transliteration (e.g., 'ἡ ἡδονή' / 'hē hēdonḗ').`,
 
