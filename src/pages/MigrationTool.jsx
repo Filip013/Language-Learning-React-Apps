@@ -11,6 +11,7 @@ const APPS_TO_MIGRATE = [
     { id: 'japanese-master', name: 'Japanese', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'latin-master', name: 'Latin', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'mandarin-master', name: 'Mandarin', collections: ['episodes', 'progress', 'stories'], docs: ['database/lexicon', 'settings/prefs'] },
+    { id: 'norwegian-master', name: 'Norwegian', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'portuguese-master', name: 'Portuguese', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'romanian-master', name: 'Romanian', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'russian-master', name: 'Russian', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
