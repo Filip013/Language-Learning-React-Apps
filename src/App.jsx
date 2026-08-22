@@ -99,6 +99,7 @@
           <Route path="/romanian" element={<LanguageCourse config={courseConfigs.romanian} />} />
           <Route path="/russian" element={<LanguageCourse config={courseConfigs.russian} />} />
           <Route path="/norwegian" element={<LanguageCourse config={courseConfigs.norwegian} />} />
+          <Route path="/dutch" element={<LanguageCourse config={courseConfigs.dutch} />} />
           <Route path="/greek" element={<LanguageCourse config={courseConfigs.greek} />} />
           <Route path="/japanese" element={<LanguageCourse config={courseConfigs.japanese} />} />
           <Route path="/latin" element={<LanguageCourse config={courseConfigs.latin} />} />
