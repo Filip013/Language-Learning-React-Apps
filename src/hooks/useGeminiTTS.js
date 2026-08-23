@@ -116,8 +116,14 @@ export function useGeminiTTS(systemInstruction) {
 
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                         ws.current.send(JSON.stringify({
-                            realtimeInput: {
-                                text: `Read the following text aloud exactly as written: "${nextItem.text}"` 
+                            clientContent: {
+                                turns: [{
+                                    role: "user",
+                                    parts: [{
+                                        text: `Read the following text aloud exactly as written: "${nextItem.text}"`
+                                    }]
+                                }],
+                                turnComplete: true
                             }
                         }));
                     }
@@ -212,7 +218,7 @@ export function useGeminiTTS(systemInstruction) {
             ws.current.onopen = () => {
                 const setupMessage = {
                     setup: {
-                        model: "models/gemini-3.1-flash-live-preview",
+                        model: "models/gemini-2.0-flash",
                         generationConfig: { 
                             responseModalities: ["AUDIO"], 
                             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } } } 
