@@ -120,7 +120,7 @@ export function useGeminiTTS(systemInstruction) {
                                 turns: [{
                                     role: "user",
                                     parts: [{
-                                        text: `Read the following text aloud exactly as written: "${nextItem.text}"`
+                                        text: nextItem.text
                                     }]
                                 }],
                                 turnComplete: true
@@ -135,9 +135,8 @@ export function useGeminiTTS(systemInstruction) {
 
         const setupMessageHandlers = () => {
             ws.current.onclose = (event) => {
-                if (event.code === 1008 || (event.reason && event.reason.includes('blocked'))) {
-                    console.error("Gemini TTS WebSocket Closed:", event.reason || `Code ${event.code}`);
-                    alert(`Gemini TTS Error: Your Gemini API Key is blocked by Google (${event.reason || 'Permission Denied'}). Please check or regenerate your API key in Google AI Studio and update Hub Settings.`);
+                if (event.code !== 1000 && event.code !== 1005) {
+                    console.warn(`Gemini TTS WebSocket Closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
                 }
             };
 
@@ -223,7 +222,7 @@ export function useGeminiTTS(systemInstruction) {
             ws.current.onopen = () => {
                 const setupMessage = {
                     setup: {
-                        model: "models/gemini-2.0-flash-exp",
+                        model: "models/gemini-3.1-flash-live-preview",
                         generationConfig: { 
                             responseModalities: ["AUDIO"], 
                             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } } } 
