@@ -33,3 +33,11 @@ yarn-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Keystores & Signing
+keystore/
+*.keystore
+*.jks
+*.p12
+keystore.properties
+signing-key-info.txt
