@@ -87,7 +87,8 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
         'n': 'Nouns', 'v': 'Verbs', 'adj': 'Adjectives', 'adv': 'Adverbs',
         'pron': 'Pronouns', 'prep': 'Prepositions', 'conj': 'Conjunctions',
         'part': 'Particles', 'mw': 'Measure Words', 'num': 'Numeral',
-        'post': 'Postposition', 'suf': 'Suffix', 'noun': 'Nouns', 'verb': 'Verbs'
+        'post': 'Postposition', 'suf': 'Suffix', 'noun': 'Nouns', 'verb': 'Verbs',
+        'nf': 'Feminine Nouns', 'nm': 'Masculine Nouns', 'nn': 'Neuter Nouns', 'fem': 'Feminine Nouns'
       };
 
       Array.from(posTags).sort().forEach(pos => {
@@ -397,7 +398,15 @@ const LexiconTab = memo(function LexiconTab({ isDarkMode, globalLexicon, user, c
                     
                     {(displayEn || pos) && (
                       <div className="text-sm font-sans flex items-center gap-2 mt-1 pt-2 border-t border-stone-100 dark:border-stone-700">
-                         {pos && <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 border border-emerald-500/30 px-1.5 rounded bg-emerald-500/10">{pos}</span>}
+                         {pos && (
+                           <span className={`text-[10px] uppercase font-bold tracking-widest px-1.5 rounded border ${
+                             pos.toLowerCase().trim() === 'nf' 
+                               ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' 
+                               : 'text-emerald-500 border border-emerald-500/30 bg-emerald-500/10'
+                           }`}>
+                             {pos}
+                           </span>
+                         )}
                          <span className={isDarkMode ? 'text-stone-400' : 'text-stone-500'}>{displayEn}</span>
                       </div>
                     )}

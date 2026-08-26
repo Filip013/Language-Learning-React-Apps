@@ -342,7 +342,7 @@ TASKS:
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in NO/EN.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. For nouns where feminine gender is allowed/possible in Norwegian, show the feminine article 'ei' in dictionary/newLemmas entries (e.g., 'ei matvare', 'ei dør', 'ei uke'), while natural/common forms may be used in the text. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'matvare', 'dør', 'uke', 'sove', 'gå', 'kjøpe'). Use 'nf' as the 'pos' tag for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -399,7 +399,7 @@ TASKS:
 2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
 3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in NL/EN.
 4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. For nouns, include the appropriate definite article ('de' or 'het') in dictionary/newLemmas entries (e.g., 'de man', 'het huis'). Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles (e.g., 'man', 'huis', 'nevel'). Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -531,7 +531,7 @@ TASKS:
 4. 'reading.focus': EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar, nuance or review (up to 10 items total). Treat every single explanation as a separate item.
 5. 'drills': Create EXACTLY 5 drill objects — one for each new base word. Each MUST contain EXACTLY 5 example sentences in Ancient Greek (polytonic), Transliteration, and English. Review and grammar items are practiced inside these sentences (see rule 5), not as separate drill entries.
 6. 'quiz': Create EXACTLY 15 questions testing the reading and past context. Provide both the Ancient Greek sentence and its transliteration. Use '_____' (5 underscores) for the blank.
-7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj'). For nouns, prefix the definite article in both Greek and Transliteration (e.g., 'ἡ ἡδονή' / 'hē hēdonḗ').`,
+7. 'newLemmas': Extract the 5 new base words with Greek, Transliteration, English, and strict POS tags (e.g., 'n', 'v', 'adj', 'adv', 'prep', 'conj'). Provide clean base lemmas without definite articles in both Greek and Transliteration (e.g., 'ἡδονή' / 'hēdonḗ').`,
 
         promptOutputFormat: {
           title: "Lesson Title",

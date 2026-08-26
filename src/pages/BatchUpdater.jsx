@@ -138,25 +138,25 @@ export default function BatchUpdater() {
             const lines = pastedMarkdown.split('\n').map(l => l.trim()).filter(l => l.startsWith('|') && !l.includes('|---|') && !l.toLowerCase().includes('| id |'));
             
             const parsedList = lines.map(line => {
-                const cols = line.split('|').map(c => c.trim());
+                const rawCols = line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
                 // Handle 6 data columns (ID, List, Target, Pronunciation, English, POS)
-                if (cols.length >= 7) {
+                if (rawCols.length >= 6) {
                     return {
-                        id: cols[1],
-                        _originalList: cols[2],
-                        target: cols[3],
-                        transliteration: cols[4],
-                        english: cols[5],
-                        pos: cols[6]
+                        id: rawCols[0],
+                        _originalList: rawCols[1],
+                        target: rawCols[2],
+                        transliteration: rawCols[3],
+                        english: rawCols[4],
+                        pos: rawCols[5]
                     };
                 }
                 // Handle standard 5 data columns (ID, List, Target, English, POS)
                 return {
-                    id: cols[1],
-                    _originalList: cols[2],
-                    target: cols[3],
-                    english: cols[4],
-                    pos: cols[5]
+                    id: rawCols[0],
+                    _originalList: rawCols[1],
+                    target: rawCols[2],
+                    english: rawCols[3],
+                    pos: rawCols[4]
                 };
             }).filter(item => item.target); // Ensure there's actually a target word
 

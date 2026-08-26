@@ -120,7 +120,7 @@ export function useGeminiTTS(systemInstruction) {
                                 turns: [{
                                     role: "user",
                                     parts: [{
-                                        text: nextItem.text
+                                        text: `Read the following text aloud exactly as written: "${nextItem.text}"`
                                     }]
                                 }],
                                 turnComplete: true

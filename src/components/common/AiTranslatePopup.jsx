@@ -6,7 +6,7 @@ import { getApiKey } from '../../config/languages';
 
 export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak }) {
   const [selectionState, setSelectionState] = useState({ text: '', x: 0, y: 0, showIcon: false, showPanel: false });
-  const [aiTranslation, setAiTranslation] = useState({ translation: '', transliteration: '', isLoading: false, error: '' });
+  const [aiTranslation, setAiTranslation] = useState({ translation: '', transliteration: '', grammar: '', isLoading: false, error: '' });
 
   useEffect(() => {
     const handleSelection = () => {
@@ -78,7 +78,7 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
 
   const handleAITranslate = async () => {
     setSelectionState(prev => ({ ...prev, showIcon: false, showPanel: true }));
-    setAiTranslation({ translation: '', transliteration: '', isLoading: true, error: '' });
+    setAiTranslation({ translation: '', transliteration: '', grammar: '', isLoading: true, error: '' });
 
     const apiKey = getApiKey();
     if (!apiKey) {
@@ -91,10 +91,11 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
       const translitLabel = hasTransliteration 
         ? ((config.labels && config.labels[config.transliterationKey]) || config.transliterationKey)
         : null;
+      const langName = config.name || 'the target language';
 
       const prompt = hasTransliteration
-        ? `Translate the following text to English. Also provide its ${translitLabel} transliteration. Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "transliteration": "..."}`
-        : `Translate the following text to English. Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "..."}`;
+        ? `Translate the following text from ${langName} to English. Also provide its ${translitLabel} transliteration. If the selected text is a word or short phrase that has grammatical gender (e.g. feminine noun, masculine noun, neuter, de-word, het-word) or specific part of speech/grammar info in ${langName}, include a very concise note under "grammar" (e.g., "feminine noun", "de-word / common gender", "neuter noun", "verb (infinitive)", etc., or null if not applicable). Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "transliteration": "...", "grammar": "..."}`
+        : `Translate the following text from ${langName} to English. If the selected text is a word or short phrase that has grammatical gender (e.g. feminine noun, masculine noun, neuter, de-word, het-word) or specific part of speech/grammar info in ${langName}, include a very concise note under "grammar" (e.g., "feminine noun", "de-word / common gender", "neuter noun", "verb (infinitive)", etc., or null if not applicable). Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "grammar": "..."}`;
 
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
           method: 'POST',
@@ -113,6 +114,7 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
       setAiTranslation({
         translation: parsed.translation || '',
         transliteration: hasTransliteration ? (parsed.transliteration || '') : '',
+        grammar: parsed.grammar || '',
         isLoading: false,
         error: ''
       });
@@ -172,6 +174,13 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
                 <div>
                   <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Target</p>
                   <p className={`text-xl font-bold ${config.fontClass || 'font-sans'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{selectionState.text}</p>
+                  {aiTranslation.grammar && (
+                    <div className="mt-1.5">
+                      <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400">
+                        {aiTranslation.grammar}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {/* Audio Button */}
                 {handleSpeak && (
