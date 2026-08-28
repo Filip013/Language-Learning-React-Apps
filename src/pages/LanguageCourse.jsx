@@ -305,7 +305,7 @@ export default function LanguageCourse({ config }) {
       return;
     }
 
-    const apiKey = localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey');
+    const apiKey = localStorage.getItem('geminiPaidApiKey') || localStorage.getItem('geminiApiKey');
     
     if (!apiKey) {
       setGenError("No API Key found. Please set it in Hub settings.");

@@ -69,9 +69,9 @@ export function useGeminiTTS(systemInstruction) {
         const texts = Array.isArray(input) ? [...input] : [input];
         if (texts.length === 0 || !texts[0].trim()) return;
 
-        const myKey = localStorage.getItem('geminiApiKey');
+        const myKey = localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey');
         if (!myKey) {
-            alert("API key not found. Please set your Free Gemini API Key in the Hub settings.");
+            alert("API key not found. Please set your Gemini API Key in the Hub settings.");
             if (onError) onError();
             return;
         }

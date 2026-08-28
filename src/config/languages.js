@@ -41,7 +41,9 @@ export const getFontStyles = (langName, textContent = '') => {
     return { isCjk: false, fontClass: '' };
 };
 
-export const getApiKey = () => localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey') || '';
+export const getFreeApiKey = () => localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey') || '';
+export const getPaidApiKey = () => localStorage.getItem('geminiPaidApiKey') || localStorage.getItem('geminiApiKey') || '';
+export const getApiKey = getFreeApiKey;
 
 export const getSystemInstruction = (langName) => {
     const rules = [
