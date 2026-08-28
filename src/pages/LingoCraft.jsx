@@ -10,7 +10,7 @@ import { useSwipeable } from 'react-swipeable';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 import { 
-  LANGUAGES, LEVELS, getFontStyles, getPaidApiKey, 
+  LANGUAGES, LEVELS, getFontStyles, getFreeApiKey, 
   getSystemInstruction, getTtsSystemInstruction 
 } from '../config/languages';
 import AiTranslatePopup from '../components/common/AiTranslatePopup';
@@ -140,7 +140,7 @@ export default function LingoCraft() {
         const queryWord = (customWord || word).trim();
         if (!queryWord || !user) return;
 
-        const apiKey = getPaidApiKey();
+        const apiKey = getFreeApiKey();
         if (!apiKey) {
             setError("No Gemini API Key found. Please add it in your Hub settings.");
             return;
