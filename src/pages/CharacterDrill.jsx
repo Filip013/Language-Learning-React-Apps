@@ -6,6 +6,7 @@ import {
   History, Search, Trash2, Database, Settings2, Eye
 } from 'lucide-react';
 import { auth, db } from '../firebase';
+import { fetchGeminiContent } from '../config/languages';
 
 const dbAppId = 'character-drills';
 
@@ -220,15 +221,6 @@ export default function CharacterDrill() {
   const handleGenerate = async () => {
     if (!user || loadingChars) return;
 
-    // Get the requested Key
-    const keyName = selectedKeyType === 'paid' ? 'geminiPaidApiKey' : 'geminiApiKey';
-    const apiKey = localStorage.getItem(keyName) || localStorage.getItem(selectedKeyType === 'free' ? 'geminiPaidApiKey' : 'geminiApiKey');
-    
-    if (!apiKey) {
-        setError(`No API Key found. Please add it in your Hub settings.`);
-        return;
-    }
-
     if (lexiconChars.length === 0) {
         setError("Your lexicon is empty. Please add vocabulary to your database first.");
         return;
@@ -307,13 +299,16 @@ export default function CharacterDrill() {
     };
 
     try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const res = await fetchGeminiContent({
+            model: selectedModel,
+            payload,
+            keyPreference: selectedKeyType
         });
         
-        if (!res.ok) throw new Error("API Connection Failed");
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error?.message || "API Connection Failed");
+        }
         const data = await res.json();
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("Empty response received.");

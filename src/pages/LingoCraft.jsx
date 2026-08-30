@@ -10,7 +10,7 @@ import { useSwipeable } from 'react-swipeable';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 import { 
-  LANGUAGES, LEVELS, getFontStyles, getFreeApiKey, 
+  LANGUAGES, LEVELS, getFontStyles, fetchGeminiContent, 
   getSystemInstruction, getTtsSystemInstruction 
 } from '../config/languages';
 import AiTranslatePopup from '../components/common/AiTranslatePopup';
@@ -140,12 +140,6 @@ export default function LingoCraft() {
         const queryWord = (customWord || word).trim();
         if (!queryWord || !user) return;
 
-        const apiKey = getFreeApiKey();
-        if (!apiKey) {
-            setError("No Gemini API Key found. Please add it in your Hub settings.");
-            return;
-        }
-
         setLoading(true);
         setError(null);
         setResult(null);
@@ -199,13 +193,16 @@ export default function LingoCraft() {
         };
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            const res = await fetchGeminiContent({
+                model: 'gemini-3.5-flash-lite',
+                payload,
+                keyPreference: 'free'
             });
             
-            if (!res.ok) throw new Error("API Connection Failed");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error?.message || "API Connection Failed");
+            }
 
             const data = await res.json();
             const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;

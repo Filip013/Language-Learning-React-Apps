@@ -9,6 +9,7 @@ import { useSwipeable } from 'react-swipeable';
 import firebase, { auth, db } from '../firebase';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
+import { fetchGeminiContent } from '../config/languages';
 
 // Shared Common Components
 import UserNoteModal from '../components/common/UserNoteModal';
@@ -305,14 +306,6 @@ export default function LanguageCourse({ config }) {
       return;
     }
 
-    const apiKey = localStorage.getItem('geminiPaidApiKey') || localStorage.getItem('geminiApiKey');
-    
-    if (!apiKey) {
-      setGenError("No API Key found. Please set it in Hub settings.");
-      setShowGenerateConfirm(false);
-      return;
-    }
-
     setIsGenerating(true);
     setGenError('');
     setShowGenerateConfirm(false);
@@ -328,14 +321,14 @@ export default function LanguageCourse({ config }) {
           }
       };
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+      const res = await fetchGeminiContent({
+          model: 'gemini-3.7-flash',
+          payload,
+          keyPreference: 'paid'
       });
 
       if (!res.ok) {
-          const errData = await res.json();
+          const errData = await res.json().catch(() => ({}));
           throw new Error(errData.error?.message || "API Connection Failed");
       }
 

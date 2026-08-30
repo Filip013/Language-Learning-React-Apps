@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, XCircle, Loader2 } from 'lucide-react';
 import PlayButton from './PlayButton';
-import { getApiKey } from '../../config/languages';
+import { fetchGeminiContent } from '../../config/languages';
 
 export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak }) {
   const [selectionState, setSelectionState] = useState({ text: '', x: 0, y: 0, showIcon: false, showPanel: false });
@@ -80,12 +80,6 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
     setSelectionState(prev => ({ ...prev, showIcon: false, showPanel: true }));
     setAiTranslation({ translation: '', transliteration: '', grammar: '', isLoading: true, error: '' });
 
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setAiTranslation(prev => ({ ...prev, isLoading: false, error: 'No API Key found in settings.' }));
-      return;
-    }
-
     try {
       const hasTransliteration = Boolean(config.transliterationKey);
       const translitLabel = hasTransliteration 
@@ -97,13 +91,13 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
         ? `Translate the following text from ${langName} to English. Also provide its ${translitLabel} transliteration. If the selected text is a word or short phrase that has grammatical gender (e.g. feminine noun, masculine noun, neuter, de-word, het-word) or specific part of speech/grammar info in ${langName}, include a very concise note under "grammar" (e.g., "feminine noun", "de-word / common gender", "neuter noun", "verb (infinitive)", etc., or null if not applicable). Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "transliteration": "...", "grammar": "..."}`
         : `Translate the following text from ${langName} to English. If the selected text is a word or short phrase that has grammatical gender (e.g. feminine noun, masculine noun, neuter, de-word, het-word) or specific part of speech/grammar info in ${langName}, include a very concise note under "grammar" (e.g., "feminine noun", "de-word / common gender", "neuter noun", "verb (infinitive)", etc., or null if not applicable). Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "grammar": "..."}`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+      const res = await fetchGeminiContent({
+          model: 'gemini-3.5-flash-lite',
+          payload: {
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: { responseMimeType: "application/json" }
-          })
+          },
+          keyPreference: 'free'
       });
 
       if (!res.ok) throw new Error("Translation failed.");

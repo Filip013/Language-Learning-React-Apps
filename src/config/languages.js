@@ -45,6 +45,38 @@ export const getFreeApiKey = () => localStorage.getItem('geminiApiKey') || local
 export const getPaidApiKey = () => localStorage.getItem('geminiPaidApiKey') || localStorage.getItem('geminiApiKey') || '';
 export const getApiKey = getFreeApiKey;
 
+export async function fetchGeminiContent({ model = 'gemini-3.5-flash-lite', payload, keyPreference = 'free' }) {
+    const freeKey = (localStorage.getItem('geminiApiKey') || '').trim();
+    const paidKey = (localStorage.getItem('geminiPaidApiKey') || '').trim();
+
+    const primaryKey = keyPreference === 'paid' ? (paidKey || freeKey) : (freeKey || paidKey);
+    const fallbackKey = keyPreference === 'paid' 
+        ? (primaryKey === paidKey && freeKey ? freeKey : '') 
+        : (primaryKey === freeKey && paidKey ? paidKey : '');
+
+    if (!primaryKey) {
+        throw new Error("No Gemini API Key found in settings. Please add your key in the Hub settings.");
+    }
+
+    const makeRequest = async (key) => {
+        return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    };
+
+    let res = await makeRequest(primaryKey);
+
+    // If rate-limited (429) or temporary server overload (503), and a separate fallback key is present, retry with fallback
+    if ((res.status === 429 || res.status === 503) && fallbackKey && fallbackKey !== primaryKey) {
+        console.warn(`[Gemini API] Primary (${keyPreference}) key returned ${res.status}. Automatically retrying with fallback key...`);
+        res = await makeRequest(fallbackKey);
+    }
+
+    return res;
+}
+
 export const getSystemInstruction = (langName) => {
     const rules = [
         "1. Provide a reliable International Phonetic Alphabet (IPA) representation.",
