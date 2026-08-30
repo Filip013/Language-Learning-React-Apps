@@ -7,6 +7,7 @@ const CANVAS_UID = "08417378469304972096";
 
 const APPS_TO_MIGRATE = [
     { id: 'dutch-master', name: 'Dutch', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
+    { id: 'german-master', name: 'German', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'greek-master', name: 'Modern Greek', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },
     { id: 'hungarian-master', name: 'Hungarian', collections: ['episodes', 'progress'], docs: ['database/dictionary'] },
     { id: 'japanese-master', name: 'Japanese', collections: ['episodes', 'progress'], docs: ['database/lexicon'] },

@@ -431,6 +431,63 @@ TASKS:
         }
     },
 
+    german: {
+        id: 'german',
+        dbAppId: 'german-master',
+        name: 'German Master',
+        primaryTextKey: 'german',
+        lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
+        hasStories: false,
+        hasReading: true,
+        hasTestTab: false,
+        hasSweepTab: false,
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking German, use standard Hochdeutsch pronunciation.",
+        promptSystemInstruction: `You are an expert German curriculum designer. Generate a highly structured lesson.
+        
+CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+
+TASKS:
+1. 'reading': A passage in German, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
+3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in DE/EN.
+4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'Mann', 'Frau', 'Haus', 'schlafen', 'gehen', 'kaufen'). Use 'nm' for masculine nouns (der), 'nf' for feminine nouns (die), 'nn' for neuter nouns (das), and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "German definition using known words" }],
+            german: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ german: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { german: "...", english: "...", pos: "nm" }
+          ]
+        }
+    },
+
     greek: {
         id: 'greek',
         dbAppId: 'greek-master',
