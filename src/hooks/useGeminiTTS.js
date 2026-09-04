@@ -65,14 +65,23 @@ export function useGeminiTTS(systemInstruction) {
         currentOnError.current = null;
     }, []);
 
-    const handleSpeak = useCallback((input, onComplete = null, onError = null) => {
+    const handleSpeak = useCallback((input, onComplete = null, onError = null, options = null) => {
         const texts = Array.isArray(input) ? [...input] : [input];
         if (texts.length === 0 || !texts[0].trim()) return;
+
+        // Support flexible arguments: handleSpeak(text, { language: '...' })
+        let actualOnComplete = onComplete;
+        let actualOnError = onError;
+        let actualOptions = options;
+        if (typeof onComplete === 'object' && onComplete !== null && !options) {
+            actualOptions = onComplete;
+            actualOnComplete = null;
+        }
 
         const myKey = localStorage.getItem('geminiApiKey') || localStorage.getItem('geminiPaidApiKey');
         if (!myKey) {
             alert("API key not found. Please set your Gemini API Key in the Hub settings.");
-            if (onError) onError();
+            if (actualOnError) actualOnError();
             return;
         }
 
@@ -100,11 +109,15 @@ export function useGeminiTTS(systemInstruction) {
         }
 
         nextAudioTime.current = audioContext.current.currentTime;
-        currentOnComplete.current = onComplete;
-        currentOnError.current = onError;
+        currentOnComplete.current = actualOnComplete;
+        currentOnError.current = actualOnError;
         
-        // Map strings into objects to track retry attempts
-        textQueue.current = texts.map(t => ({ text: t, retries: 0 }));
+        // Map strings into objects to track retry attempts and language context
+        textQueue.current = texts.map(t => ({ 
+            text: t, 
+            retries: 0,
+            language: actualOptions?.language || null 
+        }));
 
         const sendNextText = () => {
             while (textQueue.current.length > 0) {
@@ -115,12 +128,16 @@ export function useGeminiTTS(systemInstruction) {
                     audioReceivedForCurrentTurn.current = false; // Reset flag for this turn
 
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                        const promptText = nextItem.language 
+                            ? `Read the following ${nextItem.language} text aloud exactly as written: "${nextItem.text}"`
+                            : `Read the following text aloud exactly as written: "${nextItem.text}"`;
+
                         ws.current.send(JSON.stringify({
                             clientContent: {
                                 turns: [{
                                     role: "user",
                                     parts: [{
-                                        text: `Read the following text aloud exactly as written: "${nextItem.text}"`
+                                        text: promptText
                                     }]
                                 }],
                                 turnComplete: true
@@ -168,7 +185,8 @@ export function useGeminiTTS(systemInstruction) {
                                 // Put it back at the front of the queue with an incremented retry counter
                                 textQueue.current.unshift({
                                     text: currentTurnData.current.text,
-                                    retries: currentTurnData.current.retries + 1
+                                    retries: currentTurnData.current.retries + 1,
+                                    language: currentTurnData.current.language
                                 });
                                 
                                 sendNextText(); // Fire it off immediately

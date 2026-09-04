@@ -185,7 +185,8 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
                         const textToSpeak = (config.ttsUseTransliteration && aiTranslation.transliteration)
                           ? aiTranslation.transliteration
                           : selectionState.text;
-                        handleSpeak(textToSpeak);
+                        const targetLang = config.name?.replace(/\s+Master$/i, '') || config.name || null;
+                        handleSpeak(textToSpeak, { language: targetLang });
                       }} 
                       size={20} 
                     />

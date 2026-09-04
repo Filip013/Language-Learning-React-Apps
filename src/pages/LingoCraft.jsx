@@ -836,7 +836,7 @@ export default function LingoCraft() {
                 </main>
             )}
             {/* Global Shared AI Translate Popup */}
-            <AiTranslatePopup isDarkMode={isDarkMode} handleSpeak={handleSpeak} config={{ fontClass: fontClass }} />
+            <AiTranslatePopup isDarkMode={isDarkMode} handleSpeak={handleSpeak} config={{ fontClass: fontClass, name: selectedLanguage }} />
         </div>
     );
 }
