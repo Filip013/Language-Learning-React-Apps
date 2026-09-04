@@ -431,6 +431,63 @@ TASKS:
         }
     },
 
+    french: {
+        id: 'french',
+        dbAppId: 'french-master',
+        name: 'French Master',
+        primaryTextKey: 'french',
+        lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
+        hasStories: false,
+        hasReading: true,
+        hasTestTab: false,
+        hasSweepTab: false,
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking French, use standard metropolitan French pronunciation.",
+        promptSystemInstruction: `You are an expert French curriculum designer. Generate a highly structured lesson.
+        
+CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+
+TASKS:
+1. 'reading': A passage in French, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
+3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in FR/EN.
+4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'homme', 'femme', 'maison', 'dormir', 'aller', 'acheter'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "French definition using known words" }],
+            french: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ french: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { french: "...", english: "...", pos: "nm" }
+          ]
+        }
+    },
+
     german: {
         id: 'german',
         dbAppId: 'german-master',

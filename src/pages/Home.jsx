@@ -8,6 +8,7 @@ import ThemeToggle from '../components/common/ThemeToggle';
 const ALL_COURSES = [
     { id: "ancient_greek", name: "Ancient Greek", url: "/ancient-greek", color: "hover:border-amber-600", flag: "📜" },
     { id: "dutch", name: "Dutch", url: "/dutch", color: "hover:border-orange-500", flag: "🇳🇱" },
+    { id: "french", name: "French", url: "/french", color: "hover:border-blue-600", flag: "🇫🇷" },
     { id: "german", name: "German", url: "/german", color: "hover:border-yellow-500", flag: "🇩🇪" },
     { id: "greek", name: "Modern Greek", url: "/greek", color: "hover:border-cyan-500", flag: "🇬🇷" },
     { id: "hungarian", name: "Hungarian", url: "/hungarian", color: "hover:border-blue-500", flag: "🇭🇺" },
