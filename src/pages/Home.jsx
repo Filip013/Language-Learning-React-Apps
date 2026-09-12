@@ -12,6 +12,7 @@ const ALL_COURSES = [
     { id: "german", name: "German", url: "/german", color: "hover:border-yellow-500", flag: "🇩🇪" },
     { id: "greek", name: "Modern Greek", url: "/greek", color: "hover:border-cyan-500", flag: "🇬🇷" },
     { id: "hungarian", name: "Hungarian", url: "/hungarian", color: "hover:border-blue-500", flag: "🇭🇺" },
+    { id: "italian", name: "Italian", url: "/italian", color: "hover:border-emerald-500", flag: "🇮🇹" },
     { id: "japanese", name: "Japanese", url: "/japanese", color: "hover:border-rose-500", flag: "🇯🇵" },
     { id: "latin", name: "Latin", url: "/latin", color: "hover:border-amber-500", flag: "🏛️" },
     { id: "lingocraft", name: "LingoCraft", url: "/lingocraft", color: "hover:border-emerald-500", flag: "🌍" },

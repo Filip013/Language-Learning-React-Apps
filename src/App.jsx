@@ -103,6 +103,7 @@
           <Route path="/french" element={<LanguageCourse config={courseConfigs.french} />} />
           <Route path="/german" element={<LanguageCourse config={courseConfigs.german} />} />
           <Route path="/greek" element={<LanguageCourse config={courseConfigs.greek} />} />
+          <Route path="/italian" element={<LanguageCourse config={courseConfigs.italian} />} />
           <Route path="/japanese" element={<LanguageCourse config={courseConfigs.japanese} />} />
           <Route path="/latin" element={<LanguageCourse config={courseConfigs.latin} />} />
           <Route path="/ancient-greek" element={<LanguageCourse config={courseConfigs.ancient_greek} />} />
