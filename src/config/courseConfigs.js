@@ -164,13 +164,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Portuguese, use a strict European Portuguese (pt-PT) accent and phonology.",
         promptSystemInstruction: `You are an expert European Portuguese curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Portuguese, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in PT/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Portuguese, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in PT/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -221,13 +225,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert Romanian curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Romanian, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in RO/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Romanian, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in RO/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -278,13 +286,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert Russian curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Russian, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in RU/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Russian, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in RU/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -335,13 +347,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert Norwegian curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Norwegian, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in NO/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Norwegian, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in NO/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'matvare', 'dør', 'uke', 'sove', 'gå', 'kjøpe'). Use 'nf' as the 'pos' tag for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -392,13 +408,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert Dutch curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Dutch, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in NL/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Dutch, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in NL/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles (e.g., 'man', 'huis', 'nevel'). Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -449,13 +469,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking French, use standard metropolitan French pronunciation.",
         promptSystemInstruction: `You are an expert French curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in French, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in FR/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in French, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in FR/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'homme', 'femme', 'maison', 'dormir', 'aller', 'acheter'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -506,13 +530,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking German, use standard Hochdeutsch pronunciation.",
         promptSystemInstruction: `You are an expert German curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in German, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in DE/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in German, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in DE/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'Mann', 'Frau', 'Haus', 'schlafen', 'gehen', 'kaufen'). Use 'nm' for masculine nouns (der), 'nf' for feminine nouns (die), 'nn' for neuter nouns (das), and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -563,13 +591,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Italian, use standard Italian pronunciation.",
         promptSystemInstruction: `You are an expert Italian curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Italian, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in IT/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Italian, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in IT/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Provide clean base lemmas without articles or infinitive markers (e.g., 'uomo', 'donna', 'casa', 'dormire', 'andare', 'comprare'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -620,13 +652,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT,
         promptSystemInstruction: `You are an expert Modern Greek curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Modern Greek, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in EL/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Modern Greek, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in EL/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -774,13 +810,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Japanese, use standard Japanese (Hyōjungo) pronunciation.",
         promptSystemInstruction: `You are an expert Japanese curriculum designer. Generate a highly structured lesson.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Japanese (Kanji/Kana), English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in Japanese (Kanji/Kana), Rōmaji, and English.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Japanese (Kanji/Kana), English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in Japanese (Kanji/Kana), Rōmaji, and English. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
@@ -832,13 +872,17 @@ TASKS:
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Latin, use Classical Latin pronunciation.",
         promptSystemInstruction: `You are an expert Classical Latin curriculum designer. Generate a highly structured lesson. Use macrons consistently.
         
-CRITICAL RULE: You MUST strictly follow the requested JSON array lengths. Do not leave fields blank.
+CRITICAL RULES:
+1. PRESENT EXACTLY 5 NEW BASE WORDS to teach, PLUS any additional words or grammar the user explicitly requests.
+2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the 5 new target words.
+3. The 'focus' section MUST contain EXACTLY 5 items for the new target words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per new base word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the new-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
 
 TASKS:
-1. 'reading': A passage in Classical Latin, English translation, and target-language definitions. Adjust difficulty and length naturally based on the known vocabulary context.
-2. 'focus': EXACTLY 5 target words from the reading, with nuance/grammar notes.
-3. 'drills': EXACTLY 5 objects. Each MUST have EXACTLY 5 example sentences in LA/EN.
-4. 'quiz': EXACTLY 15 questions testing the reading and past context. Use '_____' (5 underscores) for the blank.
+1. 'reading': A passage in Classical Latin, English translation, and target-language definitions for the 5 new target words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': EXACTLY 5 items for the new target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per new base word). Each MUST have EXACTLY 5 example sentences in LA/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the 5 new words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
 5. 'newLemmas': Extract new base words from the reading that are NOT in the KNOWN VOCABULARY. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
