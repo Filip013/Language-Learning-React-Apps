@@ -166,16 +166,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Portuguese, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in PT/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in PT/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -227,16 +226,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Romanian, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in RO/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in RO/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -288,16 +286,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Russian, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in RU/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in RU/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -349,16 +346,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Norwegian, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in NO/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in NO/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'matvare', 'dør', 'uke', 'sove', 'gå', 'kjøpe'). Use 'nf' as the 'pos' tag for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'matvare', 'dør', 'uke', 'sove', 'gå', 'kjøpe'). Use 'nf' as the 'pos' tag for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -410,16 +406,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Dutch, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in NL/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in NL/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles (e.g., 'man', 'huis', 'nevel'). Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles (e.g., 'man', 'huis', 'nevel'). Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -471,16 +466,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in French, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in FR/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in FR/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'homme', 'femme', 'maison', 'dormir', 'aller', 'acheter'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'homme', 'femme', 'maison', 'dormir', 'aller', 'acheter'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -532,16 +526,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in German, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in DE/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in DE/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'Mann', 'Frau', 'Haus', 'schlafen', 'gehen', 'kaufen'). Use 'nm' for masculine nouns (der), 'nf' for feminine nouns (die), 'nn' for neuter nouns (das), and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'Mann', 'Frau', 'Haus', 'schlafen', 'gehen', 'kaufen'). Use 'nm' for masculine nouns (der), 'nf' for feminine nouns (die), 'nn' for neuter nouns (das), and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -593,16 +586,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Italian, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in IT/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in IT/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'uomo', 'donna', 'casa', 'dormire', 'andare', 'comprare'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'uomo', 'donna', 'casa', 'dormire', 'andare', 'comprare'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -654,16 +646,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Modern Greek, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in EL/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in EL/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -813,16 +804,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Japanese (Kanji/Kana), English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in Japanese (Kanji/Kana), Rōmaji, and English. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in Japanese (Kanji/Kana), Rōmaji, and English. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
@@ -875,16 +865,15 @@ TASKS:
         
 CRITICAL RULES:
 1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
-2. The Reading, Definitions, Drills, and Quiz MUST NOT contain any unknown words outside the Known Vocabulary + the new target words.
-3. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-4. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the new word being drilled.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
 
 TASKS:
 1. 'reading': A passage in Classical Latin, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
 2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
-3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in LA/EN. Review and grammar items are practiced inside these sentences (see rule 4), not as separate drill entries.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in LA/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
 4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
-5. 'newLemmas': Extract ONLY the new base words from the reading that are NOT already in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Use STRICT abbreviations for 'pos' (e.g., 'n', 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
 
         promptOutputFormat: {
           title: "Lesson Title",
