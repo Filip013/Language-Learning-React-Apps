@@ -11,6 +11,8 @@ export function useGeminiTTS(systemInstruction) {
     const textQueue = useRef([]); // Queue for sequential TTS requests
     const currentTurnData = useRef(null); // Tracks the current text and its retry count
     const audioReceivedForCurrentTurn = useRef(false); // Flags if audio was successfully received
+    const currentTurnTranscript = useRef(''); // Accumulates outputTranscription for verification
+    const currentTurnInterrupted = useRef(false); // Tracks server-side interruption
     const currentOnComplete = useRef(null);
     const currentOnError = useRef(null);
     
@@ -22,7 +24,8 @@ export function useGeminiTTS(systemInstruction) {
         const binaryString = window.atob(base64Data);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-        const int16Array = new Int16Array(bytes.buffer);
+        const sampleCount = Math.floor(bytes.length / 2);
+        const int16Array = new Int16Array(bytes.buffer, bytes.byteOffset, sampleCount);
         const audioBuffer = audioContext.current.createBuffer(1, int16Array.length, 24000);
         const channelData = audioBuffer.getChannelData(0);
         for (let i = 0; i < int16Array.length; i++) channelData[i] = int16Array[i] / 32768.0;
@@ -54,6 +57,8 @@ export function useGeminiTTS(systemInstruction) {
         textQueue.current = []; 
         currentTurnData.current = null;
         audioReceivedForCurrentTurn.current = false;
+        currentTurnTranscript.current = '';
+        currentTurnInterrupted.current = false;
         
         // Pause the background silent audio
         if (silentAudioRef.current) {
@@ -126,6 +131,8 @@ export function useGeminiTTS(systemInstruction) {
                 if (nextItem && nextItem.text.trim()) {
                     currentTurnData.current = nextItem;
                     audioReceivedForCurrentTurn.current = false; // Reset flag for this turn
+                    currentTurnTranscript.current = ''; // Reset accumulated transcript
+                    currentTurnInterrupted.current = false; // Reset interrupted flag
 
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                         const promptText = nextItem.language 
@@ -167,6 +174,14 @@ export function useGeminiTTS(systemInstruction) {
                 }
 
                 if (msg.serverContent) {
+                    if (msg.serverContent.interrupted) {
+                        currentTurnInterrupted.current = true;
+                    }
+
+                    if (msg.serverContent.outputTranscription && msg.serverContent.outputTranscription.text) {
+                        currentTurnTranscript.current += msg.serverContent.outputTranscription.text;
+                    }
+
                     if (msg.serverContent.modelTurn) {
                         for (const part of msg.serverContent.modelTurn.parts) {
                             if (part.inlineData && part.inlineData.mimeType.startsWith("audio/pcm")) {
@@ -177,11 +192,43 @@ export function useGeminiTTS(systemInstruction) {
                     }
                     
                     if (msg.serverContent.turnComplete) {
-                        // REPLAY/RETRY LOGIC: If the turn completed but the model gave us no audio
-                        if (!audioReceivedForCurrentTurn.current && currentTurnData.current) {
+                        // CLIENT-SIDE VERIFICATION:
+                        // Verify that the speech was not truncated or interrupted before accepting completion
+                        const targetText = currentTurnData.current?.text || "";
+                        const spokenText = currentTurnTranscript.current || "";
+                        
+                        const normalize = (s) => (s || "").replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+                        const normTarget = normalize(targetText);
+                        const normSpoken = normalize(spokenText);
+                        
+                        const isInterrupted = currentTurnInterrupted.current;
+                        const isEmpty = !audioReceivedForCurrentTurn.current;
+                        
+                        // If transcript was received and target text has substance, verify coverage
+                        const isTruncated = (normSpoken.length > 0 && normTarget.length > 0)
+                            ? (normSpoken.length / normTarget.length < 0.70)
+                            : false;
+
+                        const needsRetry = isEmpty || isInterrupted || isTruncated;
+
+                        // REPLAY/RETRY LOGIC: If the turn was empty, interrupted, or truncated early
+                        if (needsRetry && currentTurnData.current) {
                             if (currentTurnData.current.retries < MAX_RETRIES) {
-                                console.warn(`TTS empty response detected. Retrying... (${currentTurnData.current.retries + 1}/${MAX_RETRIES})`);
+                                const reason = isEmpty 
+                                    ? "empty response" 
+                                    : (isInterrupted 
+                                        ? "interrupted by server" 
+                                        : `incomplete speech (${normSpoken.length}/${normTarget.length} chars)`);
+                                console.warn(`TTS ${reason} detected. Retrying... (${currentTurnData.current.retries + 1}/${MAX_RETRIES})`);
                                 
+                                // Stop any partial audio from the incomplete turn so it doesn't overlap
+                                activeAudioNodes.current.forEach(n => {
+                                    try { n.stop(); } catch(e) {}
+                                    n.onended = null;
+                                });
+                                activeAudioNodes.current = [];
+                                if (audioContext.current) nextAudioTime.current = audioContext.current.currentTime;
+
                                 // Put it back at the front of the queue with an incremented retry counter
                                 textQueue.current.unshift({
                                     text: currentTurnData.current.text,
