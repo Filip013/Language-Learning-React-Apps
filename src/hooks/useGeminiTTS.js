@@ -13,6 +13,8 @@ export function useGeminiTTS(systemInstruction) {
     const audioReceivedForCurrentTurn = useRef(false); // Flags if audio was successfully received
     const currentTurnTranscript = useRef(''); // Accumulates outputTranscription for verification
     const currentTurnInterrupted = useRef(false); // Tracks server-side interruption
+    const currentTurnAudioDuration = useRef(0); // Tracks total seconds of audio received for current turn
+    const completionIntervalRef = useRef(null); // Ref for audio completion polling
     const currentOnComplete = useRef(null);
     const currentOnError = useRef(null);
     
@@ -30,6 +32,8 @@ export function useGeminiTTS(systemInstruction) {
         const channelData = audioBuffer.getChannelData(0);
         for (let i = 0; i < int16Array.length; i++) channelData[i] = int16Array[i] / 32768.0;
         
+        currentTurnAudioDuration.current += audioBuffer.duration;
+
         const source = audioContext.current.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(audioContext.current.destination);
@@ -47,11 +51,16 @@ export function useGeminiTTS(systemInstruction) {
     }, []);
 
     const stopSpeak = useCallback(() => {
+        if (completionIntervalRef.current) {
+            clearInterval(completionIntervalRef.current);
+            completionIntervalRef.current = null;
+        }
+
         if (ws.current) { ws.current.close(); ws.current = null; }
         
         activeAudioNodes.current.forEach(n => {
-            try { n.stop(); } catch(e) {}
             n.onended = null;
+            try { n.stop(); } catch(e) {}
         });
         activeAudioNodes.current = [];
         textQueue.current = []; 
@@ -59,6 +68,7 @@ export function useGeminiTTS(systemInstruction) {
         audioReceivedForCurrentTurn.current = false;
         currentTurnTranscript.current = '';
         currentTurnInterrupted.current = false;
+        currentTurnAudioDuration.current = 0;
         
         // Pause the background silent audio
         if (silentAudioRef.current) {
@@ -133,23 +143,31 @@ export function useGeminiTTS(systemInstruction) {
                     audioReceivedForCurrentTurn.current = false; // Reset flag for this turn
                     currentTurnTranscript.current = ''; // Reset accumulated transcript
                     currentTurnInterrupted.current = false; // Reset interrupted flag
+                    currentTurnAudioDuration.current = 0; // Reset audio duration accumulator for this turn
+
+                    const promptText = nextItem.language 
+                        ? `Read the following ${nextItem.language} text aloud exactly as written: "${nextItem.text}"`
+                        : `Read the following text aloud exactly as written: "${nextItem.text}"`;
+
+                    const clientMsg = JSON.stringify({
+                        clientContent: {
+                            turns: [{
+                                role: "user",
+                                parts: [{
+                                    text: promptText
+                                }]
+                            }],
+                            turnComplete: true
+                        }
+                    });
 
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                        const promptText = nextItem.language 
-                            ? `Read the following ${nextItem.language} text aloud exactly as written: "${nextItem.text}"`
-                            : `Read the following text aloud exactly as written: "${nextItem.text}"`;
-
-                        ws.current.send(JSON.stringify({
-                            clientContent: {
-                                turns: [{
-                                    role: "user",
-                                    parts: [{
-                                        text: promptText
-                                    }]
-                                }],
-                                turnComplete: true
-                            }
-                        }));
+                        ws.current.send(clientMsg);
+                    } else {
+                        // If WebSocket is not open, put the item back and trigger connection
+                        textQueue.current.unshift(nextItem);
+                        currentTurnData.current = null;
+                        connectWebSocket();
                     }
                     return true;
                 }
@@ -196,20 +214,49 @@ export function useGeminiTTS(systemInstruction) {
                         // Verify that the speech was not truncated or interrupted before accepting completion
                         const targetText = currentTurnData.current?.text || "";
                         const spokenText = currentTurnTranscript.current || "";
+                        const duration = currentTurnAudioDuration.current;
                         
+                        const cleanedText = targetText.trim();
+                        const charCount = cleanedText.length;
+                        const words = cleanedText.split(/\s+/).filter(Boolean);
+                        const wordCount = words.length;
+
+                        // Check if text is CJK (Japanese, Chinese, Korean)
+                        const isCJK = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/.test(cleanedText);
+
+                        // Calculate minimum physical duration:
+                        // Fastest plausible speech: CJK ~7 chars/sec; Non-CJK ~24 chars/sec or ~4.5 words/sec.
+                        let minExpectedDuration = 0;
+                        if (charCount >= 8 || wordCount >= 2) {
+                            if (isCJK) {
+                                minExpectedDuration = (charCount / 7.0) * 0.65;
+                            } else {
+                                minExpectedDuration = Math.min(charCount / 24.0, wordCount / 4.5) * 0.65;
+                            }
+                        } else {
+                            minExpectedDuration = 0.2; // Very short phrases just need audible audio
+                        }
+
+                        const isDurationShort = duration < minExpectedDuration;
+
+                        // Secondary check if transcript was received
                         const normalize = (s) => (s || "").replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
                         const normTarget = normalize(targetText);
                         const normSpoken = normalize(spokenText);
-                        
-                        const isInterrupted = currentTurnInterrupted.current;
-                        const isEmpty = !audioReceivedForCurrentTurn.current;
-                        
-                        // If transcript was received and target text has substance, verify coverage
-                        const isTruncated = (normSpoken.length > 0 && normTarget.length > 0)
-                            ? (normSpoken.length / normTarget.length < 0.70)
+                        const isTranscriptShort = (normSpoken.length > 0 && normTarget.length > 0)
+                            ? (normSpoken.length / normTarget.length < 0.65)
                             : false;
 
+                        const isInterrupted = currentTurnInterrupted.current;
+                        const isEmpty = !audioReceivedForCurrentTurn.current || duration < 0.15;
+                        const isTruncated = isDurationShort || isTranscriptShort;
+
                         const needsRetry = isEmpty || isInterrupted || isTruncated;
+
+                        console.log(
+                            `[Gemini TTS Turn] Duration: ${duration.toFixed(2)}s (min: ${minExpectedDuration.toFixed(2)}s) | ` +
+                            `Transcript: "${spokenText}" | needsRetry: ${needsRetry}`
+                        );
 
                         // REPLAY/RETRY LOGIC: If the turn was empty, interrupted, or truncated early
                         if (needsRetry && currentTurnData.current) {
@@ -218,16 +265,18 @@ export function useGeminiTTS(systemInstruction) {
                                     ? "empty response" 
                                     : (isInterrupted 
                                         ? "interrupted by server" 
-                                        : `incomplete speech (${normSpoken.length}/${normTarget.length} chars)`);
-                                console.warn(`TTS ${reason} detected. Retrying... (${currentTurnData.current.retries + 1}/${MAX_RETRIES})`);
+                                        : (isDurationShort 
+                                            ? `speech cut off early (${duration.toFixed(2)}s, expected >= ${minExpectedDuration.toFixed(2)}s)`
+                                            : `incomplete transcript (${normSpoken.length}/${normTarget.length} chars)`));
+                                console.warn(`[Gemini TTS] ${reason} detected. Retrying... (${currentTurnData.current.retries + 1}/${MAX_RETRIES})`);
                                 
-                                // Stop any partial audio from the incomplete turn so it doesn't overlap
+                                // Stop any partial audio from the incomplete turn immediately
                                 activeAudioNodes.current.forEach(n => {
-                                    try { n.stop(); } catch(e) {}
                                     n.onended = null;
+                                    try { n.stop(); } catch(e) {}
                                 });
                                 activeAudioNodes.current = [];
-                                if (audioContext.current) nextAudioTime.current = audioContext.current.currentTime;
+                                if (audioContext.current) nextAudioTime.current = audioContext.current.currentTime + 0.05;
 
                                 // Put it back at the front of the queue with an incremented retry counter
                                 textQueue.current.unshift({
@@ -236,39 +285,46 @@ export function useGeminiTTS(systemInstruction) {
                                     language: currentTurnData.current.language
                                 });
                                 
-                                sendNextText(); // Fire it off immediately
-                                return; // Skip the completion check block below for this failed turn
+                                // Small pause to allow WebSocket pipeline to settle before retry
+                                setTimeout(() => {
+                                    sendNextText();
+                                }, 50);
+                                return; // Skip completion check block below for this failed turn
                             } else {
-                                console.warn("Max TTS retries reached. Aborting playback.");
+                                console.warn("[Gemini TTS] Max retries reached. Aborting playback.");
                                 
-                                // Save error callback before wiping
                                 const errorCb = currentOnError.current;
-                                
-                                // Detach onComplete so stopSpeak doesn't accidentally trigger a success reveal
                                 currentOnComplete.current = null; 
                                 currentOnError.current = null;
                                 
-                                stopSpeak(); // Clean up audio nodes, queues, and sockets
+                                stopSpeak();
                                 
-                                if (errorCb) errorCb(); // Let the UI know it failed
-                                return; // Skip the success block
+                                if (errorCb) errorCb();
+                                return;
                             }
                         }
 
                         // Normal completion check
-                        const checkCompletion = setInterval(() => {
+                        if (completionIntervalRef.current) {
+                            clearInterval(completionIntervalRef.current);
+                            completionIntervalRef.current = null;
+                        }
+
+                        completionIntervalRef.current = setInterval(() => {
                             if (activeAudioNodes.current.length === 0) {
-                                clearInterval(checkCompletion);
+                                clearInterval(completionIntervalRef.current);
+                                completionIntervalRef.current = null;
                                 
                                 const hasMore = sendNextText();
                                 if (!hasMore) {
                                     if (silentAudioRef.current) silentAudioRef.current.pause();
 
-                            if (currentOnComplete.current) {
-                                currentOnComplete.current();
-                                currentOnComplete.current = null;
-                            }
-                            currentOnError.current = null;
+                                    if (currentOnComplete.current) {
+                                        const cb = currentOnComplete.current;
+                                        currentOnComplete.current = null;
+                                        cb();
+                                    }
+                                    currentOnError.current = null;
                                 }
                             }
                         }, 100);
@@ -282,7 +338,7 @@ export function useGeminiTTS(systemInstruction) {
             };
         };
 
-        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+        const connectWebSocket = () => {
             ws.current = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${myKey.trim()}`);
             ws.current.onopen = () => {
                 const setupMessage = {
@@ -298,6 +354,10 @@ export function useGeminiTTS(systemInstruction) {
                 ws.current.send(JSON.stringify(setupMessage));
             };
             setupMessageHandlers();
+        };
+
+        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+            connectWebSocket();
         } else {
             setupMessageHandlers();
             sendNextText();
