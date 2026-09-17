@@ -903,5 +903,65 @@ TASKS:
             { latin: "...", english: "...", pos: "n" }
           ]
         }
+    },
+
+    spanish: {
+        id: 'spanish',
+        dbAppId: 'spanish-master',
+        name: 'Spanish Master',
+        primaryTextKey: 'spanish',
+        lexiconDoc: 'lexicon',
+        
+        // Font & Design
+        textSizeMode: 'standard',
+        webFontsCss: '',
+        
+        hasStories: false,
+        hasReading: true,
+        hasTestTab: false,
+        hasSweepTab: false,
+        ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Spanish, use standard European Spanish (Castilian) pronunciation.",
+        promptSystemInstruction: `You are an expert Spanish curriculum designer. Generate a highly structured lesson.
+        
+CRITICAL RULES:
+1. Present EXACTLY 5 target vocabulary words to teach and drill. If the user requests specific words (including reviewing existing vocabulary), honor that request so there are always EXACTLY 5 target vocabulary words in total.
+2. The 'focus' section MUST contain the 5 target vocabulary words, PLUS 1 to 5 items for grammar rules, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. DRILL STRUCTURE: Create EXACTLY 5 drill objects — one per target vocabulary word. Review and grammar focus items do NOT get their own drill entry. Instead, weave them into the example sentences of the target-word drills: each review/grammar item must appear in at least one example sentence, naturally paired with the target word being drilled.
+
+TASKS:
+1. 'reading': A passage in Spanish, English translation, and target-language definitions for the target vocabulary words. Adjust difficulty and length naturally based on the known vocabulary context.
+2. 'focus': Items for the 5 target words from the reading, PLUS 1 to 5 items for grammar, nuance, or review (up to 10 items total). Treat every single explanation as a separate item.
+3. 'drills': EXACTLY 5 objects (one per target vocabulary word). Each MUST have EXACTLY 5 example sentences in ES/EN. Review and grammar items are practiced inside these sentences (see rule 3), not as separate drill entries.
+4. 'quiz': EXACTLY 15 questions testing the reading, the target words, the review/grammar items, and past context. Use '_____' (5 underscores) for the blank.
+5. 'newLemmas': Extract all new base words from the reading that are NOT in the KNOWN VOCABULARY. Do not re-extract existing vocabulary. Provide clean base lemmas without articles or infinitive markers (e.g., 'hombre', 'mujer', 'casa', 'dormir', 'ir', 'comprar'). Use 'nm' for masculine nouns, 'nf' for feminine nouns, and standard abbreviations for other parts of speech (e.g., 'v', 'adj', 'adv', 'pron', 'prep', 'conj').`,
+
+        promptOutputFormat: {
+          title: "Lesson Title",
+          tutorIntroduction: "Short engaging intro",
+          reading: {
+            definitions: [{ word: "word", text: "Spanish definition using known words" }],
+            spanish: "Text broken into paragraphs separated by \\n\\n",
+            english: "English translation",
+            focus: [{ word: "word", explanation: "Grammar/nuance note" }]
+          },
+          drills: [
+            {
+              word: "word",
+              translation: "translation",
+              examples: [{ spanish: "...", english: "..." }]
+            }
+          ],
+          quiz: [
+            {
+              sentence: "Sentence with _____",
+              englishHint: "English hint",
+              answer: "answer",
+              distractors: ["wrong1", "wrong2", "wrong3"]
+            }
+          ],
+          newLemmas: [
+            { spanish: "...", english: "...", pos: "nm" }
+          ]
+        }
     }
 };

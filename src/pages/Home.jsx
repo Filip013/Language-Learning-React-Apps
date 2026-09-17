@@ -21,6 +21,7 @@ const ALL_COURSES = [
     { id: "portuguese", name: "Portuguese", url: "/portuguese", color: "hover:border-emerald-600", flag: "🇵🇹" },
     { id: "romanian", name: "Romanian", url: "/romanian", color: "hover:border-indigo-500", flag: "🇷🇴" },
     { id: "russian", name: "Russian", url: "/russian", color: "hover:border-sky-500", flag: "🇷🇺" },
+    { id: "spanish", name: "Spanish", url: "/spanish", color: "hover:border-amber-500", flag: "🇪🇸" },
 ];
 
 const PINNED_ORDER = ["hungarian", "lingocraft", "mandarin"];
@@ -196,8 +197,22 @@ export default function Home() {
         navigate(course.url);
     };
 
-    const pinnedCourses = PINNED_ORDER.map(id => ALL_COURSES.find(c => c.id === id)).filter(Boolean);
-    const dynamicCourses = ALL_COURSES.filter(c => !PINNED_ORDER.includes(c.id)).sort((a, b) => (recentActivity[b.id] || 0) - (recentActivity[a.id] || 0));
+    const nonBaseCourses = ALL_COURSES.filter(c => !PINNED_ORDER.includes(c.id));
+    let fourthPinnedId = 'spanish';
+    let highestNonBaseTime = -1;
+    nonBaseCourses.forEach(c => {
+        const t = recentActivity[c.id] || 0;
+        if (t > highestNonBaseTime) {
+            highestNonBaseTime = t;
+            fourthPinnedId = c.id;
+        }
+    });
+
+    const activePinnedIds = [...PINNED_ORDER, fourthPinnedId];
+    const pinnedCourses = activePinnedIds.map(id => ALL_COURSES.find(c => c.id === id)).filter(Boolean);
+    const dynamicCourses = ALL_COURSES
+        .filter(c => !activePinnedIds.includes(c.id))
+        .sort((a, b) => (recentActivity[b.id] || 0) - (recentActivity[a.id] || 0));
     
     let mostRecentCourseId = null;
     Object.entries(recentActivity).reduce((max, [id, time]) => { if (time > max) { mostRecentCourseId = id; return time; } return max; }, 0);
@@ -446,12 +461,12 @@ export default function Home() {
 
                 {/* Course Grid */}
                 <h3 className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-zinc-500 mb-3 sm:mb-4 ml-1 sm:ml-2">Pinned Courses</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10">
                     {pinnedCourses.map(c => <CourseCard key={c.id} course={c} />)}
                 </div>
                 
                 <h3 className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-zinc-500 mb-3 sm:mb-4 ml-1 sm:ml-2 mt-2 sm:mt-4">Other Languages</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pb-8 sm:pb-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pb-8 sm:pb-12">
                     {dynamicCourses.map(c => <CourseCard key={c.id} course={c} />)}
                 </div>
             </main>

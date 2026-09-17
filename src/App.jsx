@@ -107,6 +107,7 @@
           <Route path="/japanese" element={<LanguageCourse config={courseConfigs.japanese} />} />
           <Route path="/latin" element={<LanguageCourse config={courseConfigs.latin} />} />
           <Route path="/ancient-greek" element={<LanguageCourse config={courseConfigs.ancient_greek} />} />
+          <Route path="/spanish" element={<LanguageCourse config={courseConfigs.spanish} />} />
           
           {/* SERVICE APPS & GAMES */}
           <Route path="/migrate" element={<MigrationTool />} />
