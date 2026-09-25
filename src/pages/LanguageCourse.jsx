@@ -179,8 +179,7 @@ export default function LanguageCourse({ config }) {
           });
         });
         if (drillSentences.length > 0) {
-          const langLabel = activeConfig.labels?.[activeConfig.primaryTextKey] || (activeConfig.primaryTextKey ? activeConfig.primaryTextKey.charAt(0).toUpperCase() + activeConfig.primaryTextKey.slice(1) : 'Target Language');
-          epContext += `Drill Sentences (${langLabel} only):\n${drillSentences.join('\n')}\n\n`;
+          epContext += `Drill Sentences:\n${drillSentences.join('\n')}\n\n`;
         }
       }
 

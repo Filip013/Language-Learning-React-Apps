@@ -202,15 +202,15 @@ export default function SweepTab({ isActive, isDarkMode, activeEpisode, progress
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar flex flex-col justify-start pt-6">
               <div className="relative min-h-[140px] flex flex-col justify-start pt-2">
                 <div className={`transition-all ${!rev[qId] ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} space-y-2.5`}>
-                  <p className={`font-bold text-sm uppercase tracking-widest text-blue-500 ${config.fontClass || 'font-sans'}`}>{item.word}</p>
+                  <p className={`font-bold ${(config.textSizeMode === 'large' || config.useLargeDrillFont) ? 'text-xl md:text-2xl tracking-wide' : 'text-sm uppercase tracking-widest'} text-blue-500 ${config.fontClass || 'font-sans'}`}>{item.word}</p>
                   <p className={`${config.fontClass || 'font-sans'} ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.primaryTextKey]}</p>
+                  <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{item.english}</p>
                   {config.secondaryScriptKey && item[config.secondaryScriptKey] && (
-                    <p className={`${config.secondaryFontClass || config.fontClass || 'font-sans'} ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${isDarkMode ? 'text-stone-300' : 'text-stone-700'}`}>{item[config.secondaryScriptKey]}</p>
+                    <p className={`${config.secondaryFontClass || config.fontClass || 'font-sans'} ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'} ${isDarkMode ? 'text-stone-100' : 'text-stone-900'}`}>{item[config.secondaryScriptKey]}</p>
                   )}
                   {config.transliterationKey && item[config.transliterationKey] && (
-                    <p className="text-base font-sans opacity-70">{item[config.transliterationKey]}</p>
+                    <p className={`text-base md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{item[config.transliterationKey]}</p>
                   )}
-                  <p className={`text-lg md:text-[17px] font-sans leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>{item.english}</p>
                 </div>
 
                 {!rev[qId] && (
