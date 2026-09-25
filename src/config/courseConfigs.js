@@ -43,23 +43,18 @@ export const courseConfigs = {
         hasStories: true,
         hasReading: false,
         hasTestTab: false,
-        hasSweepTab: false,
+        hasSweepTab: true,
 
         ttsSystemInstruction: SHARED_TTS_PROMPT + "\n\nCRITICAL INSTRUCTION: When speaking Mandarin Chinese, use a strict Taiwanese Mandarin (Guoyu) accent and traditional pronunciation.",
         promptSystemInstruction: `You are an expert curriculum designer and storyteller for a Mandarin Chinese learning app. Your task is to write stories that should be 30+ episodes long.
         
 CRITICAL RULES:
-1. VOCABULARY: Write the story primarily using the KNOWN VOCABULARY list.
-2. NEW WORDS: You are allowed to introduce up to 5 NEW WORDS not on the known list. You MUST list any new words introduced in the 'newLemmas' array. Do not leave 'newLemmas' empty if you introduced new words!
-3. DRILLS: For EACH word in the 'drills' array (which should be the new words + requested review words), you MUST generate an 'examples' array containing EXACTLY 5 sentences. NEVER leave 'examples' empty. Under 'notes', provide nuance about word use, synonyms, and related grammar.
-4. REVIEW WORDS: Do not force user-requested Review Words into the story plot. They should only appear in drills and the quiz.
-5. STORY MANAGEMENT: If the user asks to start a brand new story (e.g., changing genre, or stating "start a new story"), you MUST set 'storyStatus' to 'new_story' and invent a new 'storyTitle'. If continuing the current story, set to 'continue'. If it time to end the story, set to 'finale'.
-
-DRILL AND QUIZ DESIGN:
-- I have provided the context from the last few episodes.
-- DO NOT reuse past example sentences. Generate completely new sentences.
-- Note which words were recently drilled. Select DIFFERENT older words from the KNOWN VOCABULARY to review in this episode's drills and quiz.
-- The quiz should be exactly 15 questions, testing a mix of newly introduced words and older vocabulary.`,
+1. VOCABULARY & NEW WORDS: Write the story primarily using the KNOWN VOCABULARY list. Introduce EXACTLY 5 new target words not on the known list. You MUST list all 5 new words in the 'newLemmas' array. Do not leave 'newLemmas' empty!
+2. DRILL STRUCTURE: Create EXACTLY 5 drill objects in the 'drills' array — one for each of the 5 newly introduced target words. Do not include any other words in 'drills'. For EACH word in 'drills', you MUST generate an 'examples' array containing EXACTLY 5 sentences. Under 'notes', provide nuance about word use, synonyms, and related grammar.
+3. DIAGNOSTIC SWEEP: Create EXACTLY 15 sweep sentences targeting older vocabulary from the KNOWN VOCABULARY that have NOT appeared in the recent context (past 5-10 lessons). Each item must test a specific older word and include its traditional script, simplified script, pinyin, and English translation.
+4. QUIZ DESIGN: The quiz should be EXACTLY 15 questions total, testing a mix of the 5 new words and older vocabulary from the KNOWN VOCABULARY. Use '___' for the blank.
+5. STORY MANAGEMENT: If the user asks to start a brand new story (e.g., changing genre, or stating "start a new story"), you MUST set 'storyStatus' to 'new_story' and invent a new 'storyTitle'. If continuing the current story, set to 'continue'. If it is time to end the story, set to 'finale'.
+6. FRESH CONTENT: I have provided the context from the last few episodes (including past drill sentences and quiz questions). DO NOT reuse past example sentences or drill sentences. Generate completely new, original sentences.`,
 
         promptOutputFormat: {
           title: "Title of the chapter/episode.",
@@ -87,6 +82,15 @@ DRILL AND QUIZ DESIGN:
               answer: "answer",
               distractors: ["wrong1", "wrong2", "wrong3"],
               englishHint: "hint"
+            }
+          ],
+          sweep: [
+            {
+              word: "word",
+              traditional: "...",
+              simplified: "...",
+              pinyin: "...",
+              english: "..."
             }
           ],
           newLemmas: ["漢字1", "漢字2"]

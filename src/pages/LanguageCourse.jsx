@@ -166,17 +166,22 @@ export default function LanguageCourse({ config }) {
       }
       
       if (ep.drills) {
-        let drillNotes = [];
+        let drillSentences = [];
         ep.drills.forEach((section, sIdx) => {
-            section.examples?.forEach((ex, eIdx) => {
-                const exId = `drill_${sIdx}_${eIdx}`;
-                if (notes[exId]) {
-                    const targetText = ex[activeConfig.primaryTextKey];
-                    drillNotes.push(`- Drill "${targetText}": ${notes[exId]}`);
-                }
-            });
+          const wordHeader = section.word ? `[${section.word}] ` : '';
+          section.examples?.forEach((ex, eIdx) => {
+            const exId = `drill_${sIdx}_${eIdx}`;
+            const targetText = ex[activeConfig.primaryTextKey] || ex.traditional || "";
+            if (targetText) {
+              const noteStr = notes[exId] ? ` [User Note: ${notes[exId]}]` : '';
+              drillSentences.push(`- ${wordHeader}${targetText}${noteStr}`);
+            }
+          });
         });
-        if (drillNotes.length > 0) epContext += `Drill Notes:\n${drillNotes.join('\n')}\n\n`;
+        if (drillSentences.length > 0) {
+          const langLabel = activeConfig.labels?.[activeConfig.primaryTextKey] || (activeConfig.primaryTextKey ? activeConfig.primaryTextKey.charAt(0).toUpperCase() + activeConfig.primaryTextKey.slice(1) : 'Target Language');
+          epContext += `Drill Sentences (${langLabel} only):\n${drillSentences.join('\n')}\n\n`;
+        }
       }
 
       if (ep.quiz) {
@@ -217,7 +222,8 @@ export default function LanguageCourse({ config }) {
              const text = s[activeConfig.primaryTextKey] || s.hungarian;
              const sId = `sweep_${sIdx}`;
              let noteStr = notes[sId] ? ` (User Note: ${notes[sId]})` : '';
-             if (text) sweepSentences.push(text + noteStr);
+             const wordHeader = s.word ? `[${s.word}] ` : '';
+             if (text) sweepSentences.push(`${wordHeader}${text}${noteStr}`);
          });
          if (sweepSentences.length > 0) epContext += `Sweep Sentences:\n- ${sweepSentences.join('\n- ')}\n\n`;
       }
