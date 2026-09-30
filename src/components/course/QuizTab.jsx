@@ -71,6 +71,8 @@ export default function QuizTab({ isActive, isDarkMode, activeEpisode, progressS
           options: opts 
         };
       }));
+    } else {
+      setShuffledData([]);
     }
   }, [activeEpisode?.quiz]);
 
@@ -285,11 +287,12 @@ export default function QuizTab({ isActive, isDarkMode, activeEpisode, progressS
                 <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'}`}>
                   
                   {(() => {
-                    const maxOptLength = Math.max(...q.options.map(opt => String(opt).length));
+                    const optionsList = Array.isArray(q.options) ? q.options : [];
+                    const maxOptLength = optionsList.length > 0 ? Math.max(...optionsList.map(opt => String(opt).length)) : 0;
                     const gridClasses = maxOptLength > 35 ? "grid-cols-1" : maxOptLength > 14 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4";
                     return (
                       <div className={`grid gap-2 mb-4 ${gridClasses}`}>
-                        {q.options.map((option, optIdx) => {
+                        {optionsList.map((option, optIdx) => {
                           let btnClass = `px-3 py-2.5 rounded-xl border-2 transition-all text-center ${config.scriptStyles?.interactive || 'text-base md:text-lg font-medium'} ${config.fontClass || 'font-sans'} `;
                           if (!isGraded) btnClass += userChoice === option ? (isDarkMode ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-amber-500 bg-amber-50 text-amber-800") : (isDarkMode ? "border-stone-750 bg-stone-900/40 text-stone-200" : "border-stone-200 bg-white text-stone-700");
                           else btnClass += option === q.answer ? (isDarkMode ? "border-emerald-500 bg-emerald-950/50 text-emerald-300" : "border-emerald-500 bg-emerald-50 text-emerald-800") : userChoice === option ? "border-rose-900 bg-rose-950/30 text-rose-450 line-through opacity-70" : "border-stone-855 bg-stone-900/10 text-stone-600 opacity-40";

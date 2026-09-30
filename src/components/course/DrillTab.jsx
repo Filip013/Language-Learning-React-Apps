@@ -300,9 +300,11 @@ export default function DrillTab({ isActive, isDarkMode, activeEpisode, progress
                         </button>
                       </div>
                       <div className="overflow-y-auto no-scrollbar space-y-3 pb-2">
-                        {currentSection.notes.map((note, noteIdx) => (
-                          <p key={noteIdx} className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{note}</p>
-                        ))}
+                        {Array.isArray(currentSection?.notes) 
+                          ? currentSection.notes.map((note, noteIdx) => (
+                              <p key={noteIdx} className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{note}</p>
+                            ))
+                          : (currentSection?.notes ? <p className={`text-base leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-650'}`}>{currentSection.notes}</p> : null)}
                       </div>
                     </div>
                   )}

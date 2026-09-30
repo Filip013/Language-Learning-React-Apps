@@ -15,6 +15,7 @@ import { fetchGeminiContent } from '../config/languages';
 import UserNoteModal from '../components/common/UserNoteModal';
 import AiTranslatePopup from '../components/common/AiTranslatePopup';
 import ThemeToggle from '../components/common/ThemeToggle';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 // Modular Course Tabs
 import EpisodeTab from '../components/course/EpisodeTab';
@@ -475,10 +476,11 @@ export default function LanguageCourse({ config }) {
 
     const pages = [];
     if (activeEpisode.reading) {
-      if (activeEpisode.reading.definitions && activeEpisode.reading.definitions.length > 0) pages.push({ id: 'defs' });
-      if (activeEpisode.reading.target) pages.push({ id: 'read' });
+      if (Array.isArray(activeEpisode.reading.definitions) && activeEpisode.reading.definitions.length > 0) pages.push({ id: 'defs' });
+      if (activeEpisode.reading[activeConfig.primaryTextKey] || activeEpisode.reading.target) pages.push({ id: 'read' });
+      if (activeConfig.transliterationKey && activeEpisode.reading[activeConfig.transliterationKey]) pages.push({ id: 'transliteration' });
       if (activeEpisode.reading.english) pages.push({ id: 'eng' });
-      if (activeEpisode.reading.focus && activeEpisode.reading.focus.length > 0) pages.push({ id: 'focus' });
+      if (Array.isArray(activeEpisode.reading.focus) && activeEpisode.reading.focus.length > 0) pages.push({ id: 'focus' });
     }
     const isReadingCompleted = !activeConfig.hasReading || pages.length === 0 ||
       pages.every(p => (progressState.listenedReading || []).includes(p.id)) ||
@@ -830,16 +832,18 @@ export default function LanguageCourse({ config }) {
           />
         )}
 
-        {activeConfig.hasStories && <div className={activeTab === 'episode' ? 'flex-1 min-h-0 w-full h-full flex flex-col animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isActive={activeTab === 'episode'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
-        {activeConfig.hasReading && <div className={activeTab === 'reading' ? 'flex-1 min-h-0 w-full h-full flex flex-col animate-in fade-in duration-300' : 'hidden'}><ReadingTab isActive={activeTab === 'reading'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} progressState={progressState} updateFirebase={updateFirebase} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+        <ErrorBoundary resetKey={`${activeEpisodeId}_${activeTab}`}>
+          {activeConfig.hasStories && <div className={activeTab === 'episode' ? 'flex-1 min-h-0 w-full h-full flex flex-col animate-in fade-in duration-300' : 'hidden'}><EpisodeTab isActive={activeTab === 'episode'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+          {activeConfig.hasReading && <div className={activeTab === 'reading' ? 'flex-1 min-h-0 w-full h-full flex flex-col animate-in fade-in duration-300' : 'hidden'}><ReadingTab isActive={activeTab === 'reading'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} progressState={progressState} updateFirebase={updateFirebase} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
 
-        <div className={activeTab === 'drill' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><DrillTab isActive={activeTab === 'drill'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} isLatestEpisode={isLatestEpisode} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
-        <div className={activeTab === 'quiz' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><QuizTab isActive={activeTab === 'quiz'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
-        {activeConfig.hasTestTab && <div className={activeTab === 'test' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><TestTab isActive={activeTab === 'test'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
-        {activeConfig.hasSweepTab && <div className={activeTab === 'sweep' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><SweepTab isActive={activeTab === 'sweep'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+          <div className={activeTab === 'drill' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><DrillTab isActive={activeTab === 'drill'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} isLatestEpisode={isLatestEpisode} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
+          <div className={activeTab === 'quiz' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><QuizTab isActive={activeTab === 'quiz'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>
+          {activeConfig.hasTestTab && <div className={activeTab === 'test' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><TestTab isActive={activeTab === 'test'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
+          {activeConfig.hasSweepTab && <div className={activeTab === 'sweep' ? 'flex-1 min-h-0 w-full h-full flex flex-col' : 'hidden'}><SweepTab isActive={activeTab === 'sweep'} isDarkMode={isDarkMode} activeEpisode={activeEpisode} progressState={progressState} updateFirebase={updateFirebase} handleSpeak={handleSpeak} stopSpeak={stopSpeak} config={activeConfig} handleOpenNote={handleOpenNote} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}
 
-        <div {...lexiconSwipeHandlers} className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={activeConfig} /></div>
-        {activeConfig.hasStories && <div className={activeTab === 'story' ? 'flex-1 min-h-0 w-full h-full flex flex-col animate-in fade-in duration-300' : 'hidden'}><StoryTab isActive={activeTab === 'story'} isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}      
+          <div {...lexiconSwipeHandlers} className={activeTab === 'lexicon' ? 'block animate-in fade-in duration-300' : 'hidden'}><LexiconTab isDarkMode={isDarkMode} globalLexicon={globalLexicon} user={user} config={activeConfig} /></div>
+          {activeConfig.hasStories && <div className={activeTab === 'story' ? 'flex-1 min-h-0 w-full h-full flex flex-col animate-in fade-in duration-300' : 'hidden'}><StoryTab isActive={activeTab === 'story'} isDarkMode={isDarkMode} activeStoryId={viewingStoryId} setActiveStoryId={setViewingStoryId} storyList={storyList} config={activeConfig} onTabNext={handleTabNext} onTabPrev={handleTabPrev} /></div>}      
+        </ErrorBoundary>      
       </main>
 
       {/* Reusable User Notes Modal */}

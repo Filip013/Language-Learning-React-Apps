@@ -13,16 +13,21 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
 
   const reading = activeEpisode?.reading;
 
+  const targetText = reading ? (reading[config.primaryTextKey] || reading.target || '') : '';
+
   const pages = useMemo(() => {
     if (!reading) return [];
     const list = [];
-    const targetText = reading[config.primaryTextKey];
+    const text = reading[config.primaryTextKey] || reading.target;
     if (Array.isArray(reading.definitions) && reading.definitions.length > 0) list.push({ id: 'defs', label: 'Definitions' });
-    if (targetText) list.push({ id: 'read', label: 'Reading' });
+    if (text) list.push({ id: 'read', label: 'Reading' });
+    if (config.transliterationKey && reading[config.transliterationKey]) {
+      list.push({ id: 'transliteration', label: (config.labels && config.labels[config.transliterationKey]) || 'Transliteration' });
+    }
     if (reading.english) list.push({ id: 'eng', label: 'Translation' });
     if (Array.isArray(reading.focus) && reading.focus.length > 0) list.push({ id: 'focus', label: 'Focus & Grammar' });
     return list;
-  }, [reading, config.primaryTextKey, config.labels]);
+  }, [reading, config.primaryTextKey, config.labels, config.transliterationKey]);
 
   const defaultView = useMemo(() => {
     if (pages.length === 0) return 'read';
@@ -30,29 +35,33 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
     return hasDefs ? 'defs' : pages[0].id;
   }, [pages]);
 
+  const effectiveActiveView = useMemo(() => {
+    if (pages.length === 0) return '';
+    if (activeView && pages.some(p => p.id === activeView)) return activeView;
+    const unlistened = pages.find(p => !(progressState?.listenedReading || []).includes(p.id));
+    return unlistened ? unlistened.id : defaultView;
+  }, [pages, activeView, progressState?.listenedReading, defaultView]);
+
   useEffect(() => {
     setActiveView('');
   }, [activeEpisode?.id]);
 
   useEffect(() => {
-    if (pages.length > 0 && !activeView) {
-      const unlistened = pages.find(p => !(progressState?.listenedReading || []).includes(p.id));
-      setActiveView(unlistened ? unlistened.id : defaultView);
+    if (effectiveActiveView && activeView !== effectiveActiveView) {
+      setActiveView(effectiveActiveView);
     }
-  }, [pages, activeView, progressState?.listenedReading, defaultView]);
+  }, [effectiveActiveView, activeView]);
 
   useEffect(() => {
-    if (isActive && activeView && progressState && updateFirebase) {
+    if (isActive && effectiveActiveView && progressState && updateFirebase) {
       const listened = progressState.listenedReading || [];
-      if (!listened.includes(activeView)) {
-        updateFirebase({ listenedReading: [...listened, activeView] });
+      if (!listened.includes(effectiveActiveView)) {
+        updateFirebase({ listenedReading: [...listened, effectiveActiveView] });
       }
     }
-  }, [isActive, activeView, progressState, updateFirebase]);
+  }, [isActive, effectiveActiveView, progressState, updateFirebase]);
 
-  const currentIndex = pages.findIndex(p => p.id === activeView);
-
-  const targetText = reading ? reading[config.primaryTextKey] : '';
+  const currentIndex = pages.findIndex(p => p.id === effectiveActiveView);
   const notes = progressState?.notes || {};
 
   const playAudio = useCallback((id, text) => {
@@ -126,22 +135,22 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
           break;
         case ' ':
           e.preventDefault();
-          if (activeView === 'defs' && reading?.definitions) {
+          if (effectiveActiveView === 'defs' && Array.isArray(reading?.definitions)) {
             playAudio('defs', reading.definitions.map(d => d.word + ". " + d.text).join(' '));
-          } else if (activeView === 'read' && targetText) {
-            const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && reading[config.transliterationKey])
+          } else if (effectiveActiveView === 'read' && targetText) {
+            const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && reading?.[config.transliterationKey])
               ? reading[config.transliterationKey]
               : targetText;
             playAudio('read', textToSpeak);
-          } else if (activeView === 'transliteration' && reading?.[config.transliterationKey]) {
+          } else if (effectiveActiveView === 'transliteration' && reading?.[config.transliterationKey]) {
             playAudio('transliteration', reading[config.transliterationKey]);
-          } else if (activeView === 'eng' && reading?.english) {
+          } else if (effectiveActiveView === 'eng' && reading?.english) {
             playAudio('eng', reading.english);
           }
           break;
         case 'n':
         case 'N':
-          if (activeView === 'focus') {
+          if (effectiveActiveView === 'focus') {
             e.preventDefault();
             handleOpenNote('reading_focus', 'Focus & Grammar Notes', notes['reading_focus']);
           }
@@ -152,7 +161,7 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, handleNext, handlePrev, activeView, reading, targetText, playingId, notes, handleOpenNote, playAudio]);
+  }, [isActive, handleNext, handlePrev, effectiveActiveView, reading, targetText, playingId, notes, handleOpenNote, playAudio, config]);
 
   if (!reading || pages.length === 0) return null;
 
@@ -175,7 +184,7 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
                 setActiveView(p.id);
               }}
               className={`px-2 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1 text-center ${
-                activeView === p.id 
+                effectiveActiveView === p.id 
                   ? (isDarkMode ? 'bg-stone-800 text-amber-400 shadow-sm border border-stone-750' : 'bg-white text-amber-700 shadow-sm border border-stone-105') 
                   : (isDarkMode ? 'text-stone-400 hover:bg-stone-800 hover:text-stone-200' : 'text-stone-500 hover:bg-stone-200 hover:text-stone-800')
               }`}
@@ -188,9 +197,9 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
 
       <div className={`flex-1 min-h-0 flex flex-col rounded-2xl shadow-sm border overflow-hidden transition-colors ${isDarkMode ? 'bg-stone-900 border-stone-800/80' : 'bg-white border-stone-200'}`}>
         <div {...swipeHandlers} ref={setRefs} className="flex-1 min-h-0 relative touch-pan-y flex flex-col w-full">
-          <div key={activeView} className={`absolute inset-0 flex flex-col animate-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
+          <div key={effectiveActiveView} className={`absolute inset-0 flex flex-col animate-in duration-300 fill-mode-both ${slideDirection === 'next' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}>
             
-            {activeView === 'defs' && (
+            {effectiveActiveView === 'defs' && Array.isArray(reading?.definitions) && (
               <>
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 no-scrollbar ${config.fontClass || ''}`}>
                   <ul className={`space-y-3 ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'}`}>
@@ -204,15 +213,15 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
                 </div>
                 <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                   <h2 className="text-base font-bold tracking-wide">Definitions</h2>
-                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'defs'} onClick={() => playAudio('defs', reading.definitions.map(d=>d.word + ". " + d.text).join(' '))} />
+                  <PlayButton isDarkMode={isDarkMode} isPlaying={playingId === 'defs'} onClick={() => playAudio('defs', (reading.definitions || []).map(d=>d.word + ". " + d.text).join(' '))} />
                 </div>
               </>
             )}
 
-            {activeView === 'read' && (
+            {effectiveActiveView === 'read' && (
               <>
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar ${config.fontClass || ''} ${config.scriptStyles?.bodyText || 'text-lg md:text-xl font-normal leading-relaxed'}`}>
-                  {targetText.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+                  {(targetText || '').split('\n\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
                 </div>
                 <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                   <h2 className="text-base font-bold tracking-wide">Target Text</h2>
@@ -220,7 +229,7 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
                     isDarkMode={isDarkMode} 
                     isPlaying={playingId === 'read'} 
                     onClick={() => {
-                      const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && reading[config.transliterationKey])
+                      const textToSpeak = (config.ttsUseTransliteration && config.transliterationKey && reading?.[config.transliterationKey])
                         ? reading[config.transliterationKey]
                         : targetText;
                       playAudio('read', textToSpeak);
@@ -230,10 +239,10 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
               </>
             )}
 
-            {activeView === 'transliteration' && config.transliterationKey && reading[config.transliterationKey] && (
+            {effectiveActiveView === 'transliteration' && config.transliterationKey && reading?.[config.transliterationKey] && (
               <>
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar font-sans text-lg md:text-xl leading-relaxed ${isDarkMode ? 'text-stone-300' : 'text-stone-700'}`}>
-                  {reading[config.transliterationKey].split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+                  {(reading[config.transliterationKey] || '').split('\n\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
                 </div>
                 <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                   <h2 className="text-base font-bold tracking-wide">{(config.labels && config.labels[config.transliterationKey]) || 'Transliteration'}</h2>
@@ -242,10 +251,10 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
               </>
             )}
 
-            {activeView === 'eng' && (
+            {effectiveActiveView === 'eng' && reading?.english && (
               <>
                 <div className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-4 no-scrollbar text-lg italic leading-relaxed ${isDarkMode ? 'text-stone-400' : 'text-stone-650'}`}>
-                  {reading.english.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+                  {(reading.english || '').split('\n\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
                 </div>
                 <div className={`shrink-0 flex items-center justify-between p-3 border-t ${isDarkMode ? 'border-stone-800' : 'border-stone-100'}`}>
                   <h2 className="text-base font-bold tracking-wide">Translation</h2>
@@ -254,7 +263,7 @@ export default function ReadingTab({ isActive, isDarkMode, activeEpisode, handle
               </>
             )}
 
-            {activeView === 'focus' && (
+            {effectiveActiveView === 'focus' && Array.isArray(reading?.focus) && (
               <>
                 <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 space-y-6 no-scrollbar text-lg">
                   {reading.focus.map((item, idx) => (
