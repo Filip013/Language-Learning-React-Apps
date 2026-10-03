@@ -75,7 +75,8 @@ export default function LingoCraft() {
     const cardRef = useRef(null);
 
     // Use centralized TTS Hook
-    const ttsSystemInstruction = getTtsSystemInstruction(selectedLanguage);
+    const currentTtsLanguage = (result?.targetLanguage ? getLangObj(result.targetLanguage)?.name : '') || selectedLanguage;
+    const ttsSystemInstruction = getTtsSystemInstruction(currentTtsLanguage);
     const { handleSpeak, stopSpeak } = useGeminiTTS(ttsSystemInstruction);
 
     // Global Theme Initialization
@@ -261,7 +262,7 @@ export default function LingoCraft() {
 
     const getTTSText = (item, langName) => {
         if (langName === 'English') return [item.original];
-        const targetScript = (langName?.includes('Greek') && item.transcription) ? item.transcription : item.original;
+        const targetScript = (langName === 'Ancient Greek' && item.transcription) ? item.transcription : item.original;
         return [targetScript, getTranslation(item), targetScript];
     };
 
