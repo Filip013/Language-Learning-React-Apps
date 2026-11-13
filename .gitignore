@@ -34,6 +34,11 @@ yarn-debug.log*
 *.sln
 *.sw?
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Keystores & Signing
 keystore/
 *.keystore

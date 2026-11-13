@@ -189,15 +189,15 @@ export default function LingoCraft() {
             generationConfig: { 
                 responseMimeType: "application/json", 
                 responseSchema: responseSchema,
-                thinkingConfig: { thinkingLevel: "HIGH" } 
+                thinkingConfig: { thinkingLevel: "MEDIUM" } 
             }
         };
 
         try {
             const res = await fetchGeminiContent({
-                model: 'gemini-3.5-flash-lite',
+                model: 'gemini-4-hydrogen',
                 payload,
-                keyPreference: 'free'
+                keyPreference: 'paid'
             });
             
             if (!res.ok) {

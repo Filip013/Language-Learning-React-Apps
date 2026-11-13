@@ -45,7 +45,7 @@ export const getFreeApiKey = () => localStorage.getItem('geminiApiKey') || local
 export const getPaidApiKey = () => localStorage.getItem('geminiPaidApiKey') || localStorage.getItem('geminiApiKey') || '';
 export const getApiKey = getFreeApiKey;
 
-export async function fetchGeminiContent({ model = 'gemini-3.5-flash-lite', payload, keyPreference = 'free' }) {
+export async function fetchGeminiContent({ model = 'gemini-4-hydrogen', payload, keyPreference = 'free' }) {
     const freeKey = (localStorage.getItem('geminiApiKey') || '').trim();
     const paidKey = (localStorage.getItem('geminiPaidApiKey') || '').trim();
 

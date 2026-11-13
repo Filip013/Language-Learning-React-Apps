@@ -328,9 +328,9 @@ export default function LanguageCourse({ config }) {
       };
 
       const res = await fetchGeminiContent({
-          model: 'gemini-3.8-flash',
+          model: 'gemini-4-hydrogen',
           payload,
-          keyPreference: 'paid'
+          keyPreference: 'free'
       });
 
       if (!res.ok) {
