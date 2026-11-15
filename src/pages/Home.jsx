@@ -442,7 +442,7 @@ export default function Home() {
                     <div className="bg-stone-100/50 dark:bg-zinc-900/50 p-4 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-stone-200 dark:border-zinc-800 mb-6 sm:mb-12 animate-in slide-in-from-top-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                             <ApiKeyManager user={user} title="Free Gemini Key" description="Powers TTS voice and course lesson generation (Hydrogen & Live)." storageKey="geminiApiKey" />
-                            <ApiKeyManager user={user} title="Paid Gemini Key" description="Powers LingoCraft and AI Translate (Hydrogen)." storageKey="geminiPaidApiKey" />
+                            <ApiKeyManager user={user} title="Paid Gemini Key" description="Powers LingoCraft (Hydrogen) and AI Translate (Flash Lite)." storageKey="geminiPaidApiKey" />
                         </div>
                         
                         <div className="border-t border-stone-200 dark:border-zinc-800 pt-6 sm:pt-8">

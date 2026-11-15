@@ -10,8 +10,8 @@ import { useSwipeable } from 'react-swipeable';
 import { auth, db } from '../firebase';
 import { useGeminiTTS } from '../hooks/useGeminiTTS';
 import { 
-  LANGUAGES, LEVELS, getFontStyles, fetchGeminiContent, 
-  getSystemInstruction, getTtsSystemInstruction 
+  LANGUAGES, LEVELS, getFontStyles, fetchGeminiContentStream, 
+  parsePartialJson, getSystemInstruction, getTtsSystemInstruction 
 } from '../config/languages';
 import AiTranslatePopup from '../components/common/AiTranslatePopup';
 import ThemeToggle from '../components/common/ThemeToggle';
@@ -61,6 +61,7 @@ export default function LingoCraft() {
     const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0].name);
     const [selectedLevel, setSelectedLevel] = useState(LEVELS[1].id);
     const [loading, setLoading] = useState(false);
+    const [isStreaming, setIsStreaming] = useState(false);
     const [error, setError] = useState(null);
     
     const [result, setResult] = useState(null);
@@ -142,6 +143,7 @@ export default function LingoCraft() {
         if (!queryWord || !user) return;
 
         setLoading(true);
+        setIsStreaming(true);
         setError(null);
         setResult(null);
         stopSpeak();
@@ -193,29 +195,59 @@ export default function LingoCraft() {
             }
         };
 
+        const streamId = Date.now().toString();
+        const streamTimestamp = Number(streamId);
+
         try {
-            const res = await fetchGeminiContent({
+            const rawText = await fetchGeminiContentStream({
                 model: 'gemini-4-hydrogen',
                 payload,
-                keyPreference: 'paid'
-            });
-            
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error?.message || "API Connection Failed");
-            }
+                keyPreference: 'paid',
+                onChunk: (accumulatedText) => {
+                    const partial = parsePartialJson(accumulatedText);
+                    if (!partial || typeof partial !== 'object') return;
 
-            const data = await res.json();
-            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const hasHeader = Boolean(partial.word || partial.definitionEnglish);
+                    const validSentences = (Array.isArray(partial.sentences) ? partial.sentences : [])
+                        .filter(s => s && typeof s === 'object' && (s.original || s.englishTranslation || s.explanation));
+
+                    if (!hasHeader && validSentences.length === 0) return;
+
+                    setResult({
+                        word: partial.word || queryWord,
+                        partOfSpeech: partial.partOfSpeech || '',
+                        ipa: partial.ipa || '',
+                        definitionEnglish: partial.definitionEnglish || '',
+                        sentences: validSentences,
+                        id: streamId,
+                        targetLanguage: langObj,
+                        level: selectedLevel,
+                        timestamp: streamTimestamp
+                    });
+                    setActiveTab('main');
+                    setLoading(false);
+                }
+            });
+
             if (!rawText) throw new Error("Empty response received.");
 
-            const parsedResult = JSON.parse(rawText);
+            let parsedResult;
+            try {
+                parsedResult = JSON.parse(rawText);
+            } catch {
+                parsedResult = parsePartialJson(rawText);
+            }
+            if (!parsedResult || !parsedResult.word) {
+                throw new Error("Unable to parse response.");
+            }
+
             const enrichedResult = {
                 ...parsedResult,
-                id: Date.now().toString(),
+                sentences: Array.isArray(parsedResult.sentences) ? parsedResult.sentences : [],
+                id: streamId,
                 targetLanguage: langObj,
                 level: selectedLevel,
-                timestamp: Date.now()
+                timestamp: streamTimestamp
             };
 
             setResult(enrichedResult);
@@ -228,9 +260,10 @@ export default function LingoCraft() {
 
         } catch (err) {
             console.error(err);
-            setError("Unable to generate contexts. Please check your connection or try again later.");
+            setError(err.message || "Unable to generate contexts. Please check your connection or try again later.");
         } finally {
             setLoading(false);
+            setIsStreaming(false);
         }
     };
 
@@ -303,7 +336,8 @@ export default function LingoCraft() {
 
     // --- Navigation Logic for Cards ---
     const handleNext = useCallback(() => {
-        if (result && currentIdx < result.sentences.length - 1) {
+        const len = result?.sentences?.length || 0;
+        if (result && currentIdx < len - 1) {
             setSlideDirection('next');
             setCurrentIdx(prev => prev + 1);
         }
@@ -383,7 +417,7 @@ export default function LingoCraft() {
                     setShowSearchOverlay(prev => !prev);
                     break;
                 case ' ':
-                    if (result) {
+                    if (result?.sentences?.[currentIdx]) {
                         e.preventDefault();
                         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
                         toggleAudio(result.sentences[currentIdx], currentIdx, activeLangName);
@@ -413,7 +447,8 @@ export default function LingoCraft() {
 
     if (!user) return null;
 
-    const showCardLayout = activeTab === 'main' && result && !loading;
+    const sentences = result?.sentences || [];
+    const showCardLayout = activeTab === 'main' && Boolean(result);
     const isRevealed = isNoBlurLang || revealedSentences.has(currentIdx);
     const isPlaying = playingId !== null;
 
@@ -613,15 +648,24 @@ export default function LingoCraft() {
                                         <h2 className={`truncate ${isCjk ? 'text-4xl sm:text-5xl font-normal' : 'text-2xl sm:text-3xl font-extrabold tracking-tight'} ${fontClass}`}>
                                             {result.word}
                                         </h2>
-                                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border shrink-0 ${isDarkMode ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
-                                            {result.partOfSpeech}
-                                        </span>
-                                        <span className={`px-2 py-0.5 text-[11px] font-mono font-bold rounded-lg border shrink-0 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-stone-100 border-stone-200 text-stone-600'}`}>
-                                            {result.ipa}
-                                        </span>
+                                        {result.partOfSpeech && (
+                                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border shrink-0 ${isDarkMode ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+                                                {result.partOfSpeech}
+                                            </span>
+                                        )}
+                                        {result.ipa && (
+                                            <span className={`px-2 py-0.5 text-[11px] font-mono font-bold rounded-lg border shrink-0 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-stone-100 border-stone-200 text-stone-600'}`}>
+                                                {result.ipa}
+                                            </span>
+                                        )}
+                                        {isStreaming && (
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border shrink-0 ${isDarkMode ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+                                                <Loader2 className="w-2.5 h-2.5 animate-spin" /> Streaming
+                                            </span>
+                                        )}
                                     </div>
                                     <p className={`text-sm sm:text-base font-medium leading-snug ${isDarkMode ? 'text-zinc-300' : 'text-stone-600'}`}>
-                                        {result.definitionEnglish}
+                                        {result.definitionEnglish || (isStreaming ? 'Loading definition...' : '')}
                                     </p>
                                 </div>
                                 <div className="flex gap-4 shrink-0 text-right w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-inherit">
@@ -649,7 +693,7 @@ export default function LingoCraft() {
                                 </button>
                                 
                                 <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-1 w-full justify-center">
-                                    {result.sentences.map((_, idx) => (
+                                    {sentences.map((_, idx) => (
                                         <button 
                                             key={idx} 
                                             onClick={() => { setSlideDirection(idx > currentIdx ? 'next' : 'prev'); setCurrentIdx(idx); }} 
@@ -658,12 +702,17 @@ export default function LingoCraft() {
                                             {idx + 1}
                                         </button>
                                     ))}
+                                    {isStreaming && sentences.length < 5 && (
+                                        <span className={`w-7 h-7 shrink-0 flex items-center justify-center rounded-lg border border-dashed ${isDarkMode ? 'border-zinc-700 text-zinc-500' : 'border-stone-300 text-stone-400'}`}>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        </span>
+                                    )}
                                 </div>
 
                                 <button 
                                     onClick={handleNext} 
-                                    disabled={currentIdx === result.sentences.length - 1} 
-                                    className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${currentIdx === result.sentences.length - 1 ? 'opacity-30 cursor-not-allowed border-transparent' : (isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:bg-zinc-700' : 'bg-white border-stone-300 text-blue-600 hover:bg-stone-50')}`}
+                                    disabled={sentences.length === 0 || currentIdx >= sentences.length - 1} 
+                                    className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${sentences.length === 0 || currentIdx >= sentences.length - 1 ? 'opacity-30 cursor-not-allowed border-transparent' : (isDarkMode ? 'bg-zinc-800 border-zinc-700 text-blue-400 hover:bg-zinc-700' : 'bg-white border-stone-300 text-blue-600 hover:bg-stone-50')}`}
                                 >
                                     <span className="hidden sm:inline">Next</span> <ChevronRight size={14} />
                                 </button>
@@ -677,12 +726,18 @@ export default function LingoCraft() {
                                         {/* Container handling internal content overflow and scrolling */}
                                         <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-8 no-scrollbar flex flex-col justify-start pt-3">
                                             
+                                            {!currentSentence ? (
+                                                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                                    <Loader2 className="w-7 h-7 text-blue-500 animate-spin" />
+                                                    <p className={`text-sm font-medium ${isDarkMode ? 'text-zinc-400' : 'text-stone-500'}`}>Generating example sentences...</p>
+                                                </div>
+                                            ) : (
                                             <div className="relative min-h-[140px] flex flex-col justify-start">
                                                 <div className={`transition-all ${!isRevealed ? 'duration-0 blur-md opacity-40 select-none pointer-events-none' : 'duration-700 blur-0 opacity-100'} space-y-4`}>
                                                     
                                                     <div>
                                                         <p className={`leading-tight ${isCjk ? 'text-3xl sm:text-4xl font-normal tracking-wide' : 'text-xl sm:text-2xl font-bold'} ${fontClass} ${isDarkMode ? 'text-zinc-100' : 'text-stone-800'}`}>
-                                                            {currentSentence.original}
+                                                            {currentSentence.original || (isStreaming ? '...' : '')}
                                                         </p>
                                                         {currentSentence.transcription && currentSentence.transcription !== currentSentence.original && (
                                                             <p className={`text-base italic font-medium mt-1.5 ${isDarkMode ? 'text-zinc-400' : 'text-stone-500'}`}>
@@ -702,15 +757,17 @@ export default function LingoCraft() {
                                                     )}
 
                                                     {/* EXPLANATION BLOCK WITH SEPARATE HEADER LINE */}
-                                                    <div className="mt-4 bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 flex flex-col gap-2">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Sparkles className={`w-4 h-4 shrink-0 ${isDarkMode ? 'text-blue-500' : 'text-blue-600'}`} />
-                                                            <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>Explanation</span>
+                                                    {(currentSentence.explanation || isStreaming) && (
+                                                        <div className="mt-4 bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 flex flex-col gap-2">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Sparkles className={`w-4 h-4 shrink-0 ${isDarkMode ? 'text-blue-500' : 'text-blue-600'}`} />
+                                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>Explanation</span>
+                                                            </div>
+                                                            <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-zinc-300' : 'text-stone-600'}`}>
+                                                                {currentSentence.explanation || 'Streaming explanation...'}
+                                                            </p>
                                                         </div>
-                                                        <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-zinc-300' : 'text-stone-600'}`}>
-                                                            {currentSentence.explanation}
-                                                        </p>
-                                                    </div>
+                                                    )}
                                                 </div>
 
                                                 {!isRevealed && (
@@ -734,6 +791,7 @@ export default function LingoCraft() {
                                                     </div>
                                                 )}
                                             </div>
+                                            )}
 
                                         </div>
 

@@ -92,7 +92,7 @@ export default function AiTranslatePopup({ isDarkMode, config = {}, handleSpeak 
         : `Translate the following text from ${langName} to English. If the selected text is a word or short phrase that has grammatical gender (e.g. feminine noun, masculine noun, neuter, de-word, het-word) or specific part of speech/grammar info in ${langName}, include a very concise note under "grammar" (e.g., "feminine noun", "de-word / common gender", "neuter noun", "verb (infinitive)", etc., or null if not applicable). Text: "${selectionState.text}"\nOutput JSON strictly with keys: {"translation": "...", "grammar": "..."}`;
 
       const res = await fetchGeminiContent({
-          model: 'gemini-4-hydrogen',
+          model: 'gemini-3.5-flash-lite',
           payload: {
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: { responseMimeType: "application/json" }

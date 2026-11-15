@@ -77,6 +77,167 @@ export async function fetchGeminiContent({ model = 'gemini-4-hydrogen', payload,
     return res;
 }
 
+export function parsePartialJson(input) {
+    if (!input || typeof input !== 'string') return null;
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    try {
+        return JSON.parse(trimmed);
+    } catch {
+        // Continue to partial JSON repair
+    }
+
+    let inString = false;
+    let escaped = false;
+    const stack = [];
+
+    for (let i = 0; i < trimmed.length; i++) {
+        const ch = trimmed[i];
+        if (inString) {
+            if (escaped) {
+                escaped = false;
+            } else if (ch === '\\') {
+                escaped = true;
+            } else if (ch === '"') {
+                inString = false;
+            }
+        } else {
+            if (ch === '"') {
+                inString = true;
+            } else if (ch === '{' || ch === '[') {
+                stack.push(ch);
+            } else if (ch === '}' || ch === ']') {
+                stack.pop();
+            }
+        }
+    }
+
+    let repaired = trimmed;
+    if (inString) {
+        if (escaped) {
+            repaired = repaired.slice(0, -1);
+        }
+        repaired += '"';
+    }
+
+    // Remove trailing incomplete key/colon/comma before closing open containers
+    repaired = repaired.trimEnd();
+    if (repaired.endsWith(':')) {
+        repaired = repaired.slice(0, -1).trimEnd();
+        // Strip the dangling key string before the colon
+        if (repaired.endsWith('"')) {
+            repaired = repaired.replace(/"(?:\\.|[^"\\])*"\s*$/, '').trimEnd();
+        }
+    } else if (stack.length > 0 && stack[stack.length - 1] === '{' && /[{,]\s*"(?:\\.|[^"\\])*"\s*$/.test(repaired)) {
+        // Dangling object key with no colon yet
+        repaired = repaired.replace(/"(?:\\.|[^"\\])*"\s*$/, '').trimEnd();
+    }
+
+    if (repaired.endsWith(',')) {
+        repaired = repaired.slice(0, -1).trimEnd();
+    }
+
+    for (let i = stack.length - 1; i >= 0; i--) {
+        repaired += stack[i] === '{' ? '}' : ']';
+    }
+
+    try {
+        return JSON.parse(repaired);
+    } catch {
+        return null;
+    }
+}
+
+export async function fetchGeminiContentStream({ model = 'gemini-4-hydrogen', payload, keyPreference = 'free', onChunk }) {
+    const freeKey = (localStorage.getItem('geminiApiKey') || '').trim();
+    const paidKey = (localStorage.getItem('geminiPaidApiKey') || '').trim();
+
+    const primaryKey = keyPreference === 'paid' ? (paidKey || freeKey) : (freeKey || paidKey);
+    const fallbackKey = keyPreference === 'paid'
+        ? (primaryKey === paidKey && freeKey ? freeKey : '')
+        : (primaryKey === freeKey && paidKey ? paidKey : '');
+
+    if (!primaryKey) {
+        throw new Error("No Gemini API Key found in settings. Please add your key in the Hub settings.");
+    }
+
+    const makeStreamRequest = async (key) => {
+        return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    };
+
+    let res = await makeStreamRequest(primaryKey);
+
+    if ((res.status === 429 || res.status === 503) && fallbackKey && fallbackKey !== primaryKey) {
+        console.warn(`[Gemini API Stream] Primary (${keyPreference}) key returned ${res.status}. Automatically retrying with fallback key...`);
+        res = await makeStreamRequest(fallbackKey);
+    }
+
+    if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || "API Connection Failed");
+    }
+
+    if (!res.body) {
+        throw new Error("Streaming not supported by response.");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let sseBuffer = '';
+    let accumulatedText = '';
+
+    const processLines = (lines) => {
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line.startsWith('data:')) continue;
+            const jsonStr = line.slice(5).trim();
+            if (!jsonStr || jsonStr === '[DONE]') continue;
+
+            try {
+                const parsedChunk = JSON.parse(jsonStr);
+                const parts = parsedChunk.candidates?.[0]?.content?.parts || [];
+                let sawNewText = false;
+                let isThinking = false;
+
+                for (const part of parts) {
+                    if (part.thought) {
+                        isThinking = true;
+                    } else if (typeof part.text === 'string' && part.text.length > 0) {
+                        accumulatedText += part.text;
+                        sawNewText = true;
+                    }
+                }
+
+                if ((sawNewText || isThinking) && onChunk) {
+                    onChunk(accumulatedText, { isThinking });
+                }
+            } catch {
+                // Ignore malformed partial SSE line
+            }
+        }
+    };
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split(/\r?\n/);
+        sseBuffer = lines.pop() || '';
+        processLines(lines);
+    }
+
+    if (sseBuffer.trim()) {
+        processLines([sseBuffer]);
+    }
+
+    return accumulatedText;
+}
+
 export const getSystemInstruction = (langName) => {
     const rules = [
         "1. Provide a reliable International Phonetic Alphabet (IPA) representation.",
