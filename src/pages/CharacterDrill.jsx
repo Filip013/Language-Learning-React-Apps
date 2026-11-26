@@ -11,8 +11,20 @@ import { fetchGeminiContent } from '../config/languages';
 const dbAppId = 'character-drills';
 
 const fontStyles = `
-  @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
-  @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
+  @font-face {
+    font-family: 'DFKai-SB';
+    src: url('https://shrill-dust-3a72.filip013.workers.dev/?url=http%3A%2F%2Ffilip013.duckdns.org%2FDFKai-SB.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'STKaiti';
+    src: url('https://shrill-dust-3a72.filip013.workers.dev/?url=http%3A%2F%2Ffilip013.duckdns.org%2FSTKaiti.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
   .moe-font {
     font-family: 'DFKai-SB', 'STKaiti', 'KaiTi', 'BiauKai', 'Kaiti TC', serif !important;
   }

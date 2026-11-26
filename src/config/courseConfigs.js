@@ -33,9 +33,21 @@ export const courseConfigs = {
         useLargeDrillFont: true,
         textSizeMode: 'large',
         webFontsCss: `
-            @import url('https://db.onlinewebfonts.com/c/fe4f9dac99fb6b607c03981e6ce16869?family=DFKai-SB');
-            @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
-            .moe-font { font-family: 'DFKai-SB', serif; }
+            @font-face {
+                font-family: 'DFKai-SB';
+                src: url('https://shrill-dust-3a72.filip013.workers.dev/?url=http%3A%2F%2Ffilip013.duckdns.org%2FDFKai-SB.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+            }
+            @font-face {
+                font-family: 'STKaiti';
+                src: url('https://shrill-dust-3a72.filip013.workers.dev/?url=http%3A%2F%2Ffilip013.duckdns.org%2FSTKaiti.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+            }
+            .moe-font { font-family: 'DFKai-SB', 'STKaiti', serif; }
             .simp-font { font-family: 'STKaiti', sans-serif; }
         `,
         
@@ -787,8 +799,13 @@ TASKS:
         useLargeDrillFont: true,
         textSizeMode: 'large',
         webFontsCss: `
-            @import url('https://db.onlinewebfonts.com/c/947e00387f802f409bd2f3e74b9c0730?family=HGSKyokashotai');
-            @import url('https://db.onlinewebfonts.com/c/1ee9941f1b8c128110ca4307dda59917?family=STKaiti');
+            @font-face {
+                font-family: 'STKaiti';
+                src: url('https://shrill-dust-3a72.filip013.workers.dev/?url=http%3A%2F%2Ffilip013.duckdns.org%2FSTKaiti.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+            }
             @font-face {
                 font-family: 'KyoKaSho';
                 src: url('https://shrill-dust-3a72.filip013.workers.dev/KyoKaSho.woff2') format('woff2');
