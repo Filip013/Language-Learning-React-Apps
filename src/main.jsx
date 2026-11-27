@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { isTauri } from '@tauri-apps/api/core'
+import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill'
+import twemojiFlagsUrl from 'country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2'
+
+polyfillCountryFlagEmojis('Twemoji Country Flags', twemojiFlagsUrl)
 
 if (isTauri()) {
   // Inside Tauri (desktop WebView2), the PWA service worker's precached assets
